@@ -11,8 +11,10 @@ This project is derived from **ja3-ja4-tls-fingerprinting** by CarterPerez-dev
 
 The sensor core, fingerprint implementations, intelligence store, detection
 rules, dashboard and learning documents were written by the upstream author;
-their copyright headers are retained in the source files. Changes made in this
-repository are listed in `CHANGES.md`. This derivative is distributed under the
+their copyright headers (`©AngelaMos`) are retained in those source files, as the
+licence requires. Files created in this repository (the evaluation harness, the
+dataset lab, the capture scripts, the CIDR and profile modules, and others) carry
+the header `© Pranav Verma`. Changes to upstream files are listed in `CHANGES.md`. This derivative is distributed under the
 same licence (AGPL-3.0).
 
 # Third-party fingerprint algorithm licensing

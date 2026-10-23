@@ -172,15 +172,18 @@ export function LiveStream({
   feed,
   connected,
   flowCount,
+  query,
+  onQuery,
   className,
 }: {
   feed: LiveItem[]
   connected: boolean
   flowCount: number
+  query: string
+  onQuery: (value: string) => void
   className?: string
 }): React.ReactElement {
   const [filter, setFilter] = useState<FilterId>('all')
-  const [query, setQuery] = useState('')
   const [frozen, setFrozen] = useState<LiveItem[] | null>(null)
   const [selected, setSelected] = useState<LiveItem | null>(null)
   // Clearing hides everything seen so far without touching the running counts.
@@ -256,10 +259,11 @@ export function LiveStream({
           type="search"
           className={styles.search}
           ref={searchRef}
+          id="live-stream-filter"
           placeholder="filter ip, sni, fingerprint  ( / )"
           aria-label="Filter the live stream"
           value={query}
-          onChange={(event) => setQuery(event.target.value)}
+          onChange={(event) => onQuery(event.target.value)}
         />
         <button
           type="button"

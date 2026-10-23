@@ -1,5 +1,5 @@
 /**
- * ©AngelaMos | 2026
+ * © Pranav Verma | 2026
  * profiles.ts
  */
 
@@ -33,6 +33,7 @@ export interface FingerprintProfile {
   ja3: Set<string>
   alpn: Set<string>
   alerts: number
+  times: number[]
   firstNanos: number
   lastNanos: number
 }
@@ -80,12 +81,14 @@ export function summarise(feed: LiveItem[]): Profiles {
         ja3: new Set(),
         alpn: new Set(),
         alerts: 0,
+        times: [],
         firstNanos: event.ts_nanos,
         lastNanos: event.ts_nanos,
       }
       fingerprints.set(event.ja4.hash, fp)
     }
     fp.connections += 1
+    fp.times.push(event.ts_nanos)
     fp.verdict = worse(fp.verdict, verdict)
     fp.firstNanos = Math.min(fp.firstNanos, event.ts_nanos)
     fp.lastNanos = Math.max(fp.lastNanos, event.ts_nanos)
@@ -185,4 +188,119 @@ export const VERDICT_NOTE: Record<Verdict, string> = {
     'Matches a fingerprint the feed lists as benign. A tool that reproduces it byte for byte shares this verdict.',
   suspicious: 'Matches a fingerprint the feed lists as suspicious.',
   malicious: 'Matches a fingerprint the feed lists as malicious.',
+}
+
+// Connection counts in equal time slices from first to last sighting.
+export interface Bucket {
+  id: number
+  count: number
+}
+
+export function timeline(times: number[], buckets = 32): Bucket[] {
+  if (times.length === 0) return []
+  const first = Math.min(...times)
+  const last = Math.max(...times)
+  const counts = Array.from({ length: buckets }, () => 0)
+  const span = last - first
+  for (const t of times) {
+    const index =
+      span === 0
+        ? 0
+        : Math.min(buckets - 1, Math.floor(((t - first) / span) * buckets))
+    counts[index] += 1
+  }
+  return counts.map((count, id) => ({ id, count }))
+}
+
+const EXTENSION_NAMES: Record<string, string> = {
+  '0005': 'status_request',
+  '000a': 'supported_groups',
+  '000b': 'ec_point_formats',
+  '000d': 'signature_algorithms',
+  '0012': 'signed_certificate_timestamp',
+  '0015': 'padding',
+  '0017': 'extended_master_secret',
+  '001b': 'compress_certificate',
+  '0022': 'delegated_credentials',
+  '0023': 'session_ticket',
+  '0029': 'pre_shared_key',
+  '002b': 'supported_versions',
+  '002d': 'psk_key_exchange_modes',
+  '0033': 'key_share',
+  '4469': 'alps (legacy codepoint)',
+  '44cd': 'alps (new codepoint)',
+  fe0d: 'encrypted_client_hello',
+  ff01: 'renegotiation_info',
+  ca34: 'trust_anchors',
+}
+
+const CIPHER_NAMES: Record<string, string> = {
+  '1301': 'TLS_AES_128_GCM_SHA256',
+  '1302': 'TLS_AES_256_GCM_SHA384',
+  '1303': 'TLS_CHACHA20_POLY1305_SHA256',
+  c02b: 'ECDHE_ECDSA_AES_128_GCM',
+  c02c: 'ECDHE_ECDSA_AES_256_GCM',
+  c02f: 'ECDHE_RSA_AES_128_GCM',
+  c030: 'ECDHE_RSA_AES_256_GCM',
+  cca8: 'ECDHE_RSA_CHACHA20',
+  cca9: 'ECDHE_ECDSA_CHACHA20',
+  c013: 'ECDHE_RSA_AES_128_CBC_SHA',
+  c014: 'ECDHE_RSA_AES_256_CBC_SHA',
+  '009c': 'RSA_AES_128_GCM',
+  '009d': 'RSA_AES_256_GCM',
+  '002f': 'RSA_AES_128_CBC_SHA',
+  '0035': 'RSA_AES_256_CBC_SHA',
+}
+
+export interface ListDiff {
+  onlyA: string[]
+  onlyB: string[]
+  both: number
+}
+
+function diffLists(
+  a: string[],
+  b: string[],
+  names: Record<string, string>
+): ListDiff {
+  const setA = new Set(a)
+  const setB = new Set(b)
+  const label = (code: string): string =>
+    names[code] ? `${names[code]} (${code})` : code
+  return {
+    onlyA: a.filter((x) => !setB.has(x)).map(label),
+    onlyB: b.filter((x) => !setA.has(x)).map(label),
+    both: a.filter((x) => setB.has(x)).length,
+  }
+}
+
+function rawParts(raw: string): [string[], string[], string[]] {
+  const [, ciphers = '', extensions = '', signatures = ''] = raw.split('_')
+  const list = (csv: string): string[] => (csv ? csv.split(',') : [])
+  return [list(ciphers), list(extensions), list(signatures)]
+}
+
+export interface Comparison {
+  ciphers: ListDiff
+  extensions: ListDiff
+  signatures: ListDiff
+  sharedDestinations: string[]
+}
+
+// What differs between two client hellos, read from the JA4 raw strings. The
+// extension list excludes server name and ALPN by the JA4 specification.
+export function compare(
+  a: FingerprintProfile,
+  b: FingerprintProfile
+): Comparison {
+  const [ca, ea, sa] = rawParts(a.raw)
+  const [cb, eb, sb] = rawParts(b.raw)
+  return {
+    ciphers: diffLists(ca, cb, CIPHER_NAMES),
+    extensions: diffLists(ea, eb, EXTENSION_NAMES),
+    signatures: diffLists(sa, sb, {}),
+    sharedDestinations: [...a.destinations.keys()].filter((d) =>
+      b.destinations.has(d)
+    ),
+  }
 }

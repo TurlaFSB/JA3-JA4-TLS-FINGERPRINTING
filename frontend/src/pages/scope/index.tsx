@@ -3,6 +3,7 @@
  * index.tsx
  */
 
+import { useState } from 'react'
 import { useLiveStream } from '@/api/hooks'
 import {
   AlertFeed,
@@ -16,6 +17,15 @@ import styles from './scope.module.scss'
 
 export function Component(): React.ReactElement {
   const live = useLiveStream()
+  const [query, setQuery] = useState('')
+
+  // Filters the stream to one fingerprint or server name and brings it into view.
+  const showInStream = (value: string): void => {
+    setQuery(value)
+    document
+      .getElementById('live-stream-filter')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
 
   return (
     <div className={styles.page}>
@@ -45,11 +55,17 @@ export function Component(): React.ReactElement {
           feed={live.feed}
           connected={live.connected}
           flowCount={live.flowCount}
+          query={query}
+          onQuery={setQuery}
           className={styles.live}
         />
         <AnomalyHighlights className={styles.anomaly} />
         <Distribution className={styles.dist} />
-        <Profiles feed={live.feed} className={styles.profiles} />
+        <Profiles
+          feed={live.feed}
+          onShowInStream={showInStream}
+          className={styles.profiles}
+        />
         <AlertFeed className={styles.alerts} />
       </section>
     </div>

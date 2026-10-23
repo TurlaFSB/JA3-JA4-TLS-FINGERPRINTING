@@ -1,5 +1,5 @@
 // ===================
-// ©AngelaMos | 2026
+// © Pranav Verma | 2026
 // profiles.module.scss
 // ===================
 
@@ -89,13 +89,37 @@
   flex-direction: column;
 }
 
+.line {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+
+  .row {
+    border-bottom: 0;
+  }
+}
+
+.item {
+  border-bottom: 1px solid $line-faint;
+}
+
+.pick {
+  display: flex;
+  justify-content: center;
+
+  input {
+    accent-color: $fire;
+    cursor: pointer;
+  }
+}
+
 .row {
   display: grid;
   grid-template-columns: minmax(140px, 1.5fr) minmax(120px, 1.2fr) 56px 56px 92px;
   align-items: center;
   gap: $space-3;
   width: 100%;
-  padding: 6px $space-3;
+  padding: 6px $space-3 6px 0;
   margin: 0;
   color: inherit;
   text-align: left;
@@ -275,4 +299,187 @@ button.row {
 .code {
   font-family: $font-mono;
   color: $volt-soft;
+}
+
+.actions {
+  margin-bottom: $space-3;
+}
+
+.timeline {
+  margin: 0 0 $space-3;
+
+  svg {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    height: 36px;
+    border-bottom: 1px solid $line;
+  }
+
+  rect {
+    fill: $volt;
+  }
+
+  figcaption {
+    display: flex;
+    justify-content: space-between;
+    max-width: 280px;
+    font-family: $font-mono;
+    font-size: $font-size-3xs;
+    color: $dust;
+  }
+}
+
+.hintBar {
+  margin: 0;
+  padding: $space-2 $space-3;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  color: $ash;
+  border-bottom: 1px solid $line-faint;
+}
+
+.compare {
+  padding: $space-3 $space-4 $space-4;
+  background: $ink-900;
+  border-bottom: 1px solid $line;
+}
+
+.compareHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  margin-bottom: $space-2;
+}
+
+.compareTitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+  margin: 0;
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: $bone;
+}
+
+.tagA,
+.tagB {
+  padding: 0 5px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  font-weight: 700;
+  color: $ink-1000;
+}
+
+.tagA {
+  background: $fire;
+}
+
+.tagB {
+  background: $volt;
+}
+
+.versus {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  text-transform: uppercase;
+  color: $dust;
+}
+
+.matrix {
+  width: 100%;
+  margin-bottom: $space-4;
+  border-collapse: collapse;
+  font-size: $font-size-2xs;
+
+  th,
+  td {
+    padding: 3px $space-3 3px 0;
+    text-align: left;
+    vertical-align: top;
+    color: $paper;
+    overflow-wrap: anywhere;
+  }
+
+  thead th {
+    font-family: $font-mono;
+    font-size: $font-size-3xs;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: $dust;
+  }
+
+  tbody th {
+    width: 110px;
+    font-family: $font-mono;
+    font-weight: 400;
+    color: $dust;
+  }
+
+  tr[data-differs='true'] td {
+    color: $fire-soft;
+  }
+
+  tbody tr {
+    border-top: 1px solid $line-faint;
+  }
+}
+
+.diffGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: $space-4;
+}
+
+.diffCols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $space-3;
+}
+
+.diff {
+  min-width: 0;
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-family: $font-mono;
+    font-size: $font-size-3xs;
+    overflow-wrap: anywhere;
+  }
+
+  li {
+    padding: 1px 0;
+    color: $paper;
+  }
+}
+
+.diff li.diffHead {
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $dust;
+}
+
+.onlyA li:not(.diffHead, .none) {
+  color: $fire-soft;
+}
+
+.onlyB li:not(.diffHead, .none) {
+  color: $volt-soft;
+}
+
+.diff li.none {
+  color: $soot;
+}
+
+.same {
+  margin: 0;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $thermal;
 }
