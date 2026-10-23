@@ -177,6 +177,8 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--repeat", type=int, default=10)
     ap.add_argument("--chromium-dir", help="directory of chromium-<version>/chromium builds (see fetch_chromium.sh)")
+    ap.add_argument("--only", help="comma-separated scenario labels to run (default: all available)")
+    ap.add_argument("--append", action="store_true", help="add the selected scenarios to an existing dataset directory")
     ap.add_argument("--host", default=DEFAULT_HOST, help="hostname the clients connect to (added to /etc/hosts if it does not resolve)")
     args = ap.parse_args()
     lab.scrub_proxy_env()
@@ -209,6 +211,27 @@ def main():
                     "impersonation", f"curl_cffi-{imp}", "native",
                     f"curl_cffi {curl_cffi.__version__} impersonate={imp}", run)
 
+        if lab_has(py, "curl_cffi"):
+            # An adaptive attacker: same ClientHello, but the telltale defaults are
+            # removed (no Client Hints, no Sec-Fetch, HTTP/1.1 only) and the
+            # headers a browser sends to a cleartext origin are written by hand.
+            def run_evasive(ua=UA_CHROME_WIN):
+                for url in (https_url, http_url):
+                    code = ("from curl_cffi import requests as r\n"
+                            "h={'User-Agent':'%s','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',"
+                            "'Accept-Language':'en-US,en;q=0.9','Accept-Encoding':'gzip, deflate'}\n"
+                            "for _ in range(%d):\n"
+                            "    r.get('%s', impersonate='chrome142', verify=False, timeout=10, default_headers=False, headers=h, http_version='v1')\n"
+                            % (ua, args.repeat, url))
+                    subprocess.run([py, "-c", code], capture_output=True, timeout=120)
+            scenarios["curl_cffi-chrome142__evasive"] = (
+                "evasive-impersonation", "curl_cffi-chrome142-evasive", "chrome-win",
+                "curl_cffi impersonate=chrome142 with default headers stripped, HTTP/1.1, claims Windows", run_evasive)
+            scenarios["curl_cffi-chrome142__evasive-unix"] = (
+                "evasive-impersonation", "curl_cffi-chrome142-evasive-unix", "safari-mac",
+                "curl_cffi impersonate=chrome142 with default headers stripped, HTTP/1.1, claims macOS",
+                lambda: run_evasive(UA_SAFARI_MAC))
+
         if args.chromium_dir and os.path.isdir(args.chromium_dir):
             for entry in sorted(os.listdir(args.chromium_dir)):
                 binary = os.path.join(args.chromium_dir, entry, "chromium")
@@ -220,7 +243,26 @@ def main():
                         chromium_runner(binary, os.path.join(args.chromium_dir, entry), https_url, http_url,
                                         max(3, args.repeat // 2), tmp))
 
+        full = lab.chromium_path()
+        if full:
+            def run_full(full=full):
+                for url in (https_url, http_url):
+                    for _ in range(max(3, args.repeat // 2)):
+                        profile = tempfile.mkdtemp(dir=tmp)
+                        subprocess.run([full, "--headless=new", "--no-sandbox", "--disable-gpu", "--disable-quic",
+                                        "--ignore-certificate-errors", f"--user-data-dir={profile}", "--dump-dom", url],
+                                       capture_output=True, timeout=60)
+            version = lab.out([full, "--version"]) or "Chromium (Playwright build)"
+            scenarios["chromium-full__native"] = ("browser", "chromium-full", "native", version + " (full browser, new headless)", run_full)
+
+        if args.only:
+            wanted = set(args.only.split(","))
+            scenarios = {k: v for k, v in scenarios.items() if k in wanted}
+
         manifest_labels = {}
+        if args.append and os.path.exists(os.path.join(args.out, "manifest.json")):
+            with open(os.path.join(args.out, "manifest.json")) as f:
+                manifest_labels = json.load(f)["labels"]
         for label, (client_class, client, claim, version, run) in sorted(scenarios.items()):
             pcap = os.path.join(args.out, "pcap", f"{label}.pcap")
             print(f"capturing {label} ...", flush=True)

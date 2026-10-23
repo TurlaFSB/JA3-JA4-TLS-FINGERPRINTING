@@ -74,6 +74,32 @@ fn http_request(ip: &str, ts: u64, ua: &str) -> FingerprintEvent {
     }
 }
 
+fn http_request_with_headers(
+    ip: &str,
+    ts: u64,
+    ua: &str,
+    host: &str,
+    header_names: &str,
+) -> FingerprintEvent {
+    FingerprintEvent {
+        ts_nanos: ts,
+        src: format!("{ip}:1000").parse().unwrap(),
+        dst: "10.0.0.250:80".parse().unwrap(),
+        event: StreamEvent::HttpRequest {
+            ja4h: Ja4Family::new(
+                format!(
+                    "ge11nn10enus_{:012x}_000000000000_000000000000",
+                    header_names.len()
+                ),
+                format!("ge11nn10enus_{header_names}_"),
+            ),
+            method: "GET".into(),
+            host: Some(host.into()),
+            user_agent: Some(ua.into()),
+        },
+    }
+}
+
 fn tcp_syn(ip: &str, ts: u64, ja4t: &str) -> FingerprintEvent {
     FingerprintEvent {
         ts_nanos: ts,
@@ -379,6 +405,126 @@ fn a_popular_benign_fingerprint_is_not_a_monoculture() {
             .unwrap();
         assert!(!fires(&alerts, Rule::Monoculture), "address {i}");
     }
+}
+
+const REAL_BROWSER_HEADERS: &str =
+    "Host,Connection,Accept-Language,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding";
+const TOOL_BROWSER_HEADERS: &str = "Host,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language";
+
+#[test]
+fn header_anomaly_flags_browser_only_headers_over_cleartext() {
+    let mut store = store();
+    let alerts = store
+        .detect_with(
+            &http_request_with_headers(
+                "10.40.0.1",
+                1_000_000_000,
+                BROWSER_UA,
+                "shop.example",
+                TOOL_BROWSER_HEADERS,
+            ),
+            &cfg(),
+        )
+        .unwrap();
+    let alert = alerts
+        .iter()
+        .find(|alert| alert.rule == Rule::HeaderAnomaly)
+        .expect("Sec-Fetch and Client Hints over cleartext are not browser behaviour");
+    assert_eq!(alert.severity, AlertSeverity::Medium);
+    assert!(alert.detail.contains("Sec-Fetch-Site"));
+    assert!(alert.detail.contains("sec-ch-ua"));
+}
+
+#[test]
+fn header_anomaly_flags_the_h2c_upgrade_a_browser_never_sends() {
+    let mut store = store();
+    let alerts = store
+        .detect_with(
+            &http_request_with_headers(
+                "10.40.0.2",
+                1_000_000_000,
+                BROWSER_UA,
+                "shop.example",
+                "Host,Upgrade,HTTP2-Settings,User-Agent,Accept",
+            ),
+            &cfg(),
+        )
+        .unwrap();
+    assert!(fires(&alerts, Rule::HeaderAnomaly));
+}
+
+#[test]
+fn header_anomaly_stays_quiet_for_a_real_browsers_cleartext_request() {
+    let mut store = store();
+    let alerts = store
+        .detect_with(
+            &http_request_with_headers(
+                "10.40.0.3",
+                1_000_000_000,
+                BROWSER_UA,
+                "shop.example",
+                REAL_BROWSER_HEADERS,
+            ),
+            &cfg(),
+        )
+        .unwrap();
+    assert!(!fires(&alerts, Rule::HeaderAnomaly));
+}
+
+#[test]
+fn header_anomaly_ignores_loopback_origins_where_browsers_do_send_them() {
+    let mut store = store();
+    for (i, host) in ["localhost:8080", "127.0.0.1", "app.localhost", "[::1]:3000"]
+        .iter()
+        .enumerate()
+    {
+        let alerts = store
+            .detect_with(
+                &http_request_with_headers(
+                    &format!("10.40.1.{}", i + 1),
+                    1_000_000_000,
+                    BROWSER_UA,
+                    host,
+                    TOOL_BROWSER_HEADERS,
+                ),
+                &cfg(),
+            )
+            .unwrap();
+        assert!(!fires(&alerts, Rule::HeaderAnomaly), "{host}");
+    }
+}
+
+#[test]
+fn header_anomaly_needs_a_browser_claim_and_does_not_flag_a_websocket_upgrade() {
+    let mut store = store();
+    // A tool that is honest about being a tool is not an impersonator.
+    let honest = store
+        .detect_with(
+            &http_request_with_headers(
+                "10.40.2.1",
+                1_000_000_000,
+                CURL_UA,
+                "shop.example",
+                TOOL_BROWSER_HEADERS,
+            ),
+            &cfg(),
+        )
+        .unwrap();
+    assert!(!fires(&honest, Rule::HeaderAnomaly));
+    // A browser opening a cleartext WebSocket sends Upgrade, but not HTTP2-Settings.
+    let websocket = store
+        .detect_with(
+            &http_request_with_headers(
+                "10.40.2.2",
+                1_000_000_000,
+                BROWSER_UA,
+                "shop.example",
+                "Host,Connection,Upgrade,User-Agent,Sec-WebSocket-Version,Sec-WebSocket-Key",
+            ),
+            &cfg(),
+        )
+        .unwrap();
+    assert!(!fires(&websocket, Rule::HeaderAnomaly));
 }
 
 #[test]

@@ -24,7 +24,7 @@ Do not use it to track individuals, to monitor traffic you have no authority ove
 | Adversary action | Effect | Mitigation / status |
 |---|---|---|
 | Malformed or hostile packets | Crash or memory exhaustion | Engine forbids `unsafe`; bounded flow table and stream buffers; property tests feed arbitrary and mutated input (`tests/robustness.rs`) |
-| Fingerprint spoofing (uTLS, curl-impersonate, custom ClientHello) | Client looks like a browser | **Not preventable by fingerprint alone.** Cross-layer checks (JA4 vs JA4T vs User-Agent) raise the cost; effectiveness is measured in the evaluation, not assumed |
+| Fingerprint spoofing (uTLS, curl-impersonate, custom ClientHello) | Client looks like a browser | **Not preventable by fingerprint alone**: measured against real Chromium builds, curl-impersonate reproduces the ClientHello exactly. Cross-layer rules catch tools on their defaults (`header_anomaly`, `ua_mismatch` for libraries, `os_mismatch`); an attacker who strips default headers and claims a Unix User-Agent evades all of them, and a real browser under automation is indistinguishable. See `eval/README.md` |
 | Randomisation (Chrome extension shuffling) | JA3 changes every connection | JA4 sorts before hashing; JA3 kept only for legacy feeds |
 | Encrypted Client Hello | Inner ClientHello hidden | Detection degrades to the outer hello; impact is a planned experiment |
 | Feed poisoning | False positives or hidden malware | Importer validates records; feeds are vendored and versioned |

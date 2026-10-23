@@ -1,0 +1,1373 @@
+{
+  "dataset_version": "v0.5",
+  "per_scenario": {
+    "chromium-107.0.0__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-107.0.0",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/107.0.5296.0 Safari/537.36"
+      ]
+    },
+    "chromium-110.0.1__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-110.0.1",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/110.0.5478.0 Safari/537.36"
+      ]
+    },
+    "chromium-131.0.1__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-131.0.1",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/131.0.6778.0 Safari/537.36"
+      ]
+    },
+    "chromium-133.0.0__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-133.0.0",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/133.0.6943.0 Safari/537.36"
+      ]
+    },
+    "chromium-137.0.1__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-137.0.1",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/137.0.7151.0 Safari/537.36"
+      ]
+    },
+    "chromium-138.0.2__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-138.0.2",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/138.0.7204.0 Safari/537.36"
+      ]
+    },
+    "chromium-140.0.0__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-140.0.0",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/140.0.7339.0 Safari/537.36"
+      ]
+    },
+    "chromium-141.0.0__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-141.0.0",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.7390.0 Safari/537.36"
+      ]
+    },
+    "chromium-143.0.4__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "chromium-143.0.4",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/143.0.7499.0 Safari/537.36"
+      ]
+    },
+    "chromium-full__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 8
+      },
+      "client": "chromium-full",
+      "client_class": "browser",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/141.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "curl",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "curl",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "curl/8.5.0"
+      ]
+    },
+    "curl__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "curl",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "curl_cffi-chrome107__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": true,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1,
+        "os_mismatch": 19
+      },
+      "client": "curl_cffi-chrome107",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome110__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": true,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1,
+        "os_mismatch": 19
+      },
+      "client": "curl_cffi-chrome110",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome116__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": true,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1,
+        "os_mismatch": 19
+      },
+      "client": "curl_cffi-chrome116",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome120__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 6,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome120",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome124__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome124",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome131__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome131",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome133a__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome133a",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome136__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome136",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome142__evasive": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19
+      },
+      "client": "curl_cffi-chrome142-evasive",
+      "client_class": "evasive-impersonation",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome142__evasive-unix": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "curl_cffi-chrome142-evasive-unix",
+      "client_class": "evasive-impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "curl_cffi-chrome142__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome142",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome145__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome145",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome146__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome146",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome150__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-chrome150",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+      ]
+    },
+    "curl_cffi-chrome99__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": true,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1,
+        "os_mismatch": 19
+      },
+      "client": "curl_cffi-chrome99",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.51 Safari/537.36"
+      ]
+    },
+    "curl_cffi-edge101__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": true,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1,
+        "os_mismatch": 19
+      },
+      "client": "curl_cffi-edge101",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.64 Safari/537.36 Edg/101.0.1210.47"
+      ]
+    },
+    "curl_cffi-firefox147__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-firefox147",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:147.0) Gecko/20100101 Firefox/147.0"
+      ]
+    },
+    "curl_cffi-safari2601__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-safari2601",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0.1 Safari/605.1.15"
+      ]
+    },
+    "curl_cffi-tor145__native": {
+      "alerted": {
+        "header_anomaly": true,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "header_anomaly": 1
+      },
+      "client": "curl_cffi-tor145",
+      "client_class": "impersonation",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0"
+      ]
+    },
+    "go-net-http__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "go-net-http",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "go-net-http__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "go-net-http",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Go-http-client/1.1"
+      ]
+    },
+    "go-net-http__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "go-net-http",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "node-https__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "node-https",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "node-https__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "node-https",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": []
+    },
+    "node-https__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "node-https",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "php-curl__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "php-curl",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "php-curl__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "php-curl",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": []
+    },
+    "php-curl__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "php-curl",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "python-httpx__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "python-httpx",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "python-httpx__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "python-httpx",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "python-httpx/0.28.1"
+      ]
+    },
+    "python-httpx__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "python-httpx",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "python-requests__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "python-requests",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "python-requests__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "python-requests",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "python-requests/2.34.2"
+      ]
+    },
+    "python-requests__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "python-requests",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "ruby-net-http__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "ruby-net-http",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "ruby-net-http__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "ruby-net-http",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Ruby"
+      ]
+    },
+    "ruby-net-http__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "ruby-net-http",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    },
+    "wget__chrome-win": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": true,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "os_mismatch": 19,
+        "ua_mismatch": 10
+      },
+      "client": "wget",
+      "client_class": "library",
+      "truth": {
+        "os_lie": true,
+        "ua_lie": true
+      },
+      "ua_claim": "chrome-win",
+      "user_agents": [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+      ]
+    },
+    "wget__native": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": false,
+        "ua_mismatch_or_header_anomaly": false
+      },
+      "alerts": {
+        "first_seen": 5
+      },
+      "client": "wget",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": false
+      },
+      "ua_claim": "native",
+      "user_agents": [
+        "Wget/1.21.4"
+      ]
+    },
+    "wget__safari-mac": {
+      "alerted": {
+        "header_anomaly": false,
+        "os_mismatch": false,
+        "ua_mismatch": true,
+        "ua_mismatch_or_header_anomaly": true
+      },
+      "alerts": {
+        "first_seen": 5,
+        "ua_mismatch": 10
+      },
+      "client": "wget",
+      "client_class": "library",
+      "truth": {
+        "os_lie": false,
+        "ua_lie": true
+      },
+      "ua_claim": "safari-mac",
+      "user_agents": [
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+      ]
+    }
+  },
+  "summary": {
+    "all scenarios": {
+      "header_anomaly": {
+        "false_positive_rate": 0.0,
+        "fn": 18,
+        "fp": 0,
+        "recall": 0.486,
+        "tn": 18,
+        "tp": 17
+      },
+      "os_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 39,
+        "tp": 14
+      },
+      "scenarios": 53,
+      "ua_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 19,
+        "fp": 0,
+        "recall": 0.457,
+        "tn": 18,
+        "tp": 16
+      },
+      "ua_mismatch_or_header_anomaly": {
+        "false_positive_rate": 0.0,
+        "fn": 2,
+        "fp": 0,
+        "recall": 0.943,
+        "tn": 18,
+        "tp": 33
+      }
+    },
+    "impersonation profile, defaults": {
+      "header_anomaly": {
+        "false_positive_rate": null,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 17
+      },
+      "os_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 12,
+        "tp": 5
+      },
+      "scenarios": 17,
+      "ua_mismatch": {
+        "false_positive_rate": null,
+        "fn": 17,
+        "fp": 0,
+        "recall": 0.0,
+        "tn": 0,
+        "tp": 0
+      },
+      "ua_mismatch_or_header_anomaly": {
+        "false_positive_rate": null,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 17
+      }
+    },
+    "impersonation, defaults stripped (adaptive)": {
+      "header_anomaly": {
+        "false_positive_rate": null,
+        "fn": 2,
+        "fp": 0,
+        "recall": 0.0,
+        "tn": 0,
+        "tp": 0
+      },
+      "os_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 1,
+        "tp": 1
+      },
+      "scenarios": 2,
+      "ua_mismatch": {
+        "false_positive_rate": null,
+        "fn": 2,
+        "fp": 0,
+        "recall": 0.0,
+        "tn": 0,
+        "tp": 0
+      },
+      "ua_mismatch_or_header_anomaly": {
+        "false_positive_rate": null,
+        "fn": 2,
+        "fp": 0,
+        "recall": 0.0,
+        "tn": 0,
+        "tp": 0
+      }
+    },
+    "library, honest User-Agent": {
+      "header_anomaly": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 8,
+        "tp": 0
+      },
+      "os_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 8,
+        "tp": 0
+      },
+      "scenarios": 8,
+      "ua_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 8,
+        "tp": 0
+      },
+      "ua_mismatch_or_header_anomaly": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 8,
+        "tp": 0
+      }
+    },
+    "library, lying User-Agent": {
+      "header_anomaly": {
+        "false_positive_rate": null,
+        "fn": 16,
+        "fp": 0,
+        "recall": 0.0,
+        "tn": 0,
+        "tp": 0
+      },
+      "os_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 8,
+        "tp": 8
+      },
+      "scenarios": 16,
+      "ua_mismatch": {
+        "false_positive_rate": null,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 16
+      },
+      "ua_mismatch_or_header_anomaly": {
+        "false_positive_rate": null,
+        "fn": 0,
+        "fp": 0,
+        "recall": 1.0,
+        "tn": 0,
+        "tp": 16
+      }
+    },
+    "real browser": {
+      "header_anomaly": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 10,
+        "tp": 0
+      },
+      "os_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 10,
+        "tp": 0
+      },
+      "scenarios": 10,
+      "ua_mismatch": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 10,
+        "tp": 0
+      },
+      "ua_mismatch_or_header_anomaly": {
+        "false_positive_rate": 0.0,
+        "fn": 0,
+        "fp": 0,
+        "recall": null,
+        "tn": 10,
+        "tp": 0
+      }
+    }
+  }
+}

@@ -12,7 +12,7 @@ import { CropFrame, Reticle } from './marks'
 
 // The rules that mean a fingerprint caught a client in a lie, the ones worth
 // pulling to the top of the console out of the ledger's noise.
-const LOUD: Rule[] = ['ua_mismatch', 'known_bad', 'os_mismatch']
+const LOUD: Rule[] = ['ua_mismatch', 'known_bad', 'os_mismatch', 'header_anomaly']
 
 const HEADLINE: Record<Rule, string> = {
   ua_mismatch: 'the user-agent is lying',
@@ -21,6 +21,7 @@ const HEADLINE: Record<Rule, string> = {
   first_seen: 'first sighting',
   fp_rotation: 'identity rotation',
   monoculture: 'one toolkit, many hosts',
+  header_anomaly: 'headers no browser would send',
 }
 
 export function AnomalyHighlights({

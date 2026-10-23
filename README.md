@@ -32,7 +32,7 @@ Passive TLS fingerprinting for JA3 and the JA4+ family. Reads packet captures or
 - **Transports:** TCP with full stream reassembly (reordering, retransmission, overlap); QUIC v1 and v2 Initial packet decryption and CRYPTO-frame reassembly.
 - **Inputs:** pcap and pcapng files; live capture through libpcap with only `CAP_NET_RAW` and `CAP_NET_ADMIN`.
 - **Matching:** exact lookup and JA4 prefix matching against a local SQLite database, scored into a verdict with confidence.
-- **Detection:** six stateful rules over fingerprint history (known-bad, User-Agent and OS mismatch, first-seen, rotation, monoculture).
+- **Detection:** seven rules over fingerprint history and cleartext HTTP (known-bad, User-Agent mismatch, OS mismatch, header anomaly, first-seen, rotation, monoculture).
 - **Interfaces:** CLI with text and JSON output, forensic report mode, HTTP API and web dashboard with a Server-Sent Events stream.
 - **Resource bounds:** capped flow table, idle timeouts, and per-stream byte limits. The engine crate forbids `unsafe`.
 
@@ -71,6 +71,7 @@ tlsfp serve 127.0.0.1:8080                   # API and dashboard, tails the data
 tlsfp serve --replay capture.pcapng --loop   # dashboard fed from a replayed capture
 tlsfp serve --live eth0                      # dashboard fed from a live interface
 tlsfp serve --location "DC-2 rack 14"        # label shown in the dashboard header (or TLSFP_SENSOR_LOCATION)
+tlsfp pcap x.pcap --detect --shared-network 10.0.0.0/8   # NAT or proxy addresses (or TLSFP_SHARED_NETWORKS)
 ```
 
 Live capture needs raw-socket capabilities. Grant them to the binary instead of running as root:
@@ -119,9 +120,10 @@ Rules read fingerprint history stored in the database, so they behave identicall
 | `os_mismatch` | The OS implied by the User-Agent disagrees with the OS implied by the client's TCP SYN fingerprint (JA4T). |
 | `first_seen` | The fingerprint has never been recorded before. Informational. |
 | `fp_rotation` | One address presents more than 5 distinct fingerprints within the window (default 1 hour). |
-| `monoculture` | One fingerprint appears from more than 10 distinct addresses within the window. |
+| `monoculture` | One fingerprint appears from more than 10 distinct addresses within the window. Never raised for a fingerprint with an exact benign match. |
+| `header_anomaly` | A cleartext request claiming a browser carries headers browsers never send to that origin: `Sec-Fetch-*`, `Sec-CH-*` Client Hints, or an `Upgrade: h2c` / `HTTP2-Settings` handshake. Skips loopback origins. Catches impersonation tools left on their defaults; trivially evaded. |
 
-Thresholds and the window are configurable in `DetectConfig`. Defaults suit a quiet link; busy sensors should raise them.
+Thresholds and the window are configurable in `DetectConfig`. Defaults suit a quiet link; busy sensors should raise them. Rotation and monoculture are skipped for addresses declared with `--shared-network` (a NAT gateway, proxy or jump host).
 
 ## Intelligence
 
@@ -223,10 +225,14 @@ cargo bench -p tlsfp-core        # throughput benchmarks
 | Known-good clients unseen by the feed that were wrongly vouched for | 0 of 5 (reported unknown) |
 | Real Chromium builds whose JA4 equals the nearest-version curl-impersonate profile | 8 of 9 |
 | curl-impersonate Chrome and Edge profiles whose JA4 equals a real build's | 15 of 16 |
+| Lying libraries caught by `ua_mismatch` (a library claiming Chrome or Safari) | 16 of 16, no false alarms on 8 honest libraries and 10 real browsers |
+| Windows claims from a Linux host caught by `os_mismatch` | 14 of 14 |
+| Impersonation tools left on defaults caught by `header_anomaly` | 17 of 17, no false alarms |
+| Impersonation with defaults stripped and a Unix User-Agent | **not caught by any rule** |
 | JA4 sets reproducing across two lab runs | 28 of 28 clients |
 | Distinct fingerprints per client, JA3 against JA4 | 5.74 against 1.10 |
 
-JA3 changes on every connection for any client that randomizes extension order, while JA4 collapses them. Impersonation is the finding that matters: **a tool that impersonates Chrome with curl-impersonate produces the same JA3/JA4 as the real browser**, so TLS fingerprints cannot catch it. The sensor therefore never lists such profiles as tools, and impersonation has to be caught at other layers (see `eval/README.md`). The evaluation also led to fixes in the matcher and label logic and to the `--shared-network` option for NAT gateways. Method, results and limits: [`eval/README.md`](eval/README.md); clients and threats to validity: [`dataset/README.md`](dataset/README.md).
+JA3 changes on every connection for any client that randomizes extension order, while JA4 collapses them. Impersonation is the finding that matters: **a tool that impersonates Chrome with curl-impersonate produces the same JA3/JA4 as the real browser**, so TLS fingerprints cannot catch it. The sensor therefore never lists such profiles as tools. What does separate them is the HTTP layer: curl-impersonate sends Client Hints, `Sec-Fetch-*` headers and an h2c upgrade over cleartext, which real browsers never do, so `header_anomaly` catches the default configuration. An attacker who removes those headers and claims a Unix User-Agent evades every rule here, and real-browser automation looks like a user at every measured layer. The evaluation also led to fixes in the matcher and label logic and to the `--shared-network` option for NAT gateways. Method, results and limits: [`eval/README.md`](eval/README.md); clients and threats to validity: [`dataset/README.md`](dataset/README.md).
 
 ## Deployment and security
 
@@ -239,7 +245,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 
 ## Limitations
 
-- Fingerprints can be spoofed (uTLS, curl-impersonate, custom ClientHello). Cross-layer rules raise the cost but do not eliminate evasion.
+- Fingerprints can be spoofed (uTLS, curl-impersonate, custom ClientHello), and a spoofed ClientHello is identical to the real one. The cross-layer rules raise the cost for tools on their defaults; they do not stop a careful attacker, and nothing here detects a real browser driven by automation.
 - Encrypted Client Hello hides the inner ClientHello; detection degrades to the outer one.
 - JA4X needs the certificate in the clear (TLS 1.2 and earlier). JA4H covers cleartext HTTP/1.x only.
 - QUIC support covers client Initial packets; no 0-RTT, Handshake packets, or connection migration.
@@ -268,8 +274,8 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 |---|---|
 | Done | Security audit, CI, parser fuzz coverage, reproducible fingerprint and detection evaluation, lab-derived client intelligence |
 | Next | Real Firefox, Safari and Edge captures, and a second operating system, to replace impersonation stand-ins |
-| Planned | Rules that need cleartext HTTP (`ua_mismatch`, `os_mismatch`) evaluated on labeled traffic |
-| Planned | Cross-layer impersonation classifier evaluated against the rule baseline |
+| Done | Cleartext-HTTP rules (`ua_mismatch`, `os_mismatch`, `header_anomaly`) evaluated on labeled scenarios, including adaptive attackers |
+| Next | Real desktop Chrome, Firefox and Safari on more than one operating system; with only one browser family a learned classifier would learn the browser, not the impersonation |
 | Planned | Per-host fingerprint drift detection |
 | Planned | Evasion study (uTLS, curl-impersonate) and Encrypted Client Hello impact |
 

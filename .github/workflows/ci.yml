@@ -61,6 +61,10 @@ jobs:
           done
       - name: Impersonation fidelity reproduces committed results
         run: python3 eval/fidelity.py --dataset dataset/v0.4 --out eval/results/v0.4 --check
+      - name: Cross-layer rule evaluation reproduces committed results
+        run: |
+          python3 eval/scenarios.py --dataset dataset/v0.5 --out eval/results/v0.5 --check
+          python3 eval/crosslayer.py --dataset dataset/v0.5 --out eval/results/v0.5 --check
       - name: Detection evaluation reproduces committed results
         run: python3 eval/detections.py --dataset dataset/v0.3 --feed-dataset dataset/v0.2 dataset/v0.4 --out eval/results/v0.3 --check
       - name: Lab intelligence feed matches its generator

@@ -6,6 +6,9 @@ Two scripts measure the project against labeled lab captures (`dataset/`). Both 
 |---|---|
 | `evaluate.py` | How stable and how discriminating JA3 and JA4 are across clients |
 | `detections.py` | What the sensor concludes about each client: intelligence verdicts and detection-rule alerts |
+| `fidelity.py` | Whether curl-impersonate profiles reproduce a real browser's ClientHello |
+| `scenarios.py` | The cleartext-HTTP rules (`ua_mismatch`, `header_anomaly`, `os_mismatch`) on client scenarios with ground truth |
+| `crosslayer.py` | Whether the HTTP request fingerprint (JA4H) separates real browsers from impersonators |
 
 ```bash
 cargo build --release
@@ -61,7 +64,25 @@ Percent of client handshakes receiving each verdict; each client is judged in is
 
 - **No false positives.** No known-good client, seen or unseen, received a suspicious or malicious verdict or any alert other than the informational `first_seen`. Unseen known-good clients are not vouched for either: they come back unknown (a similar fingerprint exists, nothing exact) or no match.
 - **Impersonation is not detected at the TLS layer.** Profiles of Chrome and Edge are received as benign Chromium because their fingerprint is the real browser's. Firefox, Safari and Tor profiles have no real counterpart in the lab, so they are not in the feed and come back with no verdict. Detecting impersonation needs another layer; see the cross-layer results below.
-- **NAT is a false-positive mode, and now configurable.** With all 50 clients behind one address `fp_rotation` raised dozens of alerts (more than 5 distinct JA4 values per address in an hour): correct for the rule, wrong for a gateway. `--shared-network <CIDR>` (or `TLSFP_SHARED_NETWORKS`) declares addresses that front many clients, and rotation and monoculture are skipped there.
+- **NAT is a false-positive mode, and now configurable.** With all 50 clients behind one address `fp_rotation` raised 30 alerts (more than 5 distinct JA4 values per address in an hour): correct for the rule, wrong for a gateway. Declared as a shared network, the same run raises none. `--shared-network <CIDR>` (or `TLSFP_SHARED_NETWORKS`) declares addresses that front many clients, and rotation and monoculture are skipped there.
+
+### Cross-layer rules (dataset v0.5)
+
+53 scenarios. Each client sends HTTPS and cleartext HTTP from one address to a non-secure hostname. Full table: [`results/v0.5/scenarios.md`](results/v0.5/scenarios.md). "Lies" are a non-browser claiming a browser (`ua`) or a Windows claim from a Linux host (`os`).
+
+| Group | Scenarios | `ua_mismatch` | `header_anomaly` | either | `os_mismatch` |
+|---|---|---|---|---|---|
+| Library, honest User-Agent | 8 | no false alarms | no false alarms | no false alarms | no false alarms |
+| Library, lying User-Agent | 16 | 16 / 16 | 0 / 16 | 16 / 16 | 8 / 8 Windows claims |
+| Impersonation profile, defaults | 17 | 0 / 17 | 17 / 17 | 17 / 17 | 5 / 5 Windows claims |
+| Impersonation, defaults stripped | 2 | 0 / 2 | 0 / 2 | 0 / 2 | 1 / 1 Windows claim; the macOS claim missed |
+| Real browser | 10 | no false alarms | no false alarms | no false alarms | no false alarms |
+
+- **Lying libraries are caught by `ua_mismatch`** once the label classifier knows the common client families (16 of 16, up from 10 of 16 before Go, Node.js, Ruby, PHP and OpenSSL labels were recognised). It works because the handshake of a known library names the library whatever the User-Agent says.
+- **Impersonation is not caught by TLS or by `ua_mismatch`** (0 of 17), as the fidelity result predicts.
+- **`header_anomaly` catches impersonation tools left on their defaults (17 of 17), with no false alarms on ten real browsers.** It rests on a protocol fact, not a fingerprint: Fetch Metadata (`Sec-Fetch-*`) and Client Hints (`Sec-CH-*`) are sent only to secure or loopback origins, and browsers never attempt a cleartext HTTP/2 upgrade, yet curl-impersonate sends all of them over plain HTTP. Against the full Chromium, the real request is `Host, Connection, Accept-Language, Upgrade-Insecure-Requests, User-Agent, Accept, Accept-Encoding`; every profile sent sixteen headers including Client Hints and Sec-Fetch, plus an `Upgrade: h2c` handshake.
+- **It is trivially evaded.** An attacker who removes those headers and forces HTTP/1.1 (two scenarios) is caught by nothing except `os_mismatch`, and only when the claimed operating system disagrees with the real TCP stack. A Windows claim from a Linux host is caught; a macOS claim from a Linux host is not, because both read as Unix. **An attacker who strips the defaults and claims a Unix User-Agent evades every rule in this project.** Real-browser automation (Selenium, Playwright or Puppeteer driving an actual browser) looks like a user at every layer measured here, by construction.
+- **JA4H separates the lab's real browsers from the impersonators perfectly, but that comparison is only partly valid.** Zero of 17 profiles share a JA4H with any real build, but nine of the ten real browsers are headless shells that send a leaner request than a desktop browser. The `header_anomaly` result stands on the protocol rules above, not on that comparison. See [`results/v0.5/crosslayer.md`](results/v0.5/crosslayer.md).
 
 ### What the evaluation changed in the code
 
@@ -70,6 +91,7 @@ Percent of client handshakes receiving each verdict; each client is judged in is
 3. **Impersonation entries were removed from the feed.** An earlier version of the feed listed curl-impersonate profiles as tools, and an earlier version of this document reported that modern impersonation was therefore flagged. That result was wrong: those fingerprints are real Chrome's, so the feed would have flagged genuine Chrome users, and the test set had no real browsers to show it. Adding real Chromium builds to the lab exposed it; the generator now refuses to list any impersonation profile, and CI checks the committed feed against it.
 4. **More client families recognised.** Node.js, Ruby, PHP, OpenSSL and Go labels are now classified as non-browsers, so `ua_mismatch` can use them.
 5. **Shared networks and popular fingerprints.** `--shared-network` suppresses rotation and monoculture on declared addresses, and a fingerprint with an exact benign match is never a monoculture.
+6. **A new rule, `header_anomaly`,** for the protocol-level tell above.
 
 ## Limits
 
@@ -77,5 +99,5 @@ Read the numbers with these in mind; the full list is in [`dataset/README.md`](.
 
 - One host, one OS, one TLS server over loopback. Server-side fingerprints and TCP-stack fingerprints carry no information here.
 - Real Firefox, Safari and Edge were not available. `curl_cffi` impersonation profiles stand in for them. Real Chromium is available (headless-shell builds from npm), which is what made the fidelity comparison possible; it is not desktop Chrome, and builds 116 to 123 did not run in the lab.
-- "Known-good" means software run in the lab. Nothing here measures detection of real malware or real network traffic, and the `ua_mismatch` and `os_mismatch` rules, which need cleartext HTTP, are not exercised because the lab clients speak HTTPS.
+- "Known-good" means software run in the lab. Nothing here measures detection of real malware or real network traffic. The cleartext-HTTP rules are evaluated only in the scenario dataset, against one full browser and nine headless shells.
 - Small samples: 20 handshakes per client, 50 clients. Percentages are indicative, not tight estimates.

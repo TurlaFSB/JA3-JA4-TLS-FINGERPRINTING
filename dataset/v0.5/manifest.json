@@ -1,0 +1,497 @@
+{
+  "dataset_version": "v0.5",
+  "kind": "scenarios",
+  "created_utc": "2026-10-23T12:04:15Z",
+  "environment": {
+    "os": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "kernel": "6.18.44-fc-v153",
+    "machine": "x86_64",
+    "host_os_class": "unix",
+    "transport": "loopback",
+    "target_host": "lab.test",
+    "user_agent_claims": {
+      "native": null,
+      "chrome-win": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+      "safari-mac": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15"
+    }
+  },
+  "labels": {
+    "chromium-107.0.0__native": {
+      "client": "chromium-107.0.0",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 107.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-107.0.0__native.pcap",
+      "sha256": "c410fb5292b61e0359168f281f3cbbac3db67520d9d99cce3435593ece9d12c5",
+      "requested_connections": 10
+    },
+    "chromium-110.0.1__native": {
+      "client": "chromium-110.0.1",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 110.0.1 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-110.0.1__native.pcap",
+      "sha256": "084f63f958a49aad1475d16d1639211f08631a880ce4fcae4fadbb46b21caecc",
+      "requested_connections": 10
+    },
+    "chromium-131.0.1__native": {
+      "client": "chromium-131.0.1",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 131.0.1 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-131.0.1__native.pcap",
+      "sha256": "4bc9e31a121da74323e05e514b3a2920df7ecbe857621de2884cb1097db51b9e",
+      "requested_connections": 10
+    },
+    "chromium-133.0.0__native": {
+      "client": "chromium-133.0.0",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 133.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-133.0.0__native.pcap",
+      "sha256": "0a36342cc6dd4916106fcab04182f0cc8b93f4165e7f904c8753c2782efd8be9",
+      "requested_connections": 10
+    },
+    "chromium-137.0.1__native": {
+      "client": "chromium-137.0.1",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 137.0.1 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-137.0.1__native.pcap",
+      "sha256": "80973caf340ad5ec6abb6835b16dff8f522e9a24f68e9d39b6ed697a6ded9ce5",
+      "requested_connections": 10
+    },
+    "chromium-138.0.2__native": {
+      "client": "chromium-138.0.2",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 138.0.2 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-138.0.2__native.pcap",
+      "sha256": "e11aa8ef457b379b64fd2b09794932f2ac0bec7348a8f3b702c552eece768658",
+      "requested_connections": 10
+    },
+    "chromium-140.0.0__native": {
+      "client": "chromium-140.0.0",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 140.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-140.0.0__native.pcap",
+      "sha256": "3d461fcdafbefba0ab91235931b758ad4516169d04643bc3cab7d98ee11b1830",
+      "requested_connections": 10
+    },
+    "chromium-141.0.0__native": {
+      "client": "chromium-141.0.0",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 141.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-141.0.0__native.pcap",
+      "sha256": "3bee1b2a368a5ff5e27f0080487332e59ce8ff937fe19241c3666edcd577e94f",
+      "requested_connections": 10
+    },
+    "chromium-143.0.4__native": {
+      "client": "chromium-143.0.4",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium headless-shell 143.0.4 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-143.0.4__native.pcap",
+      "sha256": "6b5f0a10d4ed2cdeb9e342cc0361f20886918eb6aa991b8c02bb095b23f583ca",
+      "requested_connections": 10
+    },
+    "curl__chrome-win": {
+      "client": "curl",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl__chrome-win.pcap",
+      "sha256": "0f4dcc2d6f80c96d7b8f2f4b717b4db381510f85e0ff8ebf858f01c07d9020e2",
+      "requested_connections": 10
+    },
+    "curl__native": {
+      "client": "curl",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl__native.pcap",
+      "sha256": "cd7d6cf9a1e47950f51c56a15a711b73ef8cc2e27cbe2c25410528361c900f27",
+      "requested_connections": 10
+    },
+    "curl__safari-mac": {
+      "client": "curl",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl__safari-mac.pcap",
+      "sha256": "db58396adf4d01f5a662b2e567f59b91a362d520e7ddd2d97f74cc1255a8bff2",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome107__native": {
+      "client": "curl_cffi-chrome107",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome107",
+      "pcap": "pcap/curl_cffi-chrome107__native.pcap",
+      "sha256": "479cf3deb2d216f3e48bbdcdac22221f83155ed0f62b95efdf5ef267e50a079b",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome110__native": {
+      "client": "curl_cffi-chrome110",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome110",
+      "pcap": "pcap/curl_cffi-chrome110__native.pcap",
+      "sha256": "7f84ae6342db3d5df9f410898006d9871e87c4297c062e902b9889b463a0e517",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome116__native": {
+      "client": "curl_cffi-chrome116",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome116",
+      "pcap": "pcap/curl_cffi-chrome116__native.pcap",
+      "sha256": "dfc39a0c81e5bd1e616999de4af7546a146b3c9f89ce6c4b62c462724572a572",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome120__native": {
+      "client": "curl_cffi-chrome120",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome120",
+      "pcap": "pcap/curl_cffi-chrome120__native.pcap",
+      "sha256": "271c2417927f0489f7072f9ef0c780bf5c09eae8553a7234dc6299d400d0ba69",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome124__native": {
+      "client": "curl_cffi-chrome124",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome124",
+      "pcap": "pcap/curl_cffi-chrome124__native.pcap",
+      "sha256": "3ff86949b422834e767433e46dd08a7346eb3f14fd035401921d09d3f46b978e",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome131__native": {
+      "client": "curl_cffi-chrome131",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome131",
+      "pcap": "pcap/curl_cffi-chrome131__native.pcap",
+      "sha256": "021df646b43c7aad403d4baa40a375be5cd20cca17643275ad2f5c02d21ee917",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome133a__native": {
+      "client": "curl_cffi-chrome133a",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome133a",
+      "pcap": "pcap/curl_cffi-chrome133a__native.pcap",
+      "sha256": "4de82eeda716f032209c7b3fa5dc3d151bf9452374d570db6ce92b919c0c793f",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome136__native": {
+      "client": "curl_cffi-chrome136",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome136",
+      "pcap": "pcap/curl_cffi-chrome136__native.pcap",
+      "sha256": "d471644b3d0d5b3aaefe07d67f92f9938eca11e80a268b09aefa5d7ca0871bc5",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome142__native": {
+      "client": "curl_cffi-chrome142",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome142",
+      "pcap": "pcap/curl_cffi-chrome142__native.pcap",
+      "sha256": "3ae9c45d3f74b647410ebe9af5aac7ed5e80e57f79181d6d5762fdb876d4f7d2",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome145__native": {
+      "client": "curl_cffi-chrome145",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome145",
+      "pcap": "pcap/curl_cffi-chrome145__native.pcap",
+      "sha256": "f2040a565abbc4f922497356df1654178fb167b6de3ec0ef4ceb51e28755d515",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome146__native": {
+      "client": "curl_cffi-chrome146",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome146",
+      "pcap": "pcap/curl_cffi-chrome146__native.pcap",
+      "sha256": "1d8170f1ed345af9ad20ed51390323d6a38bba93565d9d02f8c94ab5334d4723",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome150__native": {
+      "client": "curl_cffi-chrome150",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome150",
+      "pcap": "pcap/curl_cffi-chrome150__native.pcap",
+      "sha256": "0b244c6fc5791281bf911e46e3398ee29a66abb3bfb7d0c8c6cbb40e26be7ad5",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome99__native": {
+      "client": "curl_cffi-chrome99",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome99",
+      "pcap": "pcap/curl_cffi-chrome99__native.pcap",
+      "sha256": "b457713183b7699712ff09fc95e03afba348051a674c2c2fb2420be0dc263de7",
+      "requested_connections": 10
+    },
+    "curl_cffi-edge101__native": {
+      "client": "curl_cffi-edge101",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=edge101",
+      "pcap": "pcap/curl_cffi-edge101__native.pcap",
+      "sha256": "92ab45e0cb5ee80c568d5375bc2716e18ff26df39b256d9d07aa037a30f8699f",
+      "requested_connections": 10
+    },
+    "curl_cffi-firefox147__native": {
+      "client": "curl_cffi-firefox147",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=firefox147",
+      "pcap": "pcap/curl_cffi-firefox147__native.pcap",
+      "sha256": "68dc2293c460103b6b57031195dc11b04bee015982d1ac939da8de11a7a99316",
+      "requested_connections": 10
+    },
+    "curl_cffi-safari2601__native": {
+      "client": "curl_cffi-safari2601",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=safari2601",
+      "pcap": "pcap/curl_cffi-safari2601__native.pcap",
+      "sha256": "bfd427fbcf26b9d8b6db88429a11f06670e1a6a0e7a25c4fddcda0c2f06f2be6",
+      "requested_connections": 10
+    },
+    "curl_cffi-tor145__native": {
+      "client": "curl_cffi-tor145",
+      "client_class": "impersonation",
+      "ua_claim": "native",
+      "client_version": "curl_cffi 0.16.3 impersonate=tor145",
+      "pcap": "pcap/curl_cffi-tor145__native.pcap",
+      "sha256": "8010ffa289d4078ac6e5309ebbefe68435dc6b02b4f3f554a6e3ea99a995e679",
+      "requested_connections": 10
+    },
+    "go-net-http__chrome-win": {
+      "client": "go-net-http",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "go version go1.24.7 linux/amd64",
+      "pcap": "pcap/go-net-http__chrome-win.pcap",
+      "sha256": "c53f0aca1aee518962ad0fe1c23732cd5ff28f94def1ca7db9789c59b7e43b09",
+      "requested_connections": 10
+    },
+    "go-net-http__native": {
+      "client": "go-net-http",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "go version go1.24.7 linux/amd64",
+      "pcap": "pcap/go-net-http__native.pcap",
+      "sha256": "cb6e130ef37d654ebc3b79f02054aedf19934b01ab4b753f0081c6c9b4d49a70",
+      "requested_connections": 10
+    },
+    "go-net-http__safari-mac": {
+      "client": "go-net-http",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "go version go1.24.7 linux/amd64",
+      "pcap": "pcap/go-net-http__safari-mac.pcap",
+      "sha256": "30169495ed3fac23f916a96cb48cb4afb8607bcf2cd9f68298103119d77c3395",
+      "requested_connections": 10
+    },
+    "node-https__chrome-win": {
+      "client": "node-https",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "node v22.22.0",
+      "pcap": "pcap/node-https__chrome-win.pcap",
+      "sha256": "d158ebe11f9ab1d689dbf349ea44ee481b11659ced96c0ae4034aedddffe3111",
+      "requested_connections": 10
+    },
+    "node-https__native": {
+      "client": "node-https",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "node v22.22.0",
+      "pcap": "pcap/node-https__native.pcap",
+      "sha256": "2fe050bda76b706ad99b1ac26da8f082ceb322fd342509fce1f4bda9022ade39",
+      "requested_connections": 10
+    },
+    "node-https__safari-mac": {
+      "client": "node-https",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "node v22.22.0",
+      "pcap": "pcap/node-https__safari-mac.pcap",
+      "sha256": "7e1e92418a131368dcf524cb5459a96abf4dc9dc80cbd40d3c0b31c119b9d9eb",
+      "requested_connections": 10
+    },
+    "php-curl__chrome-win": {
+      "client": "php-curl",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS)",
+      "pcap": "pcap/php-curl__chrome-win.pcap",
+      "sha256": "d726701fc6da94c6a60f604e5eb1d7c724d8cdb62d5944d6294e7749066317df",
+      "requested_connections": 10
+    },
+    "php-curl__native": {
+      "client": "php-curl",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS)",
+      "pcap": "pcap/php-curl__native.pcap",
+      "sha256": "be6cc0b6cd3c33125ea12d4ae05148e2cdd97a0d2719cf86be4645726508d1de",
+      "requested_connections": 10
+    },
+    "php-curl__safari-mac": {
+      "client": "php-curl",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS)",
+      "pcap": "pcap/php-curl__safari-mac.pcap",
+      "sha256": "e53ae958ef5f390282585ef7e796bd6b17eb280365ec616a2160e18b6ce68a1f",
+      "requested_connections": 10
+    },
+    "python-httpx__chrome-win": {
+      "client": "python-httpx",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "python 3.13.16",
+      "pcap": "pcap/python-httpx__chrome-win.pcap",
+      "sha256": "9e2002f95a51665e943cf8cb63b5fa0a5a38e11be4dcd2c396f6ff89158bd576",
+      "requested_connections": 10
+    },
+    "python-httpx__native": {
+      "client": "python-httpx",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "python 3.13.16",
+      "pcap": "pcap/python-httpx__native.pcap",
+      "sha256": "6dd49137e5449f20109016c0dcb700007c476500858e0dd43f2a315036c8c81d",
+      "requested_connections": 10
+    },
+    "python-httpx__safari-mac": {
+      "client": "python-httpx",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "python 3.13.16",
+      "pcap": "pcap/python-httpx__safari-mac.pcap",
+      "sha256": "990f672dc8a47f278d819a2bfed4ee70f4932d45b35b3bfec55079d555e242a0",
+      "requested_connections": 10
+    },
+    "python-requests__chrome-win": {
+      "client": "python-requests",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "python 3.13.16",
+      "pcap": "pcap/python-requests__chrome-win.pcap",
+      "sha256": "3b092a191b9a2e6716e423c77e266fc16c927202cde68587d423f8587436f8c2",
+      "requested_connections": 10
+    },
+    "python-requests__native": {
+      "client": "python-requests",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "python 3.13.16",
+      "pcap": "pcap/python-requests__native.pcap",
+      "sha256": "21642d3298a13f0faf95fb13284dee28a73157d6b3d2b9e11f5eb83eddc8102b",
+      "requested_connections": 10
+    },
+    "python-requests__safari-mac": {
+      "client": "python-requests",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "python 3.13.16",
+      "pcap": "pcap/python-requests__safari-mac.pcap",
+      "sha256": "9c0da3be98981fff5901a5e9be8d345a389c5f02b9f74d9b1794be661fefe3de",
+      "requested_connections": 10
+    },
+    "ruby-net-http__chrome-win": {
+      "client": "ruby-net-http",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "ruby 3.3.6 (2024-11-05 revision 75015d4c1f) [x86_64-linux]",
+      "pcap": "pcap/ruby-net-http__chrome-win.pcap",
+      "sha256": "1da47ec253f7490250bccf6540f8d7a6faa0661c1d13fa12a9ab33b1cbd4342f",
+      "requested_connections": 10
+    },
+    "ruby-net-http__native": {
+      "client": "ruby-net-http",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "ruby 3.3.6 (2024-11-05 revision 75015d4c1f) [x86_64-linux]",
+      "pcap": "pcap/ruby-net-http__native.pcap",
+      "sha256": "dedfccbc1cab1dc1d030c7f4f97f6c35c9da99ba275c4f313d95915f84e131c1",
+      "requested_connections": 10
+    },
+    "ruby-net-http__safari-mac": {
+      "client": "ruby-net-http",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "ruby 3.3.6 (2024-11-05 revision 75015d4c1f) [x86_64-linux]",
+      "pcap": "pcap/ruby-net-http__safari-mac.pcap",
+      "sha256": "6fc72cf8bb0a23b6b05d912fd9f2fcef71e5f3796b4d84f14c87e62171339680",
+      "requested_connections": 10
+    },
+    "wget__chrome-win": {
+      "client": "wget",
+      "client_class": "library",
+      "ua_claim": "chrome-win",
+      "client_version": "GNU Wget 1.21.4 built on linux-gnu.",
+      "pcap": "pcap/wget__chrome-win.pcap",
+      "sha256": "9620fd12737dbb3d04e5e63ab12f3b9cbfd25d640f4cd28bff7ac8426fdd529b",
+      "requested_connections": 10
+    },
+    "wget__native": {
+      "client": "wget",
+      "client_class": "library",
+      "ua_claim": "native",
+      "client_version": "GNU Wget 1.21.4 built on linux-gnu.",
+      "pcap": "pcap/wget__native.pcap",
+      "sha256": "664e6172ac554dec671c810fbf5435138510798aa1704ec96da17b023d1314b5",
+      "requested_connections": 10
+    },
+    "wget__safari-mac": {
+      "client": "wget",
+      "client_class": "library",
+      "ua_claim": "safari-mac",
+      "client_version": "GNU Wget 1.21.4 built on linux-gnu.",
+      "pcap": "pcap/wget__safari-mac.pcap",
+      "sha256": "9d1f6fad60f32d57ac47f5bc9c0bd9d565c05bbf5aa0462585a3c576303ef985",
+      "requested_connections": 10
+    },
+    "chromium-full__native": {
+      "client": "chromium-full",
+      "client_class": "browser",
+      "ua_claim": "native",
+      "client_version": "Chromium 141.0.7390.37 (full browser, new headless)",
+      "pcap": "pcap/chromium-full__native.pcap",
+      "sha256": "fb511abf162280c80df50f3a58d038405ccee2d8c26ed96b09d0c6e7f6b6c906",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome142__evasive": {
+      "client": "curl_cffi-chrome142-evasive",
+      "client_class": "evasive-impersonation",
+      "ua_claim": "chrome-win",
+      "client_version": "curl_cffi impersonate=chrome142 with default headers stripped, HTTP/1.1",
+      "pcap": "pcap/curl_cffi-chrome142__evasive.pcap",
+      "sha256": "3fe7f39104de089c8612de8bde6685bd64ce6847adfd02b263e97d5535174460",
+      "requested_connections": 10
+    },
+    "curl_cffi-chrome142__evasive-unix": {
+      "client": "curl_cffi-chrome142-evasive-unix",
+      "client_class": "evasive-impersonation",
+      "ua_claim": "safari-mac",
+      "client_version": "curl_cffi impersonate=chrome142 with default headers stripped, HTTP/1.1, claims macOS",
+      "pcap": "pcap/curl_cffi-chrome142__evasive-unix.pcap",
+      "sha256": "9b090f4918f449f32c1bc9dde3736784fe7cdd68d1c4cead12628a9c46ca3456",
+      "requested_connections": 10
+    }
+  }
+}

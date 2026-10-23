@@ -870,11 +870,13 @@
   "single_address": [
     {
       "alerts": 42,
+      "alerts_when_declared_shared": 42,
       "rule": "first_seen",
       "severity": "info"
     },
     {
       "alerts": 30,
+      "alerts_when_declared_shared": 0,
       "rule": "fp_rotation",
       "severity": "medium"
     }

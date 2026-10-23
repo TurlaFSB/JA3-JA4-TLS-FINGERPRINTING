@@ -61,7 +61,9 @@ def evaluate(tlsfp, dataset):
 
     groups = defaultdict(lambda: {"browsers": [], "impersonation": [], "libraries": []})
     for label, v in per.items():
-        bucket = {"browser": "browsers", "impersonation": "impersonation", "library": "libraries"}[v["client_class"]]
+        bucket = {"browser": "browsers", "impersonation": "impersonation", "library": "libraries"}.get(v["client_class"])
+        if bucket is None:
+            continue  # the adaptive-attacker scenarios belong to eval/scenarios.py
         if v["client_class"] == "library" and v["ua_claim"] != "native":
             continue  # a spoofed User-Agent does not change the library's own header order
         for h in v["ja4h"]:
@@ -82,7 +84,8 @@ def evaluate(tlsfp, dataset):
         "profiles_sharing_header_order_with_a_real_build": sorted(v["client"] for v in profiles.values()
                                                                   if set(v["header_orders"]) & real_orders),
         "real_ja4h_values": len(real_ja4h),
-        "per_scenario": {k: v for k, v in per.items() if v["client_class"] != "library" or v["ua_claim"] == "native"},
+        "per_scenario": {k: v for k, v in per.items()
+                         if v["client_class"] in ("browser", "impersonation") or (v["client_class"] == "library" and v["ua_claim"] == "native")},
         "ja4h_groups": {k: v for k, v in sorted(groups.items())},
     }
 

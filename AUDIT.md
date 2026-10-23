@@ -7,7 +7,7 @@ Scope: the Rust workspace (`tlsfp-core`, `tlsfp-intel`, `tlsfp`), container and 
 | Check | Result |
 |---|---|
 | `cargo build --workspace --all-targets` | passes (needs `libpcap-dev`) |
-| `cargo test --workspace` | 204 tests passed before this audit, 234 after |
+| `cargo test --workspace` | 204 tests passed before this audit, 239 after |
 | `cargo fmt --all --check` | clean |
 | `cargo clippy --workspace --all-targets -- -D warnings` | clean |
 | `cargo audit` | 2 warnings before, 0 after (see F1) |
@@ -30,6 +30,8 @@ Scope: the Rust workspace (`tlsfp-core`, `tlsfp-intel`, `tlsfp`), container and 
 | F13 | Low | Intel labels naming an impersonation framework (`curl_cffi impersonating Chrome`) were classified as the browser they mention, which would have suppressed `ua_mismatch`. | Fixed in `signal.rs`; test added. |
 | F14 | High | The bundled lab feed listed curl-impersonate browser profiles as tools. Compared with real Chromium builds of the same era (dataset v0.4) they have the identical JA4, so the entries were real Chrome's fingerprint and would have flagged genuine Chrome users. An earlier evaluation reported these profiles as flagged; that result was an artifact (the test set contained no real browsers) and is retracted. | Fixed: the generator never lists impersonation profiles and adds real builds as benign; fidelity analysis (`eval/fidelity.py`) and CI guard it. |
 | F15 | Medium | `fp_rotation` and `monoculture` raised alerts on shared addresses (NAT gateways, proxies) and on popular benign fingerprints, where many fingerprints or many addresses are normal. | Fixed: `--shared-network` skips both rules for declared networks; a fingerprint with an exact benign match is never a monoculture. Tests added. |
+| F16 | Medium | `ua_mismatch` missed lying clients whose library labels were not recognised (Go, Node.js, Ruby, PHP, OpenSSL): 10 of 16 caught. | Fixed in the label classifier: 16 of 16 on the scenario dataset, no false alarms. |
+| F17 | Info | No rule used the HTTP request itself to separate a browser from a tool left on its defaults. | Added `header_anomaly` (Sec-Fetch, Client Hints and h2c upgrade over cleartext to a non-loopback origin); 17 of 17 impersonation defaults caught, 0 false alarms on 10 real browsers; documented as trivially evaded. |
 | F9 | Low | `tlsfp pcap` reported `Broken pipe` with a backtrace when piped to `head`; the `live` path already handled it. | Fixed with a regression test (verified failing before the fix). |
 
 ## Not covered

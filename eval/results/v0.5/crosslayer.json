@@ -1,0 +1,586 @@
+{
+  "dataset_version": "v0.5",
+  "impersonation_profiles": 17,
+  "ja4h_groups": {
+    "ge11nn020000_1af9d02f0bf7_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "php-curl"
+      ]
+    },
+    "ge11nn020000_d5c75abc5c2c_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "node-https"
+      ]
+    },
+    "ge11nn030000_cd680697de12_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "go-net-http"
+      ]
+    },
+    "ge11nn030000_fe444ad14866_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "curl"
+      ]
+    },
+    "ge11nn040000_80c20a6e2957_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "ruby-net-http"
+      ]
+    },
+    "ge11nn050000_3658ef221638_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "wget"
+      ]
+    },
+    "ge11nn050000_b223a0ebb0b5_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "python-requests"
+      ]
+    },
+    "ge11nn050000_be0d0b335e46_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [],
+      "libraries": [
+        "python-httpx"
+      ]
+    },
+    "ge11nn060000_10317b2cb409_000000000000_000000000000": {
+      "browsers": [
+        "chromium-131.0.1",
+        "chromium-133.0.0",
+        "chromium-137.0.1",
+        "chromium-138.0.2",
+        "chromium-140.0.0",
+        "chromium-141.0.0",
+        "chromium-143.0.4"
+      ],
+      "impersonation": [],
+      "libraries": []
+    },
+    "ge11nn07enus_106dff3e66d0_000000000000_000000000000": {
+      "browsers": [
+        "chromium-full"
+      ],
+      "impersonation": [],
+      "libraries": []
+    },
+    "ge11nn07enus_bc8d2ed93139_000000000000_000000000000": {
+      "browsers": [
+        "chromium-107.0.0",
+        "chromium-110.0.1"
+      ],
+      "impersonation": [],
+      "libraries": []
+    },
+    "ge11nn11enus_e0c80960df9b_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [
+        "curl_cffi-safari2601"
+      ],
+      "libraries": []
+    },
+    "ge11nn15enus_8d04b9429171_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [
+        "curl_cffi-firefox147"
+      ],
+      "libraries": []
+    },
+    "ge11nn16enus_b8dcc200854e_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [
+        "curl_cffi-chrome107",
+        "curl_cffi-chrome110",
+        "curl_cffi-chrome116",
+        "curl_cffi-chrome120",
+        "curl_cffi-chrome124",
+        "curl_cffi-chrome131",
+        "curl_cffi-chrome133a",
+        "curl_cffi-chrome136",
+        "curl_cffi-chrome142",
+        "curl_cffi-chrome145",
+        "curl_cffi-chrome146",
+        "curl_cffi-chrome150",
+        "curl_cffi-chrome99",
+        "curl_cffi-edge101"
+      ],
+      "libraries": []
+    },
+    "ge11nn16enus_f8d9224aba8c_000000000000_000000000000": {
+      "browsers": [],
+      "impersonation": [
+        "curl_cffi-tor145"
+      ],
+      "libraries": []
+    },
+    "ge11nr06enus_48fd33bb44de_000000000000_000000000000": {
+      "browsers": [
+        "chromium-full"
+      ],
+      "impersonation": [],
+      "libraries": []
+    }
+  },
+  "per_scenario": {
+    "chromium-107.0.0__native": {
+      "client": "chromium-107.0.0",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding,Accept-Language"
+      ],
+      "ja4h": [
+        "ge11nn07enus_bc8d2ed93139_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-110.0.1__native": {
+      "client": "chromium-110.0.1",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding,Accept-Language"
+      ],
+      "ja4h": [
+        "ge11nn07enus_bc8d2ed93139_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-131.0.1__native": {
+      "client": "chromium-131.0.1",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn060000_10317b2cb409_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-133.0.0__native": {
+      "client": "chromium-133.0.0",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn060000_10317b2cb409_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-137.0.1__native": {
+      "client": "chromium-137.0.1",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn060000_10317b2cb409_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-138.0.2__native": {
+      "client": "chromium-138.0.2",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn060000_10317b2cb409_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-140.0.0__native": {
+      "client": "chromium-140.0.0",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn060000_10317b2cb409_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-141.0.0__native": {
+      "client": "chromium-141.0.0",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn060000_10317b2cb409_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-143.0.4__native": {
+      "client": "chromium-143.0.4",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn060000_10317b2cb409_000000000000_000000000000"
+      ],
+      "requests": 5,
+      "ua_claim": "native"
+    },
+    "chromium-full__native": {
+      "client": "chromium-full",
+      "client_class": "browser",
+      "header_orders": [
+        "Host,Connection,Accept-Language,Upgrade-Insecure-Requests,User-Agent,Accept,Accept-Encoding",
+        "Host,Connection,Accept-Language,User-Agent,Accept,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn07enus_106dff3e66d0_000000000000_000000000000",
+        "ge11nr06enus_48fd33bb44de_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl__native": {
+      "client": "curl",
+      "client_class": "library",
+      "header_orders": [
+        "Host,User-Agent,Accept"
+      ],
+      "ja4h": [
+        "ge11nn030000_fe444ad14866_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome107__native": {
+      "client": "curl_cffi-chrome107",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome110__native": {
+      "client": "curl_cffi-chrome110",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome116__native": {
+      "client": "curl_cffi-chrome116",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome120__native": {
+      "client": "curl_cffi-chrome120",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome124__native": {
+      "client": "curl_cffi-chrome124",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome131__native": {
+      "client": "curl_cffi-chrome131",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome133a__native": {
+      "client": "curl_cffi-chrome133a",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome136__native": {
+      "client": "curl_cffi-chrome136",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome142__native": {
+      "client": "curl_cffi-chrome142",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome145__native": {
+      "client": "curl_cffi-chrome145",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome146__native": {
+      "client": "curl_cffi-chrome146",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome150__native": {
+      "client": "curl_cffi-chrome150",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-chrome99__native": {
+      "client": "curl_cffi-chrome99",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-edge101__native": {
+      "client": "curl_cffi-edge101",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform,Upgrade-Insecure-Requests,User-Agent,Accept,Sec-Fetch-Site,Sec-Fetch-Mode,Sec-Fetch-User,Sec-Fetch-Dest,Accept-Encoding,Accept-Language,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_b8dcc200854e_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-firefox147__native": {
+      "client": "curl_cffi-firefox147",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,User-Agent,Accept,Accept-Language,Accept-Encoding,Upgrade-Insecure-Requests,Sec-Fetch-Dest,Sec-Fetch-Mode,Sec-Fetch-Site,Sec-Fetch-User,Priority,Te,Connection"
+      ],
+      "ja4h": [
+        "ge11nn15enus_8d04b9429171_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-safari2601__native": {
+      "client": "curl_cffi-safari2601",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,sec-fetch-dest,user-agent,accept,sec-fetch-site,sec-fetch-mode,accept-language,accept-encoding,Connection"
+      ],
+      "ja4h": [
+        "ge11nn11enus_e0c80960df9b_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "curl_cffi-tor145__native": {
+      "client": "curl_cffi-tor145",
+      "client_class": "impersonation",
+      "header_orders": [
+        "Host,Upgrade,HTTP2-Settings,User-Agent,Accept,Accept-Language,Accept-Encoding,Sec-GPC,Upgrade-Insecure-Requests,Sec-Fetch-Dest,Sec-Fetch-Mode,Sec-Fetch-Site,Sec-Fetch-User,Priority,Te,Connection"
+      ],
+      "ja4h": [
+        "ge11nn16enus_f8d9224aba8c_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "go-net-http__native": {
+      "client": "go-net-http",
+      "client_class": "library",
+      "header_orders": [
+        "Host,User-Agent,Accept-Encoding"
+      ],
+      "ja4h": [
+        "ge11nn030000_cd680697de12_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "node-https__native": {
+      "client": "node-https",
+      "client_class": "library",
+      "header_orders": [
+        "Host,Connection"
+      ],
+      "ja4h": [
+        "ge11nn020000_d5c75abc5c2c_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "php-curl__native": {
+      "client": "php-curl",
+      "client_class": "library",
+      "header_orders": [
+        "Host,Accept"
+      ],
+      "ja4h": [
+        "ge11nn020000_1af9d02f0bf7_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "python-httpx__native": {
+      "client": "python-httpx",
+      "client_class": "library",
+      "header_orders": [
+        "Host,Accept,Accept-Encoding,Connection,User-Agent"
+      ],
+      "ja4h": [
+        "ge11nn050000_be0d0b335e46_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "python-requests__native": {
+      "client": "python-requests",
+      "client_class": "library",
+      "header_orders": [
+        "Host,User-Agent,Accept-Encoding,Accept,Connection"
+      ],
+      "ja4h": [
+        "ge11nn050000_b223a0ebb0b5_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "ruby-net-http__native": {
+      "client": "ruby-net-http",
+      "client_class": "library",
+      "header_orders": [
+        "Accept-Encoding,Accept,User-Agent,Host"
+      ],
+      "ja4h": [
+        "ge11nn040000_80c20a6e2957_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    },
+    "wget__native": {
+      "client": "wget",
+      "client_class": "library",
+      "header_orders": [
+        "Host,User-Agent,Accept,Accept-Encoding,Connection"
+      ],
+      "ja4h": [
+        "ge11nn050000_3658ef221638_000000000000_000000000000"
+      ],
+      "requests": 10,
+      "ua_claim": "native"
+    }
+  },
+  "profiles_separable_by_ja4h": [
+    "curl_cffi-chrome107",
+    "curl_cffi-chrome110",
+    "curl_cffi-chrome116",
+    "curl_cffi-chrome120",
+    "curl_cffi-chrome124",
+    "curl_cffi-chrome131",
+    "curl_cffi-chrome133a",
+    "curl_cffi-chrome136",
+    "curl_cffi-chrome142",
+    "curl_cffi-chrome145",
+    "curl_cffi-chrome146",
+    "curl_cffi-chrome150",
+    "curl_cffi-chrome99",
+    "curl_cffi-edge101",
+    "curl_cffi-firefox147",
+    "curl_cffi-safari2601",
+    "curl_cffi-tor145"
+  ],
+  "profiles_sharing_header_order_with_a_real_build": [],
+  "profiles_sharing_ja4h_with_a_real_build": [],
+  "real_browser_builds": 10,
+  "real_ja4h_values": 4,
+  "scenarios_with_http": 53
+}

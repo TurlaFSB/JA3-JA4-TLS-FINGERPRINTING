@@ -4,7 +4,7 @@
 //! The detection engine: what turns a stream of fingerprints into alerts.
 //!
 //! Every fingerprint the capture pipeline produces is recorded as an
-//! observation, and then six rules read the history around it. The history is
+//! observation, and then seven rules read the history around it. The history is
 //! the database itself, not an in memory accumulator, so a rule behaves the
 //! same whether it is fed a packet capture all at once or a live link one frame
 //! at a time, and a long running sensor keeps its memory across restarts.
@@ -24,6 +24,9 @@
 //!   fingerprints, the tell of a client cycling its identity to evade matching.
 //! - monoculture: one fingerprint has appeared from an unusual number of
 //!   distinct addresses, the tell of a botnet built from one toolkit.
+//! - header anomaly: a cleartext request that claims a browser carries headers
+//!   a browser does not send to that kind of origin, the tell of an
+//!   impersonation tool left on its defaults.
 //!
 //! The two correlation rules look only backwards, at observations already
 //! recorded for the same address, so a pair of flows raises one alert when the
@@ -101,6 +104,7 @@ pub enum Rule {
     FirstSeen,
     FpRotation,
     Monoculture,
+    HeaderAnomaly,
 }
 
 impl Rule {
@@ -113,6 +117,7 @@ impl Rule {
             Rule::FirstSeen => "first_seen",
             Rule::FpRotation => "fp_rotation",
             Rule::Monoculture => "monoculture",
+            Rule::HeaderAnomaly => "header_anomaly",
         }
     }
 
@@ -125,6 +130,7 @@ impl Rule {
             "os_mismatch" => Rule::OsMismatch,
             "fp_rotation" => Rule::FpRotation,
             "monoculture" => Rule::Monoculture,
+            "header_anomaly" => Rule::HeaderAnomaly,
             _ => Rule::FirstSeen,
         }
     }
@@ -279,6 +285,11 @@ pub(crate) fn run(
     if !ip_fp_known {
         if let Some(alert) = known_bad(conn, ts, &ip_text, &reports, kind, &value)? {
             alerts.push(alert);
+        }
+        if let StreamEvent::HttpRequest { ja4h, .. } = &event.event {
+            if let Some(alert) = header_anomaly(&ip_text, &context, &ja4h.raw) {
+                alerts.push(alert);
+            }
         }
     }
 
@@ -449,6 +460,88 @@ fn verdict_rank(verdict: Verdict) -> u8 {
         Verdict::Benign => 1,
         Verdict::Unknown => 0,
     }
+}
+
+/// Headers a browser sends only to a potentially trustworthy origin, plus the
+/// cleartext HTTP/2 upgrade handshake no browser performs.
+///
+/// Fetch Metadata (`Sec-Fetch-*`) and User-Agent Client Hints (`Sec-CH-*`) are
+/// defined to go only to secure or loopback origins, so a request to an ordinary
+/// cleartext host that carries them was not made by a browser. A cleartext
+/// `Upgrade` with `HTTP2-Settings` is curl's h2c attempt; browsers do not speak
+/// cleartext HTTP/2. This is a tell for a tool on its defaults and is trivially
+/// evaded by one that strips the headers, so it is a medium alert, not a verdict.
+fn browser_only_headers(raw_ja4h: &str) -> Vec<String> {
+    let names: Vec<&str> = raw_ja4h
+        .split('_')
+        .nth(1)
+        .filter(|field| !field.is_empty())
+        .map(|field| field.split(',').collect())
+        .unwrap_or_default();
+    let has = |wanted: &str| names.iter().any(|name| name.eq_ignore_ascii_case(wanted));
+    let h2c = has("upgrade") && has("http2-settings");
+    names
+        .iter()
+        .filter(|name| {
+            let lower = name.to_ascii_lowercase();
+            lower.starts_with("sec-fetch-")
+                || lower.starts_with("sec-ch-")
+                || (h2c && lower == "http2-settings")
+        })
+        .map(|name| (*name).to_string())
+        .chain(h2c.then(|| "Upgrade".to_string()))
+        .collect()
+}
+
+/// Whether a `Host` header names an origin browsers treat as potentially
+/// trustworthy without TLS: localhost and the loopback addresses.
+fn is_trustworthy_cleartext_host(host: &str) -> bool {
+    let host = host.trim().to_ascii_lowercase();
+    let name = if let Some(rest) = host.strip_prefix('[') {
+        rest.split(']').next().unwrap_or(rest).to_string()
+    } else {
+        host.rsplit_once(':')
+            .filter(|(_, port)| port.chars().all(|c| c.is_ascii_digit()))
+            .map_or(host.clone(), |(name, _)| name.to_string())
+    };
+    name == "localhost"
+        || name.ends_with(".localhost")
+        || name == "::1"
+        || name
+            .parse::<std::net::Ipv4Addr>()
+            .is_ok_and(|addr| addr.is_loopback())
+}
+
+/// The header anomaly rule: a cleartext request that claims a browser and
+/// carries headers a browser does not send to that kind of origin.
+fn header_anomaly(ip: &str, context: &Context, raw_ja4h: &str) -> Option<Alert> {
+    let user_agent = context.user_agent.as_deref()?;
+    let claimed = ua_family(user_agent).filter(|family| family.is_browser())?;
+    let host = context.host.as_deref()?;
+    if is_trustworthy_cleartext_host(host) {
+        return None;
+    }
+    let offending = browser_only_headers(raw_ja4h);
+    if offending.is_empty() {
+        return None;
+    }
+    Some(Alert {
+        ts_nanos: 0,
+        rule: Rule::HeaderAnomaly,
+        severity: AlertSeverity::Medium,
+        ip: Some(ip.to_string()),
+        fp_kind: Some(FpKind::Ja4h),
+        fp_value: None,
+        title: format!(
+            "a {} request carries headers a browser does not send here",
+            claimed.as_str()
+        ),
+        detail: format!(
+            "address {ip} sent a cleartext request to {host} with User-Agent '{user_agent}' and the headers {}; browsers send Sec-Fetch and Client Hint headers only to secure or loopback origins and never perform a cleartext HTTP/2 upgrade",
+            offending.join(", "),
+        ),
+        score: None,
+    })
 }
 
 /// The User-Agent mismatch rule, evaluated from whichever side of the pair

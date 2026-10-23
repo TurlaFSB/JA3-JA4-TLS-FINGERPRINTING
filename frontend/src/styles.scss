@@ -213,6 +213,10 @@ body {
   --accent: #{$orchid};
 }
 
+[data-rule='header_anomaly'] {
+  --accent: #{$fire-soft};
+}
+
 [data-rule='first_seen'] {
   --accent: #{$thermal};
 }

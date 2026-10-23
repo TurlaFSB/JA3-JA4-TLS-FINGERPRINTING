@@ -65,7 +65,9 @@ def evaluate(tlsfp, dataset):
             rows[label] = {
                 "client": entry["client"], "client_class": entry["client_class"], "ua_claim": entry["ua_claim"],
                 "user_agents": uas, "truth": {"ua_lie": ua_lie, "os_lie": os_lie},
-                "alerted": {"ua_mismatch": rules["ua_mismatch"] > 0, "os_mismatch": rules["os_mismatch"] > 0},
+                "alerted": {"ua_mismatch": rules["ua_mismatch"] > 0, "os_mismatch": rules["os_mismatch"] > 0,
+                            "header_anomaly": rules["header_anomaly"] > 0,
+                            "ua_mismatch_or_header_anomaly": rules["ua_mismatch"] + rules["header_anomaly"] > 0},
                 "alerts": dict(sorted(rules.items())),
             }
     return manifest, rows
@@ -91,10 +93,13 @@ def summarise(rows):
         "all scenarios": None,
         "library, honest User-Agent": lambda r: r["client_class"] == "library" and r["ua_claim"] == "native",
         "library, lying User-Agent": lambda r: r["client_class"] == "library" and r["ua_claim"] != "native",
-        "impersonation profile": lambda r: r["client_class"] == "impersonation",
+        "impersonation profile, defaults": lambda r: r["client_class"] == "impersonation",
+        "impersonation, defaults stripped (adaptive)": lambda r: r["client_class"] == "evasive-impersonation",
         "real browser": lambda r: r["client_class"] == "browser",
     }
     return {name: {"ua_mismatch": confusion(rows, "ua_mismatch", "ua_lie", sub),
+                   "header_anomaly": confusion(rows, "header_anomaly", "ua_lie", sub),
+                   "ua_mismatch_or_header_anomaly": confusion(rows, "ua_mismatch_or_header_anomaly", "ua_lie", sub),
                    "os_mismatch": confusion(rows, "os_mismatch", "os_lie", sub),
                    "scenarios": sum(1 for r in rows.values() if sub is None or sub(r))}
             for name, sub in groups.items()}
@@ -103,21 +108,24 @@ def summarise(rows):
 def markdown(manifest, rows, summary):
     lines = [f"# Cross-layer rule evaluation: dataset {manifest['dataset_version']}", "",
              "Each scenario is one client sending HTTPS (its TLS fingerprint) and cleartext HTTP (its claimed "
-             "User-Agent) from one address. `ua lie` = a non-browser claiming a browser; `os lie` = a Windows "
-             "claim from a Linux host.", "",
-             "| group | scenarios | ua_mismatch: caught / lies | false alarms / honest | os_mismatch: caught / lies | false alarms / honest |",
+             "User-Agent) from one address, to a non-secure hostname. `ua lie` = a non-browser claiming a browser; "
+             "`os lie` = a Windows claim from a Linux host. Cells read caught / lies, then false alarms / honest.", "",
+             "| group | scenarios | ua_mismatch | header_anomaly | either | os_mismatch |",
              "|---|---|---|---|---|---|"]
+    def cell(c):
+        return f"{c['tp']}/{c['tp'] + c['fn']} caught, {c['fp']}/{c['fp'] + c['tn']} false"
     for name, s in summary.items():
-        u, o = s["ua_mismatch"], s["os_mismatch"]
-        lines.append(f"| {name} | {s['scenarios']} | {u['tp']} / {u['tp'] + u['fn']} | {u['fp']} / {u['fp'] + u['tn']} | "
-                     f"{o['tp']} / {o['tp'] + o['fn']} | {o['fp']} / {o['fp'] + o['tn']} |")
+        lines.append(f"| {name} | {s['scenarios']} | {cell(s['ua_mismatch'])} | {cell(s['header_anomaly'])} | "
+                     f"{cell(s['ua_mismatch_or_header_anomaly'])} | {cell(s['os_mismatch'])} |")
     lines += ["", "## Per scenario", "",
-              "| scenario | class | ua lie | ua_mismatch | os lie | os_mismatch | user agent |", "|---|---|---|---|---|---|---|"]
+              "| scenario | class | ua lie | ua_mismatch | header_anomaly | os lie | os_mismatch | user agent |",
+              "|---|---|---|---|---|---|---|---|"]
     for label, r in sorted(rows.items()):
-        ua = (r["user_agents"][0][:48] + "...") if r["user_agents"] else "-"
+        ua = (r["user_agents"][0][:44] + "...") if r["user_agents"] else "-"
+        a = r["alerted"]
         lines.append(f"| {label} | {r['client_class']} | {'yes' if r['truth']['ua_lie'] else 'no'} | "
-                     f"{'ALERT' if r['alerted']['ua_mismatch'] else '-'} | {'yes' if r['truth']['os_lie'] else 'no'} | "
-                     f"{'ALERT' if r['alerted']['os_mismatch'] else '-'} | {ua} |")
+                     f"{'ALERT' if a['ua_mismatch'] else '-'} | {'ALERT' if a['header_anomaly'] else '-'} | "
+                     f"{'yes' if r['truth']['os_lie'] else 'no'} | {'ALERT' if a['os_mismatch'] else '-'} | {ua} |")
     return "\n".join(lines) + "\n"
 
 

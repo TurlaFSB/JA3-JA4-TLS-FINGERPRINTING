@@ -78,9 +78,9 @@ Each client is judged in isolation against a freshly seeded database.
 
 ## All clients behind one address
 
-Every capture replayed into a single database, as a NAT gateway or shared workstation would present.
+Every capture replayed into a single database, as a NAT gateway or shared workstation would present. The second column repeats the run with the address declared as a shared network (`--shared-network 127.0.0.1`).
 
-| rule | severity | alerts |
-|---|---|---|
-| first_seen | info | 42 |
-| fp_rotation | medium | 30 |
+| rule | severity | alerts | alerts with the address declared shared |
+|---|---|---|---|
+| first_seen | info | 42 | 42 |
+| fp_rotation | medium | 30 | 0 |

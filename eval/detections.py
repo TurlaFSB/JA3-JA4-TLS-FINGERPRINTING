@@ -34,8 +34,8 @@ def is_tool(key):
     return key.startswith("curl_cffi-")
 
 
-def run_capture(tlsfp, db, pcap):
-    run = subprocess.run([tlsfp, "pcap", "--intel", "--detect", "--json", "--db", db, pcap],
+def run_capture(tlsfp, db, pcap, extra=()):
+    run = subprocess.run([tlsfp, "pcap", "--intel", "--detect", "--json", "--db", db, *extra, pcap],
                          capture_output=True, text=True, check=True)
     return [json.loads(line) for line in run.stdout.splitlines()]
 
@@ -101,15 +101,17 @@ def evaluate(tlsfp, dataset, feed_dataset):
             per_client[key] = summary
 
         # One address, every client: the correlation rules under NAT.
-        shared = os.path.join(tmp, "shared.db")
-        seed(tlsfp, shared)
-        nat_alerts = Counter()
-        for key, entry in sorted(manifest["labels"].items()):
-            for ev in run_capture(tlsfp, shared, os.path.join(dataset, entry["pcap"])):
-                for alert in ev.get("alerts") or []:
-                    nat_alerts[(alert["rule"], alert["severity"])] += 1
+        nat_alerts, nat_declared = Counter(), Counter()
+        for counter, extra, name in ((nat_alerts, (), "shared.db"),
+                                     (nat_declared, ("--shared-network", "127.0.0.1"), "declared.db")):
+            db = os.path.join(tmp, name)
+            seed(tlsfp, db)
+            for key, entry in sorted(manifest["labels"].items()):
+                for ev in run_capture(tlsfp, db, os.path.join(dataset, entry["pcap"]), extra):
+                    for alert in ev.get("alerts") or []:
+                        counter[(alert["rule"], alert["severity"])] += 1
 
-    return manifest, per_client, events_by_client, nat_alerts
+    return manifest, per_client, events_by_client, (nat_alerts, nat_declared)
 
 
 def pct(num, den):
@@ -167,7 +169,8 @@ def stability(dataset, others, events_by_client, tlsfp):
     return {"compared": len(same) + len(differ), "identical_ja4_sets": len(same), "different": differ}
 
 
-def markdown(manifest, per_client, agg, nat, stab, feed_dataset):
+def markdown(manifest, per_client, agg, nat_pair, stab, feed_dataset):
+    nat, nat_declared = nat_pair
     version = manifest["dataset_version"]
     lines = [f"# Detection evaluation: dataset {version}", "",
              f"Intelligence feed built from: {', '.join(feed_dataset) if feed_dataset else 'n/a'}.", "",
@@ -199,10 +202,13 @@ def markdown(manifest, per_client, agg, nat, stab, feed_dataset):
             f"| {key} | {v['class']} | {'yes' if v['in_feed_source'] else 'no'} | {v['handshakes']} | "
             f"{v['verdicts']} | {v['best_match'] or '-'} | {'; '.join(v['exact_labels']) or '-'} | {v['alerts'] or '-'} |")
     lines += ["", "## All clients behind one address", "",
-              "Every capture replayed into a single database, as a NAT gateway or shared workstation would present.", "",
-              "| rule | severity | alerts |", "|---|---|---|"]
-    for (rule, severity), n in sorted(nat.items()):
-        lines.append(f"| {rule} | {severity} | {n} |")
+              "Every capture replayed into a single database, as a NAT gateway or shared workstation would present. "
+              "The second column repeats the run with the address declared as a shared network "
+              "(`--shared-network 127.0.0.1`).", "",
+              "| rule | severity | alerts | alerts with the address declared shared |", "|---|---|---|---|"]
+    keys = sorted(set(nat) | set(nat_declared))
+    for (rule, severity) in keys:
+        lines.append(f"| {rule} | {severity} | {nat.get((rule, severity), 0)} | {nat_declared.get((rule, severity), 0)} |")
     return "\n".join(lines) + "\n"
 
 
@@ -218,7 +224,10 @@ def main():
     manifest, per_client, events, nat = evaluate(args.tlsfp, args.dataset, args.feed_dataset)
     agg = aggregate(per_client)
     stab = stability(args.dataset, args.feed_dataset, events, args.tlsfp)
-    nat_json = [{"rule": r, "severity": s, "alerts": n} for (r, s), n in sorted(nat.items())]
+    nat, nat_declared = nat
+    nat_json = [{"rule": r, "severity": s, "alerts": nat[(r, s)], "alerts_when_declared_shared": nat_declared.get((r, s), 0)}
+                for (r, s) in sorted(set(nat) | set(nat_declared))]
+    nat = (nat, nat_declared)
     result = {"dataset_version": manifest["dataset_version"], "feed_datasets": args.feed_dataset,
               "aggregate": agg, "stability": stab, "per_client": per_client, "single_address": nat_json}
     rendered = {"detections.json": json.dumps(result, indent=2, sort_keys=True) + "\n",

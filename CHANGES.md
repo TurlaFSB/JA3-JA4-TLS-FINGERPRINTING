@@ -49,7 +49,9 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - `make_intel_feed.py` no longer lists impersonation profiles; it lists real Chromium builds and libraries as benign (34 rows). Total bundled fingerprints: 305.
 - `--shared-network <CIDR>` (and `TLSFP_SHARED_NETWORKS`) for `pcap`, `live` and `serve`; rotation and monoculture skip those addresses. A fingerprint with an exact benign match is never a monoculture.
 - Recognises Node.js, Ruby, PHP, OpenSSL and Go labels as non-browser families.
-- New scenario lab (`dataset/lab/run_scenarios.py`) and evaluators (`eval/scenarios.py`, `eval/crosslayer.py`) for the cleartext-HTTP rules; results to follow.
+- New scenario lab (`dataset/lab/run_scenarios.py`, dataset v0.5) and evaluators (`eval/scenarios.py`, `eval/crosslayer.py`) for the cleartext-HTTP rules.
+- New rule `header_anomaly`: a browser User-Agent on a cleartext request to a non-loopback origin that carries `Sec-Fetch-*`, `Sec-CH-*` or an h2c upgrade. Registered in the dashboard.
+- Detection evaluation now also reports the NAT scenario with the address declared shared (30 `fp_rotation` alerts to 0).
 
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.
