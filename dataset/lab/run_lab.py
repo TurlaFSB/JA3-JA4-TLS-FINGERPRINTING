@@ -113,6 +113,38 @@ def real_chromium_clients(chromium_dir, url, n, tmp):
     return clients
 
 
+def real_chrome_clients(chrome_dir, url, n, tmp):
+    """label -> (version, run) for real full Chrome builds from fetch_chrome.sh.
+
+    New headless mode shares the desktop browser's network stack. Each launch
+    loads the page for a few seconds and is then killed, which works for every
+    version (--dump-dom hangs on some).
+    """
+    clients = {}
+    if not chrome_dir or not os.path.isdir(chrome_dir):
+        return clients
+    for entry in sorted(os.listdir(chrome_dir)):
+        binary = os.path.join(chrome_dir, entry, "chrome")
+        if not (entry.startswith("chrome-") and os.access(binary, os.X_OK)):
+            continue
+        version = entry.removeprefix("chrome-")
+
+        def run(binary=binary):
+            for _ in range(max(3, n // 3)):
+                profile = tempfile.mkdtemp(dir=tmp)
+                proc = subprocess.Popen(
+                    [binary, "--headless=new", "--no-sandbox", "--disable-gpu", "--disable-quic",
+                     "--ignore-certificate-errors", f"--user-data-dir={profile}", url],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+                time.sleep(6)
+                try:
+                    os.killpg(proc.pid, 9)
+                except ProcessLookupError:
+                    pass
+        clients[f"chrome-real-{version.split('.')[0]}"] = (f"Google Chrome for Testing {version}", run)
+    return clients
+
+
 def build_clients(port, n, tmp):
     url = f"https://{HOST}:{port}/"
     clients = {}
@@ -263,6 +295,20 @@ def sha256(path):
     return h.hexdigest()
 
 
+def ensure_host_alias(host):
+    """Make `host` resolve to loopback, adding an /etc/hosts line when needed."""
+    import socket
+    if host == "localhost":
+        return
+    try:
+        if socket.gethostbyname(host) == "127.0.0.1":
+            return
+    except OSError:
+        pass
+    with open("/etc/hosts", "a") as f:
+        f.write(f"127.0.0.1 {host}\n")
+
+
 def scrub_proxy_env():
     """Clients must talk to the loopback server directly, never through a proxy."""
     for k in list(os.environ):
@@ -278,8 +324,13 @@ def main():
     ap.add_argument("--repeat", type=int, default=20)
     ap.add_argument("--extra-impersonate", default="", help="comma-separated extra curl_cffi profiles to capture")
     ap.add_argument("--chromium-dir", help="directory of chromium-<version>/chromium builds (see fetch_chromium.sh)")
+    ap.add_argument("--chrome-dir", help="directory of chrome-<version>/chrome builds (see fetch_chrome.sh)")
+    ap.add_argument("--host", default="localhost", help="hostname the clients connect to (added to /etc/hosts if it does not resolve)")
     ap.add_argument("--only", help="comma-separated client labels to run (default: all available)")
     args = ap.parse_args()
+    global HOST
+    HOST = args.host
+    ensure_host_alias(HOST)
     IMPERSONATE.extend(p for p in args.extra_impersonate.split(",") if p and p not in IMPERSONATE)
     if not shutil.which("tcpdump"):
         sys.exit("tcpdump is required")
@@ -289,6 +340,7 @@ def main():
         srv, port = start_server(crt, key)
         clients = build_clients(port, args.repeat, tmp)
         clients.update(real_chromium_clients(args.chromium_dir, f"https://{HOST}:{port}/", args.repeat, tmp))
+        clients.update(real_chrome_clients(args.chrome_dir, f"https://{HOST}:{port}/", args.repeat, tmp))
         if args.only:
             wanted = set(args.only.split(","))
             clients = {k: v for k, v in clients.items() if k in wanted}

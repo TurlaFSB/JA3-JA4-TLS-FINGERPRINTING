@@ -56,8 +56,114 @@
       "real": []
     }
   },
+  "per_profile": {
+    "chrome104": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome107": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome110": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome116": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome120": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome124": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome131": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome133a": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome136": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome142": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome145": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome146": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome150": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_806a8c22fdea"
+      ]
+    },
+    "chrome99": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "edge101": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "edge99": {
+      "equals_a_real_build": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    }
+  },
   "per_real_build": {
-    "107.0.0": {
+    "chromium-real-107.0.0": {
+      "client_version": "Chromium headless-shell 107.0.0 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_e5627efa2ab1"
@@ -65,18 +171,16 @@
       "nearest_profile": "chrome107",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_e5627efa2ab1"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome104",
-        "chrome107",
-        "chrome110",
-        "chrome116",
-        "chrome99",
-        "edge101",
-        "edge99"
       ]
     },
-    "110.0.1": {
+    "chromium-real-110.0.1": {
+      "client_version": "Chromium headless-shell 110.0.1 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_e5627efa2ab1"
@@ -84,18 +188,16 @@
       "nearest_profile": "chrome110",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_e5627efa2ab1"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome104",
-        "chrome107",
-        "chrome110",
-        "chrome116",
-        "chrome99",
-        "edge101",
-        "edge99"
       ]
     },
-    "131.0.1": {
+    "chromium-real-131.0.1": {
+      "client_version": "Chromium headless-shell 131.0.1 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_02713d6af862"
@@ -103,14 +205,20 @@
       "nearest_profile": "chrome131",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_02713d6af862"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome120",
-        "chrome124",
-        "chrome131"
       ]
     },
-    "133.0.0": {
+    "chromium-real-133.0.0": {
+      "client_version": "Chromium headless-shell 133.0.0 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "alps (new codepoint 0x44cd)"
+        ],
+        "extensions_only_in_real": [
+          "alps (legacy codepoint 0x4469)"
+        ],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": false,
       "ja4": [
         "t13d1516h2_8daaf6152771_02713d6af862"
@@ -118,14 +226,16 @@
       "nearest_profile": "chrome133a",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome120",
-        "chrome124",
-        "chrome131"
       ]
     },
-    "137.0.1": {
+    "chromium-real-137.0.1": {
+      "client_version": "Chromium headless-shell 137.0.1 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
@@ -133,16 +243,16 @@
       "nearest_profile": "chrome136",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome133a",
-        "chrome136",
-        "chrome142",
-        "chrome145",
-        "chrome146"
       ]
     },
-    "138.0.2": {
+    "chromium-real-138.0.2": {
+      "client_version": "Chromium headless-shell 138.0.2 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
@@ -150,16 +260,16 @@
       "nearest_profile": "chrome136",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome133a",
-        "chrome136",
-        "chrome142",
-        "chrome145",
-        "chrome146"
       ]
     },
-    "140.0.0": {
+    "chromium-real-140.0.0": {
+      "client_version": "Chromium headless-shell 140.0.0 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
@@ -167,16 +277,16 @@
       "nearest_profile": "chrome142",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome133a",
-        "chrome136",
-        "chrome142",
-        "chrome145",
-        "chrome146"
       ]
     },
-    "141.0.0": {
+    "chromium-real-141.0.0": {
+      "client_version": "Chromium headless-shell 141.0.0 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
@@ -184,16 +294,16 @@
       "nearest_profile": "chrome142",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome133a",
-        "chrome136",
-        "chrome142",
-        "chrome145",
-        "chrome146"
       ]
     },
-    "143.0.4": {
+    "chromium-real-143.0.4": {
+      "client_version": "Chromium headless-shell 143.0.4 (npm @sparticuz/chromium)",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
       "identical_to_nearest_profile": true,
       "ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
@@ -201,17 +311,13 @@
       "nearest_profile": "chrome142",
       "nearest_profile_ja4": [
         "t13d1516h2_8daaf6152771_d8a2da3f94cd"
-      ],
-      "profiles_sharing_a_ja4": [
-        "chrome133a",
-        "chrome136",
-        "chrome142",
-        "chrome145",
-        "chrome146"
       ]
     }
   },
   "profiles": 16,
+  "profiles_matching_no_real_build": [
+    "chrome150"
+  ],
   "profiles_with_ja4_identical_to_a_real_build": [
     "chrome104",
     "chrome107",
@@ -229,9 +335,7 @@
     "edge101",
     "edge99"
   ],
-  "profiles_with_no_real_counterpart": [
-    "chrome150"
-  ],
   "real_builds": 9,
-  "real_builds_identical_to_nearest_profile": 8
+  "real_builds_identical_to_nearest_profile": 8,
+  "real_full_chrome_builds": 0
 }
