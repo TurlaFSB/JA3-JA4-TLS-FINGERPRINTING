@@ -51,10 +51,11 @@ so it is attributed as BSD 3-Clause here.
 
 - Source: hand curated for this project from named primary sources
 - License: same as this repository
-- Records: 17 rows covering C2 frameworks, malware families, dual-use tooling,
-  and two benign browser baselines, each with a primary source in the reference
-  column
-- sha256: 202c0a1edc495a5149d7f6161d21adc152b1b71efdde2f5052d4767ebb0f7b66
+- Records: 21 rows covering C2 frameworks, malware families, dual-use tooling,
+  two benign Chrome baselines, and four Firefox 158 rows observed on a real
+  Windows 10 machine (`docs/FIELD_OBSERVATIONS.md`), each with a primary source
+  in the reference column
+- sha256: 349bf145acd95e7fa26e09302df568f640a89b5f4a3753155907dc5633084db2
 
 This file fills the gaps the public feeds leave: server side JA3S for Cobalt
 Strike, TrickBot, and Emotet, a JA4 for RedLine Stealer, and JA4 baselines for

@@ -132,7 +132,7 @@ Thresholds and the window are configurable in `DetectConfig`. Defaults suit a qu
 |---|---|---|---|
 | abuse.ch SSLBL | 97 | malware, C2 | CC0-1.0 |
 | Salesforce `osx-nix` JA3 list | 157 | benign applications | BSD-3-Clause |
-| Curated set | 17 | C2, tools | project |
+| Curated set | 21 | C2, tools, field-observed Firefox 158 | project |
 | Lab-derived clients (`tlsfp lab`) | 34 | benign libraries and real Chromium builds | AGPL-3.0-only |
 | ja4db.com (optional import) | variable | mixed | see ja4db.com terms |
 
@@ -259,7 +259,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 - Encrypted Client Hello hides the inner ClientHello; detection degrades to the outer one.
 - JA4X needs the certificate in the clear (TLS 1.2 and earlier). JA4H covers cleartext HTTP/1.x only.
 - QUIC support covers client Initial packets; no 0-RTT, Handshake packets, or connection migration.
-- The bundled intelligence (305 fingerprints) is a baseline, not coverage of current malware. Its client entries come from one Linux host and drift as client libraries change.
+- The bundled intelligence (309 fingerprints) is a baseline, not coverage of current malware. Its client entries come from one Linux host (plus Firefox 158 from one Windows machine) and drift as client libraries change. [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) explains how to import ja4db.com and add your own.
 - A tool that reproduces a real browser's ClientHello cannot be separated from it by JA3 or JA4, and whether curl-impersonate does depends on browser configuration the sensor cannot see (see the fidelity results in [`eval/README.md`](eval/README.md)). Curated browser fingerprints are families, not single values: 25 real Chrome builds produced three.
 - Accuracy is measured on lab captures only (see Validation); it has not been quantified on real-world traffic.
 
@@ -277,6 +277,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 | [`docs/FIELD_OBSERVATIONS.md`](docs/FIELD_OBSERVATIONS.md) | Fingerprints of real Brave, Edge and Firefox on Windows |
 | [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md) | Capture a real desktop browser and replay it in the dashboard |
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured throughput and its limits |
+| [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) | Extending the intelligence feed; licensing |
 | [`dataset/README.md`](dataset/README.md) | Dataset construction and validity |
 | [`RELEASING.md`](RELEASING.md) | Release and signed-tag procedure |
 | [`CHANGES.md`](CHANGES.md) | Changes relative to the upstream base |

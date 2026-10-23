@@ -26,3 +26,7 @@ ja3s,80b3a14bccc8598a1f3bbe83e71f735f,Emotet,c2,"Emotet command and control serv
 ja4,t10d070600_c50f5591e341_1a3805c3aa63,RedLine Stealer,malware,"RedLine Stealer and SnakeLogger infostealer (VirusTotal 2024)"
 ja4,t13d1516h2_8daaf6152771_e5627efa2ab1,Google Chrome,benign,"Chrome over TCP; FoxIO reference fingerprint from the chrome-cloudflare capture"
 ja4,q13d0310h3_55b375c5d22e_cd85d2d88918,Google Chrome,benign,"Chrome over QUIC; FoxIO reference fingerprint from the chrome-cloudflare capture"
+ja4,t13d1517h2_8daaf6152771_3cbfd9057e0d,Firefox 158 (Windows 10; HTTP/2),benign,"Field capture 2026-10-23, Firefox 158.0.1 on Windows 10 over Wi-Fi; docs/FIELD_OBSERVATIONS.md. No curl-impersonate profile reproduced this value at capture time, so it is not shared with a known tool"
+ja4,t13d1516h1_8daaf6152771_e6d2851837fd,Firefox 158 (Windows 10; HTTP/1.1),benign,"Field capture 2026-10-23, Firefox 158.0.1 on Windows 10; WebSocket connection to push.services.mozilla.com; docs/FIELD_OBSERVATIONS.md"
+ja4,q13d0315h3_55b375c5d22e_dc5437974b47,Firefox 158 (Windows 10; HTTP/3),benign,"Field capture 2026-10-23, Firefox 158.0.1 on Windows 10, QUIC Initial; docs/FIELD_OBSERVATIONS.md"
+ja3,9d42e90b0225e779f03141ddcd699df2,Firefox 158 (Windows 10),benign,"Field capture 2026-10-23, Firefox 158.0.1 on Windows 10; Firefox does not shuffle extensions so this JA3 was identical on every HTTP/2 connection (100+); docs/FIELD_OBSERVATIONS.md"

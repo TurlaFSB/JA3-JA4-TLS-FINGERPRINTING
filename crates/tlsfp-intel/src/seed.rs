@@ -284,7 +284,7 @@ mod tests {
     fn seeds_every_vendored_row() {
         let mut store = IntelStore::open_in_memory().unwrap();
         let summary = store.seed_bundled().unwrap();
-        assert_eq!(summary.parsed(), 97 + 157 + 17 + lab_rows());
+        assert_eq!(summary.parsed(), 97 + 157 + 21 + lab_rows());
         assert_eq!(summary.inserted(), summary.parsed());
     }
 

@@ -76,5 +76,8 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Performance
 - The store opens SQLite with `synchronous = NORMAL` under WAL (previously the default, an fsync per event): the detection run over 31,200 handshakes drops from 24.6 s to 10.3 s. `docs/PERFORMANCE.md` and `eval/throughput.py` record the measurements and their limits; criterion numbers added. No speed figure was published before this.
 
+## Intelligence
+- Four Firefox 158 rows (three JA4 and the stable JA3) observed on a real Windows machine join the curated set: 309 fingerprints. Brave and Edge are left out on purpose, because an impersonation profile sends the same fingerprint. `docs/INTELLIGENCE.md` documents importing ja4db.com and extending the feed. No further public feeds were added: ja4db.com and abuse.ch were not reachable from the build environment, and the two reachable lists state no licence.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.
