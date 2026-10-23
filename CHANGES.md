@@ -25,5 +25,7 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Fixes
 - `tlsfp pcap` no longer prints an error and stack trace when its output is piped to a program that exits early (`| head`); regression test added.
 
+- CI: fixed `rustup --component` usage that failed every build, test and lint job on current runners.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

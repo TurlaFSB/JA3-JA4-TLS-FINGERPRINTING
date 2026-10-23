@@ -24,6 +24,7 @@ Scope: the Rust workspace (`tlsfp-core`, `tlsfp-intel`, `tlsfp`), container and 
 | F6 | Info | Container images run as non-root (`USER tlsfp`, `USER nginx`); live capture drops to two capabilities. | No action needed. |
 | F7 | Info | README performance claim (about 380k to 500k fingerprints/s) is from the upstream author and was not reproduced in this audit. | Open: re-measure with `cargo bench -p tlsfp-core` on the target hardware before citing. |
 | F8 | Low | `install.sh` cloned the upstream repository, not this one. | Fixed: rewritten to build from the local checkout; tested with a temporary prefix. |
+| F10 | Medium | CI could never pass on a current runner: `rustup toolchain install --component clippy rustfmt` is rejected by recent rustup (each component needs its own `--component`), failing every build, test and lint job at the install step. Found from the first run on GitHub. | Fixed in `ci.yml`; Rust 1.85 and stable verified locally. |
 | F9 | Low | `tlsfp pcap` reported `Broken pipe` with a backtrace when piped to `head`; the `live` path already handled it. | Fixed with a regression test (verified failing before the fix). |
 
 ## Not covered
