@@ -94,7 +94,7 @@ Progress is tracked in [`CHANGES.md`](CHANGES.md).
 
 ## Credits and licensing
 
-This repository began as an import of the `ja3-ja4-tls-fingerprinting` project by CarterPerez-dev (AngelaMos) from [Cybersecurity-Projects](https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting), released under AGPL-3.0. The sensor, fingerprint implementations, intelligence store and dashboard in this repository originate there; original copyright headers are preserved in the source files. All changes are listed in [`CHANGES.md`](CHANGES.md).
+This project is derived from [ja3-ja4-tls-fingerprinting](https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting) by CarterPerez-dev (AngelaMos), AGPL-3.0, upstream commit `bf9ac5d`. The sensor core, fingerprint implementations, intelligence store and dashboard originate there. Changes in this repository are listed in [`CHANGES.md`](CHANGES.md); full provenance is in [`NOTICE.md`](NOTICE.md).
 
 - This project is licensed under **AGPL-3.0** ([`LICENSE`](LICENSE)). Anyone who runs a modified version as a network service must offer its source.
 - JA3 (Salesforce, BSD-3-Clause) and JA4 (FoxIO, BSD-3-Clause) are free to implement. JA4S, JA4H, JA4X and JA4T are under the FoxIO License 1.1 (non-commercial, academic use permitted, patent pending). See [`NOTICE.md`](NOTICE.md).

@@ -1,15 +1,19 @@
 # Credits and third-party licensing
 
-## Upstream project
+## Origin
 
-The sensor, fingerprint implementations, intelligence store, detection rules,
-web dashboard and learning documents in this repository originate from
-`ja3-ja4-tls-fingerprinting` by CarterPerez-dev (AngelaMos), from
-https://github.com/CarterPerez-dev/Cybersecurity-Projects (directory
-`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), licensed under the GNU
-Affero General Public License v3.0. This repository is a derivative work and
-is distributed under the same licence. Copyright headers in the source files
-are retained. Modifications are recorded in `CHANGES.md`.
+This project is derived from **ja3-ja4-tls-fingerprinting** by CarterPerez-dev
+(AngelaMos), part of the Cybersecurity-Projects collection.
+
+- Source: https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting
+- Upstream commit: `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` (2026-10-13)
+- Upstream licence: GNU Affero General Public License v3.0
+
+The sensor core, fingerprint implementations, intelligence store, detection
+rules, dashboard and learning documents were written by the upstream author;
+their copyright headers are retained in the source files. Changes made in this
+repository are listed in `CHANGES.md`. This derivative is distributed under the
+same licence (AGPL-3.0).
 
 # Third-party fingerprint algorithm licensing
 

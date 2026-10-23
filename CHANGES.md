@@ -1,6 +1,6 @@
 # Changes from upstream
 
-Upstream: https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. Imported without upstream commit history.
+Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. See `NOTICE.md`.
 
 ## Import
 - CI: removed monorepo path filter and working directory.
