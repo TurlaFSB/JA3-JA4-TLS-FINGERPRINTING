@@ -80,9 +80,4 @@ The intelligence database is seeded from public sources with their own terms:
 
 
 
-The x-ray artwork under `frontend/public/assets/objects/` (`xray-butterfly.png`,
-`xray-lily.png`) and the other images in `frontend/public/assets/` came with the
-upstream project. The upstream repository does not record their source or a
-separate licence. They are retained here at the maintainer's direction;
-confirm redistribution rights before publishing this repository or its container
-images beyond the project's own use, or replace them.
+
