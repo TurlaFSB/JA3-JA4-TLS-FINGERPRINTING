@@ -12,7 +12,8 @@
     "format": "biome format --write .",
     "typecheck": "tsc -b",
     "lint:scss": "stylelint '**/*.scss'",
-    "lint:scss:fix": "stylelint '**/*.scss' --fix"
+    "lint:scss:fix": "stylelint '**/*.scss' --fix",
+    "test": "vitest run"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.12",
@@ -38,7 +39,8 @@
     "stylelint-config-standard-scss": "^16.0.0",
     "typescript": "~5.9.3",
     "vite": "npm:rolldown-vite@7.2.5",
-    "vite-tsconfig-paths": "^5.1.0"
+    "vite-tsconfig-paths": "^5.1.0",
+    "vitest": "3.2.4"
   },
   "pnpm": {
     "overrides": {
