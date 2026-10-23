@@ -20,6 +20,10 @@ const routes: RouteObject[] = [
         lazy: () => import('@/pages/scope'),
       },
       {
+        path: ROUTES.ALERTS,
+        lazy: () => import('@/pages/alerts'),
+      },
+      {
         path: ROUTES.INTEL,
         lazy: () => import('@/pages/intel'),
       },

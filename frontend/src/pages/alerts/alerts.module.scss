@@ -1,0 +1,342 @@
+// ===================
+// © Pranav Verma | 2026
+// alerts.module.scss
+// ===================
+
+@use 'index' as *;
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+  padding: clamp($space-4, 3vw, $space-8);
+  max-width: 1640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.masthead {
+  padding-bottom: $space-4;
+  border-bottom: 1px solid $line;
+}
+
+.over {
+  display: block;
+  margin-bottom: $space-3;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: $fire;
+}
+
+.title1 {
+  margin: 0 0 $space-3-5;
+  font-family: $font-display;
+  font-size: clamp(2.6rem, 6vw, 4.5rem);
+  line-height: 0.9;
+  color: $bone;
+}
+
+.sub1 {
+  max-width: 60ch;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $ash;
+}
+
+.severities {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: $space-2;
+
+  @include breakpoint-down('md') {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-3 $space-4;
+  text-align: left;
+  color: inherit;
+  background: linear-gradient(180deg, $ink-900, $ink-1000);
+  border: 1px solid $line;
+  border-left: 3px solid var(--accent, $line-strong);
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: $line-strong;
+    border-left-color: var(--accent, $line-strong);
+    outline: none;
+  }
+
+  &[data-sev='critical'] {
+    --accent: #{$sev-critical};
+  }
+
+  &[data-sev='high'] {
+    --accent: #{$sev-high};
+  }
+
+  &[data-sev='medium'] {
+    --accent: #{$sev-medium};
+  }
+
+  &[data-sev='low'] {
+    --accent: #{$sev-low};
+  }
+
+  &[data-sev='info'] {
+    --accent: #{$sev-info};
+  }
+}
+
+.tileOn {
+  background: $ink-700;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.count {
+  font-family: $font-display;
+  font-size: $font-size-3xl;
+  line-height: 1;
+  color: $bone;
+  font-feature-settings: 'tnum' 1;
+}
+
+.tileLabel {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.frame {
+  position: relative;
+  min-height: 420px;
+}
+
+.aside {
+  font-family: $font-mono;
+  color: $ash;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-3;
+  border-bottom: 1px solid $line-faint;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-1-5;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chip {
+  padding: 3px $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    border-color: $line-strong;
+    outline: none;
+  }
+}
+
+.chipOn {
+  color: $ink-1000;
+  background: $fire;
+  border-color: $fire;
+
+  &:hover,
+  &:focus-visible {
+    color: $ink-1000;
+    border-color: $fire-soft;
+  }
+}
+
+.search {
+  flex: 1;
+  min-width: 180px;
+  height: 24px;
+  padding: 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $bone;
+  background: $ink-1000;
+  border: 1px solid $line;
+
+  &::placeholder {
+    color: $dust;
+  }
+
+  &:focus-visible {
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+.exports {
+  display: flex;
+  gap: $space-1-5;
+  margin-left: auto;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  border-bottom: 1px solid $line-faint;
+  border-left: 2px solid $line-faint;
+
+  &[data-sev='high'],
+  &[data-sev='critical'] {
+    border-left-color: $fire;
+  }
+
+  &[data-sev='medium'] {
+    border-left-color: $magma;
+  }
+}
+
+.line {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: $space-3;
+  width: 100%;
+  padding: $space-2 $space-3;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible,
+  &[aria-expanded='true'] {
+    background: $ink-800;
+    outline: none;
+  }
+
+  @include breakpoint-down('md') {
+    grid-template-columns: auto minmax(0, 1fr);
+
+    > :nth-child(2),
+    > :nth-child(4),
+    > :nth-child(5) {
+      display: none;
+    }
+  }
+}
+
+.title {
+  @include truncate;
+
+  font-size: $font-size-xs;
+  color: $bone;
+}
+
+.ip {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $volt-soft;
+}
+
+.time {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $dust;
+}
+
+.detail {
+  padding: $space-2 $space-4 $space-4;
+  background: $ink-900;
+}
+
+.text {
+  margin: 0 0 $space-3;
+  font-size: $font-size-xs;
+  line-height: 1.55;
+  color: $paper;
+}
+
+.sub {
+  margin: 0 0 $space-1;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: $fire-soft;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px $space-3;
+  margin: 0 0 $space-3;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+
+  dt {
+    color: $dust;
+  }
+
+  dd {
+    margin: 0;
+    color: $paper;
+    overflow-wrap: anywhere;
+  }
+}
+
+.link {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $volt-soft;
+}
+
+.idle {
+  margin: 0;
+  padding: $space-12 $space-4;
+  text-align: center;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $dust;
+}

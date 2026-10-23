@@ -163,6 +163,7 @@ Forensic report (`--report`) summarizes a whole capture: frame and flow counts, 
 
 - **Opens populated:** the server keeps the last 500 events and sends them in one piece on connect, so a new page shows what has already happened; new events then stream in. A replayed capture is loaded at full speed on its first pass.
 - **Profiles:** the live window grouped by client fingerprint or by destination. Each fingerprint expands to its decoded JA4, connections over time, JA3 variants, destinations and exact intelligence matches, and can be sent to the stream filter. Tick two fingerprints to compare them side by side: decoded fields, and the cipher suites, extensions and signature algorithms present in only one. Both tables export to CSV.
+- **Alerts page:** every alert with severity and rule filters, search, a plain explanation of each rule and what to verify before acting, and export.
 - **Themes:** dark and light, remembered per browser. `/` focuses the stream filter.
 - **Live stream:** filter by event type (client, server, certificate, HTTP, TCP) or free text (IP, SNI, fingerprint); pause and resume; click any row for the full detail: every fingerprint in raw and hashed form, a field-by-field JA4 breakdown, matching intelligence and any alerts, with copy buttons.
 - **Header:** backend reachability, the active feed (live interface, replayed capture, or database tail), uptime, and the operator-set `--location` label. Nothing in it is estimated from the network.

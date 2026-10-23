@@ -4,6 +4,7 @@
  */
 
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useLiveStream } from '@/api/hooks'
 import {
   AlertFeed,
@@ -17,7 +18,8 @@ import styles from './scope.module.scss'
 
 export function Component(): React.ReactElement {
   const live = useLiveStream()
-  const [query, setQuery] = useState('')
+  const [params] = useSearchParams()
+  const [query, setQuery] = useState(params.get('q') ?? '')
 
   // Filters the stream to one fingerprint or server name and brings it into view.
   const showInStream = (value: string): void => {

@@ -6,7 +6,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { useMeta } from '@/api/hooks'
+import { useMeta, useStats } from '@/api/hooks'
 import { describeSource } from '@/api/types'
 import { cx, RegMark, Ticker } from '@/components'
 import { ROUTES } from '@/config'
@@ -15,6 +15,7 @@ import styles from './shell.module.scss'
 
 const NAV = [
   { to: ROUTES.SCOPE, label: 'scope' },
+  { to: ROUTES.ALERTS, label: 'alerts' },
   { to: ROUTES.INTEL, label: 'intel' },
 ]
 
@@ -125,11 +126,14 @@ function ShellLoading(): React.ReactElement {
 
 const TITLES: Record<string, string> = {
   [ROUTES.SCOPE]: 'Live scope',
+  [ROUTES.ALERTS]: 'Alerts',
   [ROUTES.INTEL]: 'Intelligence',
 }
 
 export function Shell(): React.ReactElement {
   const { pathname } = useLocation()
+  const { data: stats } = useStats()
+  const alertTotal = stats?.alert_total ?? 0
   useEffect(() => {
     document.title = `${TITLES[pathname] ?? 'Dashboard'} · tlsfp`
   }, [pathname])
@@ -155,6 +159,11 @@ export function Shell(): React.ReactElement {
               }
             >
               {item.label}
+              {item.to === ROUTES.ALERTS && alertTotal > 0 && (
+                <span className={styles.badge}>
+                  {alertTotal.toLocaleString()}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>

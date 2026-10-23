@@ -31,6 +31,7 @@ export const ROUTES = {
   HOME: '/',
   SCOPE: '/scope',
   INTEL: '/intel',
+  ALERTS: '/alerts',
 } as const
 
 export const STORAGE_KEYS = {

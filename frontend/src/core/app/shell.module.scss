@@ -247,3 +247,12 @@
     outline: none;
   }
 }
+
+.badge {
+  margin-left: $space-1-5;
+  padding: 0 5px;
+  font-size: $font-size-3xs;
+  letter-spacing: 0;
+  color: $ink-1000;
+  background: $fire;
+}
