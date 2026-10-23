@@ -7,7 +7,7 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - Removed upstream demo links and the upstream `curl | bash` installer instructions from the README.
 - `learn/00-OVERVIEW.md`: removed monorepo `cd`.
 
-## Audit week 1 (see `AUDIT.md`)
+## Security audit and hardening (see `AUDIT.md`)
 - README rewritten for this project; credit moved to a Credits section and `NOTICE.md`.
 - `Cargo.lock`: `anyhow` 1.0.102 to 1.0.104, `spin` 0.9.8 to 0.9.9 (advisory and yanked release).
 - CI: added `cargo audit` job.

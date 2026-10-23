@@ -6,7 +6,7 @@
 
 A passive TLS fingerprinting sensor and research platform. It reads a packet capture or a live interface, computes JA3, JA4, JA4S, JA4H, JA4X and JA4T fingerprints for every handshake (including TLS inside QUIC), matches them against a local intelligence database, and flags clients whose fingerprint disagrees with what they claim to be. It never sends a packet.
 
-The project is a final-year research effort. It builds on an existing open-source sensor (see [Credits](#credits-and-licensing)) and extends it with a labeled dataset, a measured evaluation of the detection rules, and cross-layer impersonation and drift detection. See [Roadmap](#roadmap) for what is done and what is planned.
+It is a derivative of an open-source sensor (see [Credits and licensing](#credits-and-licensing)), extended with a labeled handshake dataset, a reproducible evaluation harness, and ongoing work on detection quality: measured rule accuracy, cross-layer impersonation detection, and fingerprint drift detection. See the [Roadmap](#roadmap).
 
 ## Why fingerprint TLS
 
