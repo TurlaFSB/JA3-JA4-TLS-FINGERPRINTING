@@ -125,11 +125,11 @@ export function Component(): React.ReactElement {
   return (
     <div className={styles.page}>
       <section className={styles.masthead}>
-        <span className={styles.over}>detections / ledger</span>
-        <h1 className={styles.title1}>THE LEDGER</h1>
+        <span className={styles.over}>detections</span>
+        <h1 className={styles.title1}>Alerts</h1>
         <p className={styles.sub1}>
-          Every alert the rules have raised, newest first. Open one to see what
-          the rule means and what to check before acting on it.
+          Every alert the detection rules have raised, newest first. Open one to
+          see what the rule means and what to check before acting on it.
         </p>
       </section>
 
@@ -151,11 +151,7 @@ export function Component(): React.ReactElement {
         ))}
       </section>
 
-      <CropFrame
-        label="alerts // signed ledger"
-        aside={aside}
-        className={styles.frame}
-      >
+      <CropFrame label="alerts" aside={aside} className={styles.frame}>
         <div className={styles.controls}>
           <fieldset className={styles.chips}>
             <legend className={styles.srOnly}>Filter by rule</legend>

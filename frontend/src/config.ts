@@ -18,11 +18,13 @@ export const API_ENDPOINTS = {
   EXPORT: '/export',
   HEALTH: '/health',
   META: '/meta',
+  LIBRARY: '/library',
 } as const
 
 export const QUERY_KEYS = {
   STATS: ['stats'] as const,
   META: ['meta'] as const,
+  LIBRARY: ['library'] as const,
   ALERTS: (limit: number) => ['alerts', limit] as const,
   SEARCH: (query: string, kind: string) => ['search', query, kind] as const,
 } as const
@@ -32,6 +34,7 @@ export const ROUTES = {
   SCOPE: '/scope',
   INTEL: '/intel',
   ALERTS: '/alerts',
+  LIBRARY: '/library',
 } as const
 
 export const STORAGE_KEYS = {

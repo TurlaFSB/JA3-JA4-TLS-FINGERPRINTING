@@ -38,16 +38,25 @@ const KIND_CODE: Record<StreamEvent['kind'], string> = {
   tcp_syn_ack: 'SYK',
 }
 
-type FilterId = 'all' | 'client' | 'server' | 'cert' | 'http' | 'tcp' | 'alert'
+type FilterId =
+  | 'tls'
+  | 'all'
+  | 'client'
+  | 'server'
+  | 'cert'
+  | 'http'
+  | 'tcp'
+  | 'alert'
 
 const FILTERS: { id: FilterId; label: string }[] = [
-  { id: 'all', label: 'all' },
+  { id: 'tls', label: 'handshakes' },
   { id: 'client', label: 'client' },
   { id: 'server', label: 'server' },
   { id: 'cert', label: 'cert' },
   { id: 'http', label: 'http' },
   { id: 'tcp', label: 'tcp' },
   { id: 'alert', label: 'alerts' },
+  { id: 'all', label: 'everything' },
 ]
 
 const KIND_FILTER: Record<StreamEvent['kind'], FilterId> = {
@@ -71,10 +80,14 @@ function searchText(item: LiveItem): string {
 
 function matches(item: LiveItem, filter: FilterId, query: string): boolean {
   const { message } = item
-  if (filter !== 'all') {
-    const group =
-      message.type === 'alert' ? 'alert' : KIND_FILTER[message.event.kind]
-    if (group !== filter) return false
+  const group =
+    message.type === 'alert' ? 'alert' : KIND_FILTER[message.event.kind]
+  if (filter === 'tls') {
+    // Handshakes and requests: everything except raw TCP SYN rows, which
+    // outnumber them and say little on their own.
+    if (group === 'tcp') return false
+  } else if (filter !== 'all' && group !== filter) {
+    return false
   }
   return query === '' || searchText(item).includes(query)
 }
@@ -123,12 +136,12 @@ function FlowRow({
       <span className={styles.time}>{formatClock(event.ts_nanos)}</span>
       <span className={styles.code}>{KIND_CODE[event.kind]}</span>
       <span className={styles.route}>
-        <span className={styles.hosts}>
-          <span className={styles.host}>{src.host}</span>
-          <span className={styles.arrow}>-&gt;</span>
-          <span className={styles.host}>{dst.host}</span>
-        </span>
-        {sni && <span className={styles.sni}>{sni}</span>}
+        <span className={styles.host}>{src.host}</span>
+        <span className={styles.arrow}>-&gt;</span>
+        <span className={styles.host}>{dst.host}</span>
+      </span>
+      <span className={styles.sni} title={sni}>
+        {sni ?? ''}
       </span>
       <span className={styles.fp} title={fingerprint.value}>
         <span className={styles.fpKind}>{fingerprint.kind}</span>
@@ -183,7 +196,7 @@ export function LiveStream({
   onQuery: (value: string) => void
   className?: string
 }): React.ReactElement {
-  const [filter, setFilter] = useState<FilterId>('all')
+  const [filter, setFilter] = useState<FilterId>('tls')
   const [frozen, setFrozen] = useState<LiveItem[] | null>(null)
   const [selected, setSelected] = useState<LiveItem | null>(null)
   // Clearing hides everything seen so far without touching the running counts.
@@ -236,7 +249,7 @@ export function LiveStream({
 
   return (
     <CropFrame
-      label="live // passive wire-tap"
+      label="live stream"
       aside={aside}
       className={cx(styles.frame, className)}
     >

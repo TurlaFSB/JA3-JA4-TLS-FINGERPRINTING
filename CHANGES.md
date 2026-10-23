@@ -79,5 +79,11 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Intelligence
 - Four Firefox 158 rows (three JA4 and the stable JA3) observed on a real Windows machine join the curated set: 309 fingerprints. Brave and Edge are left out on purpose, because an impersonation profile sends the same fingerprint. `docs/INTELLIGENCE.md` documents importing ja4db.com and extending the feed. No further public feeds were added: ja4db.com and abuse.ch were not reachable from the build environment, and the two reachable lists state no licence.
 
+## Capture library and a quieter dashboard
+- `tlsfp serve --library DIR` (env `TLSFP_LIBRARY`, repeatable) finds `.pcap` and `.pcapng` files in a folder, reads each once, and names the client in it: from an exact intelligence match when there is one, otherwise from the shape of the ClientHello (ALPS means Chromium; `record_size_limit` with `delegated_credentials` means Firefox; `encrypt_then_mac` means OpenSSL). New and changed files are picked up every 20 seconds. Analysis only: nothing is alerted or written to the database; symbolic links are not followed; only relative names are shown. `tlsfp identify FILE|DIR...` does the same from a terminal.
+- `eval/identify.py` checks the family rules against the labelled lab captures with an empty database: 74 of 74 browsers and profiles named with the right family, 0 of 21 libraries called a browser. The rules were written after reading those captures, so this is a regression check, not an out-of-sample accuracy.
+- Library page in the menu (Scope, Alerts, Library, Intel). The Docker stack mounts `tlsfp-captures` in the user's home folder read-only at `/captures`, where the Windows capture script saves, so captures appear without configuration.
+- Dashboard layout: the alert ledger left the Scope page (Alerts has its own), page titles and artwork shrank, the decorative ticker and labelled-with-slashes panel titles are gone, dim text has more contrast, the stream defaults to handshakes only (raw TCP SYN rows are one click away) and each row is one line with the server name in its own column.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

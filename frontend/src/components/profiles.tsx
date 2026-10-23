@@ -408,7 +408,7 @@ export function Profiles({
 
   return (
     <CropFrame
-      label="profiles // who is talking to whom"
+      label="clients and destinations"
       aside={aside}
       className={className}
     >

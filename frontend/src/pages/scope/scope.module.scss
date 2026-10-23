@@ -20,9 +20,9 @@
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
-  align-items: end;
+  align-items: center;
   gap: $space-5;
-  padding-bottom: $space-4;
+  padding-bottom: $space-3;
   border-bottom: 1px solid $line;
   overflow: hidden;
 
@@ -34,8 +34,8 @@
 .butterfly {
   position: absolute;
   top: 50%;
-  left: 36%;
-  width: 360px;
+  left: 30%;
+  width: 150px;
   transform: translateY(-50%);
   mix-blend-mode: screen;
   opacity: 0.16;
@@ -61,10 +61,12 @@
 
 .title {
   font-family: $font-display;
-  font-size: clamp(2.6rem, 6vw, 4.5rem);
-  line-height: 0.9;
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  line-height: 1;
   color: $bone;
   margin: 0 0 $space-3-5;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .sub {
@@ -84,10 +86,9 @@
   flex: 1;
   display: grid;
   grid-template:
-    'live anomaly' minmax(300px, auto)
-    'live dist' minmax(260px, auto)
+    'live anomaly' minmax(240px, auto)
+    'live dist' minmax(280px, auto)
     'profiles profiles' auto
-    'alerts alerts' auto
     / minmax(0, 1.62fr) minmax(0, 1fr);
   gap: $space-4;
 
@@ -97,7 +98,6 @@
       'anomaly'
       'dist'
       'profiles'
-      'alerts'
       / 1fr;
   }
 }
@@ -118,8 +118,3 @@
   grid-area: profiles;
 }
 
-.alerts {
-  grid-area: alerts;
-  min-height: 300px;
-  max-height: 440px;
-}

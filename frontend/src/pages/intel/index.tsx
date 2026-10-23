@@ -16,12 +16,12 @@ export function Component(): React.ReactElement {
       <section className={styles.head}>
         <img src="/assets/objects/xray-lily.png" alt="" className={styles.lily} />
         <div className={styles.headText}>
-          <span className={styles.over}>threat intelligence / catalogue</span>
-          <h1 className={styles.title}>THE CORPUS</h1>
+          <span className={styles.over}>intelligence</span>
+          <h1 className={styles.title}>Intelligence feed</h1>
           <p className={styles.sub}>
-            {(data?.intel.total ?? 0).toLocaleString()} fingerprints fused from{' '}
-            {sources.length} feeds. Query it for a known hand, or carry the ledger
-            out.
+            {(data?.intel.total ?? 0).toLocaleString()} fingerprints from{' '}
+            {sources.length} sources. Search the catalogue by label or
+            fingerprint, check where each feed comes from, or export the alerts.
           </p>
         </div>
       </section>
@@ -30,7 +30,7 @@ export function Component(): React.ReactElement {
         <SearchPanel className={styles.search} />
 
         <div className={styles.side}>
-          <CropFrame label="feeds // provenance" className={styles.feeds}>
+          <CropFrame label="feeds and licences" className={styles.feeds}>
             <ul className={styles.feedList}>
               {sources.map((source) => (
                 <li key={source.name} className={styles.feed}>
@@ -48,7 +48,7 @@ export function Component(): React.ReactElement {
             </ul>
           </CropFrame>
 
-          <CropFrame label="export // ledger" className={styles.export}>
+          <CropFrame label="export alerts" className={styles.export}>
             <div className={styles.exportBody}>
               <p className={styles.exportNote}>
                 Carry the alert ledger out, structured for a report or raw for a

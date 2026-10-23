@@ -8,7 +8,7 @@ import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useMeta, useStats } from '@/api/hooks'
 import { describeSource } from '@/api/types'
-import { cx, RegMark, Ticker } from '@/components'
+import { cx, RegMark } from '@/components'
 import { ROUTES } from '@/config'
 import { resolveTheme, useTheme, useUIStore } from '@/core/lib/shell.ui.store'
 import styles from './shell.module.scss'
@@ -16,23 +16,8 @@ import styles from './shell.module.scss'
 const NAV = [
   { to: ROUTES.SCOPE, label: 'scope' },
   { to: ROUTES.ALERTS, label: 'alerts' },
+  { to: ROUTES.LIBRARY, label: 'library' },
   { to: ROUTES.INTEL, label: 'intel' },
-]
-
-const TICKER = [
-  'ja3',
-  'ja3s',
-  'ja4',
-  'ja4s',
-  'ja4h',
-  'ja4x',
-  'ja4t',
-  'ja4ts',
-  'quic-initial decryption',
-  'passive capture only',
-  'no tshark dependency',
-  'the fingerprint outs the lie',
-  'biometric of the handshake',
 ]
 
 function pad(value: number): string {
@@ -127,6 +112,7 @@ function ShellLoading(): React.ReactElement {
 const TITLES: Record<string, string> = {
   [ROUTES.SCOPE]: 'Live scope',
   [ROUTES.ALERTS]: 'Alerts',
+  [ROUTES.LIBRARY]: 'Capture library',
   [ROUTES.INTEL]: 'Intelligence',
 }
 
@@ -181,10 +167,6 @@ export function Shell(): React.ReactElement {
           </Suspense>
         </ErrorBoundary>
       </main>
-
-      <footer className={styles.foot}>
-        <Ticker items={TICKER} />
-      </footer>
     </div>
   )
 }

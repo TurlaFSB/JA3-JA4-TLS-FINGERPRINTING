@@ -22,18 +22,22 @@ export function StatCluster({
   const stats = [
     {
       value: data?.intel.total ?? 0,
-      label: 'intel corpus',
-      sub: 'fingerprints held',
+      label: 'fingerprints',
+      sub: 'in the intelligence feed',
     },
-    { value: data?.alert_total ?? 0, label: 'alerts', sub: 'rules tripped' },
+    {
+      value: data?.alert_total ?? 0,
+      label: 'alerts',
+      sub: 'recorded by the rules',
+    },
     {
       value: data?.intel.sources.length ?? 0,
       label: 'feeds',
-      sub: 'sources fused',
+      sub: 'intelligence sources',
     },
     {
       value: flowCount,
-      label: 'live flows',
+      label: 'handshakes',
       sub: `${perSecond}/s now`,
       trace: rate,
     },

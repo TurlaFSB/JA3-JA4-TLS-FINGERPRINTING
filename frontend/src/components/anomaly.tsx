@@ -36,7 +36,7 @@ export function AnomalyHighlights({
 
   return (
     <CropFrame
-      label="anomaly // the lie the scan caught"
+      label="anomalies"
       tone={loud.length > 0 ? 'hot' : 'cold'}
       className={cx(styles.frame, className)}
     >
@@ -44,9 +44,9 @@ export function AnomalyHighlights({
         {loud.length === 0 ? (
           <div className={styles.clean}>
             <Reticle className={styles.reticle} />
-            <div className={styles.cleanLine}>no contradiction on the wire</div>
+            <div className={styles.cleanLine}>No anomalies</div>
             <div className={styles.cleanSub}>
-              every handshake agrees with what it claims to be
+              No rule has flagged a mismatch or a known-bad fingerprint.
             </div>
           </div>
         ) : (

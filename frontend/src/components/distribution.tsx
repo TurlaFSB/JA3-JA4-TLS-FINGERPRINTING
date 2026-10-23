@@ -43,10 +43,7 @@ export function Distribution({
   const ruleMax = Math.max(1, ...rules.map((row) => row.count))
 
   return (
-    <CropFrame
-      label="distribution // census"
-      className={cx(styles.frame, className)}
-    >
+    <CropFrame label="distribution" className={cx(styles.frame, className)}>
       <div className={styles.body}>
         <div className={styles.group}>
           <div className={styles.groupHead}>intel corpus / category</div>

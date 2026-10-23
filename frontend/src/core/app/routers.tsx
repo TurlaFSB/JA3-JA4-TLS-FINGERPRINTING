@@ -24,6 +24,10 @@ const routes: RouteObject[] = [
         lazy: () => import('@/pages/alerts'),
       },
       {
+        path: ROUTES.LIBRARY,
+        lazy: () => import('@/pages/library'),
+      },
+      {
         path: ROUTES.INTEL,
         lazy: () => import('@/pages/intel'),
       },

@@ -53,12 +53,15 @@ services:
       - backend
     environment:
       - RUST_LOG=${RUST_LOG:-tlsfp=info}
+      - TLSFP_LIBRARY=/captures
       - TLSFP_SENSOR_LOCATION=${TLSFP_SENSOR_LOCATION:-}
     volumes:
       - tlsfp_data:/data
-      # To replay your own capture: set CAPTURE_DIR to its folder and
-      # REPLAY_PCAP to /cap/<file> (see docs/BROWSER_CAPTURE.md).
-      - ${CAPTURE_DIR:-./testdata}:/cap:ro
+      # Capture files in this folder are found, identified and listed on the
+      # Library page, and new ones are picked up while it runs. The default is
+      # tlsfp-captures in your home folder, where scripts/capture-browser.ps1
+      # saves. Set CAPTURE_DIR to use another folder. Mounted read-only.
+      - ${CAPTURE_DIR:-${USERPROFILE:-${HOME}}/tlsfp-captures}:/captures:ro
     networks:
       - app
     deploy:

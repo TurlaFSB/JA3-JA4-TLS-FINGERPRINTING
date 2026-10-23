@@ -63,6 +63,7 @@ tlsfp pcap capture.pcapng --report           # ranked forensic summary
 tlsfp live eth0 --intel --detect             # live capture
 tlsfp live eth0 --filter "tcp port 443"      # narrow the kernel BPF filter
 
+tlsfp identify captures/                     # which client is in each capture file
 tlsfp intel seed                             # load bundled feeds
 tlsfp intel import ja4db.json                # import a ja4db.com export (validated per record)
 tlsfp intel lookup ja4 t13d1516h2_8daaf6152771_e5627efa2ab1
@@ -71,6 +72,7 @@ tlsfp intel alerts                           # recent alerts
 tlsfp serve 127.0.0.1:8080                   # API and dashboard, tails the database
 tlsfp serve --replay capture.pcapng --loop   # dashboard fed from a replayed capture
 tlsfp serve --live eth0                      # dashboard fed from a live interface
+tlsfp serve --library ~/tlsfp-captures       # also list and identify the capture files in a folder
 tlsfp serve --location "DC-2 rack 14"        # label shown in the dashboard header (or TLSFP_SENSOR_LOCATION)
 tlsfp pcap x.pcap --detect --shared-network 10.0.0.0/8   # NAT or proxy addresses (or TLSFP_SHARED_NETWORKS)
 ```
@@ -163,6 +165,7 @@ Forensic report (`--report`) summarizes a whole capture: frame and flow counts, 
 
 - **Opens populated:** the server keeps the last 500 events and sends them in one piece on connect, so a new page shows what has already happened; new events then stream in. A replayed capture is loaded at full speed on its first pass.
 - **Profiles:** the live window grouped by client fingerprint or by destination. Each fingerprint expands to its decoded JA4, connections over time, JA3 variants, destinations and exact intelligence matches, and can be sent to the stream filter. Tick two fingerprints to compare them side by side: decoded fields, and the cipher suites, extensions and signature algorithms present in only one. Both tables export to CSV.
+- **Library page:** capture files found in a watched folder (`--library DIR`, or `~/tlsfp-captures` under Docker), each read once and matched to its client, with the evidence and the impersonation caveat. [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md).
 - **Alerts page:** every alert with severity and rule filters, search, a plain explanation of each rule and what to verify before acting, and export.
 - **Themes:** dark and light, remembered per browser. `/` focuses the stream filter.
 - **Live stream:** filter by event type (client, server, certificate, HTTP, TCP) or free text (IP, SNI, fingerprint); pause and resume; click any row for the full detail: every fingerprint in raw and hashed form, a field-by-field JA4 breakdown, matching intelligence and any alerts, with copy buttons.

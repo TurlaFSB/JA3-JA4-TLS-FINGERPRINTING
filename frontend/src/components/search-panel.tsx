@@ -69,7 +69,7 @@ export function SearchPanel({
 
   return (
     <CropFrame
-      label="catalogue // query the corpus"
+      label="catalogue"
       aside={aside}
       className={cx(styles.frame, className)}
     >

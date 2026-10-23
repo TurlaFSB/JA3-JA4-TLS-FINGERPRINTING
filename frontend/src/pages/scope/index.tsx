@@ -7,7 +7,6 @@ import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useLiveStream } from '@/api/hooks'
 import {
-  AlertFeed,
   AnomalyHighlights,
   Distribution,
   LiveStream,
@@ -38,11 +37,11 @@ export function Component(): React.ReactElement {
           className={styles.butterfly}
         />
         <div className={styles.headText}>
-          <span className={styles.over}>passive tls surveillance / live</span>
-          <h1 className={styles.title}>THE SCOPE</h1>
+          <span className={styles.over}>live</span>
+          <h1 className={styles.title}>Scope</h1>
           <p className={styles.sub}>
-            Fingerprints crossing the wire, scored against the corpus and read for
-            the lie they tell.
+            TLS and QUIC handshakes as they cross the sensor, matched against the
+            intelligence feed. Alerts are on their own page.
           </p>
         </div>
         <StatCluster
@@ -68,7 +67,6 @@ export function Component(): React.ReactElement {
           onShowInStream={showInStream}
           className={styles.profiles}
         />
-        <AlertFeed className={styles.alerts} />
       </section>
     </div>
   )

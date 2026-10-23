@@ -21,7 +21,9 @@ import {
   catalogEntrySchema,
   type FpKind,
   isLiveMessage,
+  type LibraryView,
   type LiveMessage,
+  libraryViewSchema,
   type MetaResponse,
   metaSchema,
   type StatsResponse,
@@ -36,6 +38,11 @@ async function getStats(): Promise<StatsResponse> {
 async function getMeta(): Promise<MetaResponse> {
   const { data } = await apiClient.get(API_ENDPOINTS.META)
   return metaSchema.parse(data)
+}
+
+async function getLibrary(): Promise<LibraryView> {
+  const { data } = await apiClient.get(API_ENDPOINTS.LIBRARY)
+  return libraryViewSchema.parse(data)
 }
 
 async function getAlerts(limit: number): Promise<Alert[]> {
@@ -73,6 +80,16 @@ export function useMeta(): UseQueryResult<MetaResponse> {
     queryFn: getMeta,
     refetchInterval: QUERY_CONFIG.STALE_TIME.FREQUENT * 2,
     retry: QUERY_CONFIG.RETRY.NONE,
+  })
+}
+
+// The capture files the server found in its library directories and what it
+// identified in each. Polled, because the scan runs in the background.
+export function useLibrary(): UseQueryResult<LibraryView> {
+  return useQuery({
+    queryKey: QUERY_KEYS.LIBRARY,
+    queryFn: getLibrary,
+    refetchInterval: QUERY_CONFIG.STALE_TIME.FREQUENT,
   })
 }
 

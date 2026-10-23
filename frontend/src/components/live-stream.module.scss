@@ -146,7 +146,7 @@
   cursor: pointer;
   display: grid;
   grid-template-columns:
-    82px 38px minmax(96px, 1.05fr) minmax(150px, 1.7fr) auto;
+    82px 38px minmax(150px, 1.3fr) minmax(90px, 1fr) minmax(150px, 1.6fr) auto;
   align-items: center;
   gap: $space-3;
   padding: 5px $space-3;
@@ -190,24 +190,16 @@
 
 .route {
   display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  color: $paper;
-}
-
-.hosts {
-  display: flex;
   align-items: center;
   gap: $space-2;
   min-width: 0;
+  color: $paper;
 }
 
 .sni {
   @include truncate;
 
   color: $ash;
-  font-size: $font-size-3xs;
 }
 
 .host {
@@ -314,7 +306,7 @@
 .alertTitle {
   @include truncate;
 
-  grid-column: 3 / 5;
+  grid-column: 3 / 6;
   color: $bone;
 }
 
