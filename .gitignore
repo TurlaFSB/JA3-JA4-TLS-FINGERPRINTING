@@ -14,3 +14,4 @@ node_modules/
 dist/
 **/dist/
 .biome_cache/
+__pycache__/

@@ -20,6 +20,12 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 HERE = os.path.dirname(os.path.abspath(__file__))
 HOST = "localhost"
 
+# Browser ClientHello profiles shipped with curl_cffi (curl-impersonate). Real
+# browsers are not installable in the lab, so these stand in for them and are
+# labeled as impersonation, never as the browser itself.
+IMPERSONATE = ["chrome150", "chrome142", "chrome131", "chrome124", "chrome120", "edge101",
+               "firefox147", "firefox133", "safari2601", "safari180_ios", "tor145"]
+
 
 class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
@@ -90,6 +96,7 @@ def build_clients(port, n, tmp):
         clients["curl"] = (out(["curl", "--version"]), loop(["curl", "-sk", "--http1.1", url]))
         clients["curl-http2"] = (out(["curl", "--version"]), loop(["curl", "-sk", "--http2", url]))
     if shutil.which("wget"):
+        clients["wget-tls12"] = (out(["wget", "--version"]), loop(["wget", "-q", "-O", "/dev/null", "--no-check-certificate", "--secure-protocol=TLSv1_2", url]))
         clients["wget"] = (out(["wget", "--version"]), loop(["wget", "-q", "-O", "/dev/null", "--no-check-certificate", url]))
     if shutil.which("openssl"):
         def s_client():
@@ -113,10 +120,75 @@ def build_clients(port, n, tmp):
         r = subprocess.run(["go", "build", "-o", gobin, os.path.join(HERE, "goclient.go")], capture_output=True)
         if r.returncode == 0:
             clients["go-net-http"] = (out(["go", "version"]), lambda: subprocess.run([gobin, url, str(n)], capture_output=True, timeout=120))
+            clients["go-http2"] = (out(["go", "version"]) + " (HTTP/2)", lambda: subprocess.run([gobin, url, str(n), "h2"], capture_output=True, timeout=120))
     if shutil.which("node"):
         js = ("process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';const https=require('https');"
               f"(async()=>{{for(let i=0;i<{n};i++)await new Promise(r=>https.get('{url}',{{agent:new https.Agent({{keepAlive:false}})}},x=>{{x.resume();x.on('end',r)}}).on('error',r));}})()")
         clients["node-https"] = (f"node {out(['node', '--version'])}", once(["node", "-e", js]))
+    py = sys.executable
+
+    def pycode(code):
+        return once([py, "-c", code])
+
+    def have(*mods):
+        return subprocess.run([py, "-c", "import " + ",".join(mods)], capture_output=True).returncode == 0
+
+    pyv = f"python {platform.python_version()}"
+    if have("httpx"):
+        import httpx
+        clients["python-httpx"] = (f"httpx {httpx.__version__} {pyv} {ssl.OPENSSL_VERSION}", pycode(
+            f"import httpx;[httpx.Client(verify=False).get('{url}') for _ in range({n})]"))
+    if have("aiohttp"):
+        import aiohttp
+        clients["python-aiohttp"] = (f"aiohttp {aiohttp.__version__} {pyv} {ssl.OPENSSL_VERSION}", pycode(
+            "import asyncio,aiohttp\n"
+            "async def main():\n"
+            f"    for _ in range({n}):\n"
+            "        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False)) as s:\n"
+            f"            async with s.get('{url}') as r:\n"
+            "                await r.read()\n"
+            "asyncio.run(main())\n"))
+    if shutil.which("curl"):
+        clients["curl-tls13"] = (out(["curl", "--version"]), loop(["curl", "-sk", "--http1.1", "--tlsv1.3", url]))
+        clients["curl-tls12"] = (out(["curl", "--version"]), loop(["curl", "-sk", "--http1.1", "--tlsv1.2", "--tls-max", "1.2", url]))
+    if shutil.which("openssl"):
+        def s_client_h2():
+            for _ in range(n):
+                subprocess.run(["openssl", "s_client", "-alpn", "h2", "-connect", f"127.0.0.1:{port}", "-servername", HOST],
+                               input=b"", capture_output=True, timeout=30)
+        clients["openssl-s_client-alpn-h2"] = (out(["openssl", "version"]), s_client_h2)
+
+        def s_client12():
+            for _ in range(n):
+                subprocess.run(["openssl", "s_client", "-tls1_2", "-connect", f"127.0.0.1:{port}", "-servername", HOST],
+                               input=b"", capture_output=True, timeout=30)
+        clients["openssl-s_client-tls12"] = (out(["openssl", "version"]), s_client12)
+    if shutil.which("java"):
+        java_src = os.path.join(HERE, "JavaClient.java")
+        jv = subprocess.run(["java", "-version"], capture_output=True, text=True).stderr.splitlines()
+        jv = next((l for l in jv if "version" in l and "Picked up" not in l), "java")
+        clients["java-httpclient"] = (jv, once(["java", java_src, url, str(n)]))
+        clients["java-urlconnection"] = (jv, once(["java", java_src, url, str(n), "urlconn"]))
+    if shutil.which("ruby"):
+        rb = ("require 'net/http';require 'openssl';u=URI(ARGV[0]);"
+              "ARGV[1].to_i.times{Net::HTTP.start(u.host,u.port,use_ssl:true,verify_mode:OpenSSL::SSL::VERIFY_NONE){|h|h.get('/')}}")
+        clients["ruby-net-http"] = (out(["ruby", "-v"]), once(["ruby", "-e", rb, url, str(n)]))
+    if shutil.which("php"):
+        ph = (f"$c=stream_context_create(['ssl'=>['verify_peer'=>false,'verify_peer_name'=>false]]);"
+              f"for($i=0;$i<{n};$i++){{@file_get_contents('{url}',false,$c);}}")
+        clients["php-stream"] = (out(["php", "-v"]), once(["php", "-r", ph]))
+        if subprocess.run(["php", "-r", "exit(extension_loaded('curl') ? 0 : 1);"]).returncode == 0:
+            pc = (f"for($i=0;$i<{n};$i++){{$h=curl_init('{url}');curl_setopt($h,CURLOPT_SSL_VERIFYPEER,false);"
+                  f"curl_setopt($h,CURLOPT_SSL_VERIFYHOST,0);curl_setopt($h,CURLOPT_RETURNTRANSFER,true);"
+                  f"curl_exec($h);curl_close($h);}}")
+            clients["php-curl"] = (out(["php", "-v"]) + "; " + out(["php", "-r", "echo curl_version()['version'].' '.curl_version()['ssl_version'];"]), once(["php", "-r", pc]))
+    if have("curl_cffi"):
+        import curl_cffi
+        for imp in IMPERSONATE:
+            code = (f"from curl_cffi import requests as r\n"
+                    f"for _ in range({n}):\n"
+                    f"    r.get('{url}', impersonate='{imp}', verify=False, timeout=10)\n")
+            clients[f"curl_cffi-{imp}"] = (f"curl_cffi {curl_cffi.__version__} impersonate={imp}; {curl_cffi.__curl_version__}", pycode(code))
     chrome = chromium_path()
     if chrome:
         def chromium():
@@ -158,7 +230,7 @@ def sha256(path):
 def scrub_proxy_env():
     """Clients must talk to the loopback server directly, never through a proxy."""
     for k in list(os.environ):
-        if k.lower() in ("http_proxy", "https_proxy", "all_proxy", "no_proxy"):
+        if k.lower() in ("http_proxy", "https_proxy", "all_proxy", "no_proxy", "java_tool_options"):
             del os.environ[k]
     os.environ["NO_PROXY"] = os.environ["no_proxy"] = "*"
 
@@ -168,7 +240,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--out", required=True)
     ap.add_argument("--repeat", type=int, default=20)
+    ap.add_argument("--extra-impersonate", default="", help="comma-separated extra curl_cffi profiles to capture")
+    ap.add_argument("--only", help="comma-separated client labels to run (default: all available)")
     args = ap.parse_args()
+    IMPERSONATE.extend(p for p in args.extra_impersonate.split(",") if p and p not in IMPERSONATE)
     if not shutil.which("tcpdump"):
         sys.exit("tcpdump is required")
     os.makedirs(os.path.join(args.out, "pcap"), exist_ok=True)
@@ -176,6 +251,9 @@ def main():
         crt, key = make_cert(tmp)
         srv, port = start_server(crt, key)
         clients = build_clients(port, args.repeat, tmp)
+        if args.only:
+            wanted = set(args.only.split(","))
+            clients = {k: v for k, v in clients.items() if k in wanted}
         entries = {}
         for label, (version, run) in clients.items():
             pcap = os.path.join(args.out, "pcap", f"{label}.pcap")

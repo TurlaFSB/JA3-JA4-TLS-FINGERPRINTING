@@ -1,5 +1,5 @@
 // goclient.go: minimal Go net/http HTTPS client for the dataset lab.
-// Usage: goclient URL COUNT
+// Usage: goclient URL COUNT [h2]   (h2 enables HTTP/2 negotiation)
 package main
 
 import (
@@ -14,10 +14,12 @@ import (
 func main() {
 	url := os.Args[1]
 	n, _ := strconv.Atoi(os.Args[2])
+	h2 := len(os.Args) > 3 && os.Args[3] == "h2"
 	for i := 0; i < n; i++ {
 		// A fresh transport per request forces a fresh TLS handshake.
 		client := &http.Client{Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+			ForceAttemptHTTP2: h2,
 		}}
 		resp, err := client.Get(url)
 		if err != nil {

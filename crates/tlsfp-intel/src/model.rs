@@ -270,9 +270,9 @@ impl MatchReport {
     /// The threat score follows the prevalence idea from public sandboxes: a
     /// fingerprint seen mostly in malicious sources scores high, one seen mostly
     /// in benign sources scores low, and one claimed by both lands in the
-    /// middle. Each hit contributes its match strength as weight, so an exact
-    /// hash hit counts for more than a partial cipher hit. Suspicious, dual use
-    /// hits count as half a malicious vote.
+    /// middle. Only hits at the strongest match level vote, so an exact hit is
+    /// never outvoted by partial ones. Suspicious, dual use hits count as half
+    /// a malicious vote.
     ///
     /// Confidence is separate from the score: it says how sure the verdict is,
     /// rising with the strength of the best match and with the number of
@@ -289,13 +289,25 @@ impl MatchReport {
             };
         }
 
+        // Only the strongest tier of matches votes. An exact hit already says
+        // what the client is; similar-looking neighbours (same cipher list, a
+        // different extension set) are kept on the report as hints but must not
+        // outvote it, or the most common client on a network becomes
+        // "suspicious" the moment a lookalike tool is catalogued beside it.
+        let best = hits
+            .iter()
+            .map(|hit| hit.strength.weight())
+            .fold(0.0_f64, f64::max);
+        let voting: Vec<&IntelHit> = hits
+            .iter()
+            .filter(|hit| (hit.strength.weight() - best).abs() < f64::EPSILON)
+            .collect();
+
         let mut malicious = 0.0;
         let mut suspicious = 0.0;
         let mut benign = 0.0;
-        let mut best = 0.0_f64;
-        for hit in &hits {
+        for hit in &voting {
             let weight = hit.strength.weight();
-            best = best.max(weight);
             match hit.category.severity() {
                 Severity::Malicious => malicious += weight,
                 Severity::Suspicious => suspicious += weight,
@@ -313,7 +325,25 @@ impl MatchReport {
             Verdict::Suspicious
         };
 
-        let aligned = hits
+        // A benign verdict vouches for the client, so only an exact match may
+        // issue it. A partial match means "shares the cipher list with a known
+        // good client", which any tool can copy; measured against curl-impersonate
+        // profiles it labelled unrelated clients as Chrome. The hits stay on the
+        // report as a similarity hint, but the verdict is unknown. The same
+        // doubt does not apply the other way: a partial match to malicious
+        // intelligence still raises the score.
+        if verdict == Verdict::Benign && best < MatchStrength::Exact.weight() {
+            return Self {
+                kind,
+                observed,
+                verdict: Verdict::Unknown,
+                threat_score,
+                confidence: 0.0,
+                hits,
+            };
+        }
+
+        let aligned = voting
             .iter()
             .filter(|hit| verdict_aligns(verdict, hit.category.severity()))
             .count();
@@ -429,6 +459,72 @@ mod tests {
         assert_eq!(report.verdict, Verdict::Benign);
         assert!((report.threat_score - 0.0).abs() < 1e-9);
         assert!((report.confidence - 0.8).abs() < 1e-9);
+    }
+
+    #[test]
+    fn partial_match_to_benign_intel_does_not_vouch_for_the_client() {
+        for strength in [MatchStrength::CipherAndPrefix, MatchStrength::CipherOnly] {
+            let report = MatchReport::from_hits(
+                FpKind::Ja4,
+                "x".into(),
+                vec![hit(Category::Benign, strength)],
+            );
+            assert_eq!(report.verdict, Verdict::Unknown, "{strength:?}");
+            assert!(report.confidence.abs() < 1e-9);
+            assert!(report.has_hits(), "the similarity hint stays on the report");
+        }
+    }
+
+    #[test]
+    fn one_exact_benign_hit_still_earns_a_benign_verdict_beside_partial_ones() {
+        let report = MatchReport::from_hits(
+            FpKind::Ja4,
+            "x".into(),
+            vec![
+                hit(Category::Benign, MatchStrength::Exact),
+                hit(Category::Benign, MatchStrength::CipherOnly),
+            ],
+        );
+        assert_eq!(report.verdict, Verdict::Benign);
+    }
+
+    #[test]
+    fn partial_match_to_malicious_intel_still_raises_the_verdict() {
+        let report = MatchReport::from_hits(
+            FpKind::Ja4,
+            "x".into(),
+            vec![hit(Category::Malware, MatchStrength::CipherAndPrefix)],
+        );
+        assert_eq!(report.verdict, Verdict::Malicious);
+    }
+
+    #[test]
+    fn partial_neighbours_do_not_outvote_an_exact_match() {
+        let report = MatchReport::from_hits(
+            FpKind::Ja4,
+            "x".into(),
+            vec![
+                hit(Category::Benign, MatchStrength::Exact),
+                hit(Category::Tool, MatchStrength::CipherAndPrefix),
+                hit(Category::Tool, MatchStrength::CipherAndPrefix),
+                hit(Category::Malware, MatchStrength::CipherOnly),
+            ],
+        );
+        assert_eq!(report.verdict, Verdict::Benign);
+        assert_eq!(report.hits.len(), 4, "neighbours stay visible as hints");
+    }
+
+    #[test]
+    fn without_an_exact_match_the_strongest_partial_tier_decides() {
+        let report = MatchReport::from_hits(
+            FpKind::Ja4,
+            "x".into(),
+            vec![
+                hit(Category::Malware, MatchStrength::CipherAndPrefix),
+                hit(Category::Benign, MatchStrength::CipherOnly),
+            ],
+        );
+        assert_eq!(report.verdict, Verdict::Malicious);
     }
 
     #[test]

@@ -1,0 +1,441 @@
+{
+  "dataset_version": "v0.2",
+  "ja3": {
+    "clients": 28,
+    "clients_with_unique_dominant_fingerprint": 23,
+    "mean_distinct_per_client": 4.714,
+    "mean_dominant_share": 0.7968,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 9,
+        "dominant": "4e933071b48cadc84a39af55f2f2e914",
+        "dominant_share": 0.1111,
+        "handshakes": 9,
+        "shared_with": []
+      },
+      "curl": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl-http2",
+          "php-curl"
+        ]
+      },
+      "curl-http2": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl",
+          "php-curl"
+        ]
+      },
+      "curl-tls12": {
+        "distinct": 1,
+        "dominant": "87b9bfc7da97115ed2276737b09f8d74",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome120": {
+        "distinct": 20,
+        "dominant": "1f7ac6e29cbde229b3c7ff1e205b3359",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome124": {
+        "distinct": 20,
+        "dominant": "65e9a11b12ec6f242181bdf088ce4a4e",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome131": {
+        "distinct": 20,
+        "dominant": "c913677bd5205e50f19a175cf7523178",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome142": {
+        "distinct": 20,
+        "dominant": "93495df4c1a367b0817dd10e638bc3ee",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome150": {
+        "distinct": 20,
+        "dominant": "025a48b1c56780013479bc9fa64687f3",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-edge101": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-firefox133": {
+        "distinct": 1,
+        "dominant": "2d692a4485ca2f5f2b10ecb2d2909ad3",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-firefox147": {
+        "distinct": 1,
+        "dominant": "6f7889b9fb1a62a9577e685c1fcfa919",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-safari180_ios": {
+        "distinct": 1,
+        "dominant": "773906b0efdefa24a7f2b8eb6985bf37",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-safari2601": {
+        "distinct": 1,
+        "dominant": "ecdf4f49dd59effc439639da29186671",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-tor145": {
+        "distinct": 1,
+        "dominant": "0faf2a91198d40dbd58b9308f3fca2fd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "go-net-http": {
+        "distinct": 1,
+        "dominant": "8bee49baa010986785a9e74d688ed7e9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "java-httpclient": {
+        "distinct": 2,
+        "dominant": "57128db24fb3c2fc035d6a39ccb08cac",
+        "dominant_share": 0.95,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "node-https": {
+        "distinct": 1,
+        "dominant": "944d1e1858cd278718f8a46b65d3212f",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client": {
+        "distinct": 1,
+        "dominant": "a3afc2c46ba4a7d7fbe1cfb7a3031c2f",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client-tls12": {
+        "distinct": 1,
+        "dominant": "871a754af286dfb70c1b53c6887c62e0",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "php-curl": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl",
+          "curl-http2"
+        ]
+      },
+      "php-stream": {
+        "distinct": 1,
+        "dominant": "a468eae2a82cd86fea9fd0c541ed8ff0",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-aiohttp": {
+        "distinct": 1,
+        "dominant": "304734bb1c086c3453b387400cf83f11",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-httpx"
+        ]
+      },
+      "python-httpx": {
+        "distinct": 1,
+        "dominant": "304734bb1c086c3453b387400cf83f11",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-aiohttp"
+        ]
+      },
+      "python-requests": {
+        "distinct": 1,
+        "dominant": "a48c0d5f95b1ef98f560f324fd275da1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-urllib": {
+        "distinct": 1,
+        "dominant": "93c7d42c0df602fb91589311534831f5",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "ruby-net-http": {
+        "distinct": 1,
+        "dominant": "86d37534033d9c5b60a83ff8b2fbeea3",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget": {
+        "distinct": 1,
+        "dominant": "e91ce64088cf382a3a56b713620f0204",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      }
+    }
+  },
+  "ja4": {
+    "clients": 28,
+    "clients_with_unique_dominant_fingerprint": 21,
+    "mean_distinct_per_client": 1.107,
+    "mean_dominant_share": 0.9788,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_e15453cad77d",
+        "dominant_share": 0.5556,
+        "handshakes": 9,
+        "shared_with": []
+      },
+      "curl": {
+        "distinct": 1,
+        "dominant": "t13d3112h1_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl-http2": {
+        "distinct": 1,
+        "dominant": "t13d3112h2_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "php-curl"
+        ]
+      },
+      "curl-tls12": {
+        "distinct": 1,
+        "dominant": "t12d2807h1_d943125447b4_a44c6288192a",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome120": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 0.9,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome124",
+          "curl_cffi-chrome131"
+        ]
+      },
+      "curl_cffi-chrome124": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome131"
+        ]
+      },
+      "curl_cffi-chrome131": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome124"
+        ]
+      },
+      "curl_cffi-chrome142": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome150": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_806a8c22fdea",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-edge101": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-firefox133": {
+        "distinct": 1,
+        "dominant": "t13d1716h2_5b57614c22b0_eeeea6562960",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-firefox147": {
+        "distinct": 1,
+        "dominant": "t13d1717h2_5b57614c22b0_3cbfd9057e0d",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-safari180_ios": {
+        "distinct": 1,
+        "dominant": "t13d2014h2_a09f3c656075_e42f34c56612",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-safari2601": {
+        "distinct": 1,
+        "dominant": "t13d2013h2_a09f3c656075_7f0f34a4126d",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-tor145": {
+        "distinct": 1,
+        "dominant": "t13d1513h2_8daaf6152771_748f4c70de1c",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "go-net-http": {
+        "distinct": 1,
+        "dominant": "t13d131000_f57a46bbacb6_e7c285222651",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "java-httpclient": {
+        "distinct": 2,
+        "dominant": "t13d311300_1d947a95fc68_d6a918353cf0",
+        "dominant_share": 0.95,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "node-https": {
+        "distinct": 1,
+        "dominant": "t13d521100_b262b3658495_8e6e362c5eac",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client": {
+        "distinct": 1,
+        "dominant": "t13d311000_e8f1e7e78f70_1f22a2ca17c4",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client-tls12": {
+        "distinct": 1,
+        "dominant": "t12d280700_d943125447b4_e7e480e5a997",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "php-curl": {
+        "distinct": 1,
+        "dominant": "t13d3112h2_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl-http2"
+        ]
+      },
+      "php-stream": {
+        "distinct": 1,
+        "dominant": "t13d751100_479067518aa3_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-aiohttp": {
+        "distinct": 1,
+        "dominant": "t13d1812h1_85036bcba153_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-httpx"
+        ]
+      },
+      "python-httpx": {
+        "distinct": 1,
+        "dominant": "t13d1812h1_85036bcba153_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-aiohttp"
+        ]
+      },
+      "python-requests": {
+        "distinct": 1,
+        "dominant": "t13d1812h1_85036bcba153_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-urllib": {
+        "distinct": 1,
+        "dominant": "t13d181100_85036bcba153_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "ruby-net-http": {
+        "distinct": 1,
+        "dominant": "t13d311200_e8f1e7e78f70_d339722ba4af",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget": {
+        "distinct": 1,
+        "dominant": "t13d751100_479067518aa3_fb8d5ffd48c1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      }
+    }
+  }
+}

@@ -130,9 +130,12 @@ Thresholds and the window are configurable in `DetectConfig`. Defaults suit a qu
 | abuse.ch SSLBL | 97 | malware, C2 | CC0-1.0 |
 | Salesforce `osx-nix` JA3 list | 157 | benign applications | BSD-3-Clause |
 | Curated set | 17 | C2, tools | project |
+| Lab-derived clients (`tlsfp lab`) | 45 | benign libraries, impersonation tools | AGPL-3.0-only |
 | ja4db.com (optional import) | variable | mixed | see ja4db.com terms |
 
 Feeds are vendored and compiled into the binary, so seeding needs no network. Benign and malicious sources are both loaded on purpose: some hashes appear in both, and the matcher scores the disagreement.
+
+The `tlsfp lab` feed is generated from the project's own labeled captures of 28 real client builds (curl, Python, Go, Java, Ruby, PHP, Chromium and the curl-impersonate browser profiles); see [`dataset/README.md`](dataset/README.md). Verdict rules: a *benign* verdict needs an exact match, a partial match (same cipher list) is only a similarity hint, and only the strongest match tier votes.
 
 ## Output
 
@@ -210,16 +213,20 @@ cargo audit
 cargo bench -p tlsfp-core        # throughput benchmarks
 ```
 
-### Fingerprint evaluation
+### Evaluation
 
-`dataset/` contains labeled handshakes from real clients and `eval/evaluate.py` measures how stable and discriminating JA3 and JA4 are on them; CI verifies the committed results reproduce. Dataset v0.1: 9 clients, 148 handshakes, loopback on one Linux host.
+`dataset/` holds labeled handshakes from 50 real client builds and impersonation profiles; `eval/` measures fingerprint stability and what the sensor concludes about each client. Both are reproducible and verified in CI. The detection numbers are held out: the bundled `tlsfp lab` feed is built from an earlier lab run (v0.2) and tested on a later, separate one (v0.3, 988 handshakes) that adds clients the feed never saw.
 
-| | JA3 | JA4 |
-|---|---|---|
-| Clients with a unique dominant fingerprint | 7 / 9 | 9 / 9 |
-| Chromium, 8 handshakes: distinct fingerprints | 8 | 2 |
+| Held-out result (v0.3) | |
+|---|---|
+| Known-good clients receiving a suspicious or malicious verdict | 0 of 22 (428 handshakes) |
+| Known-good clients unseen by the feed, wrongly vouched for as benign | 0 of 5 (reported unknown) |
+| Modern impersonation profiles (Chrome 120+, Firefox, Safari, Tor) flagged | 100%, including 10 profiles the feed had not seen |
+| Old Chrome-based impersonation (Chrome 99 to 116, Edge) | not separable from real Chrome by JA3 or JA4 |
+| JA4 sets reproducing across two lab runs | 28 of 28 clients |
+| Distinct fingerprints per client, JA3 against JA4 | 5.74 against 1.10 |
 
-JA3 changes on every Chromium connection because of extension shuffling; JA4 does not, and its second value is session resumption (`pre_shared_key`). JA3 also cannot separate curl over HTTP/1.1 from HTTP/2, which JA4 does through ALPN. Method, results and validity limits: [`eval/README.md`](eval/README.md), [`dataset/README.md`](dataset/README.md).
+JA3 changes on every connection for any client that randomizes extension order, while JA4 collapses them. With 50 clients behind one address, `fp_rotation` raises 30 alerts: correct for the rule, and a false-positive mode for shared egress. The evaluation also led to four fixes in the matcher and label logic; see [`eval/README.md`](eval/README.md) for results, method and limits, and [`dataset/README.md`](dataset/README.md) for the clients and threats to validity.
 
 ## Deployment and security
 
@@ -236,8 +243,9 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 - Encrypted Client Hello hides the inner ClientHello; detection degrades to the outer one.
 - JA4X needs the certificate in the clear (TLS 1.2 and earlier). JA4H covers cleartext HTTP/1.x only.
 - QUIC support covers client Initial packets; no 0-RTT, Handshake packets, or connection migration.
-- The bundled intelligence (271 fingerprints) is a baseline, not coverage of current malware.
-- Detection accuracy has not been quantified on real-world traffic yet (see Roadmap).
+- The bundled intelligence (316 fingerprints) is a baseline, not coverage of current malware. Its client entries come from one Linux host and drift as client libraries change.
+- Tools that reproduce a real browser's ClientHello exactly (curl-impersonate profiles for Chrome up to 116 and Edge) cannot be separated from that browser by JA3 or JA4; they are measured, not hidden, in [`eval/README.md`](eval/README.md).
+- Accuracy is measured on lab captures only (see Validation); it has not been quantified on real-world traffic.
 
 ## Documentation
 
@@ -258,9 +266,9 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 
 | Status | Item |
 |---|---|
-| Done | Security audit, CI, parser fuzz coverage, reproducible fingerprint evaluation |
-| Next | Dataset v0.2: Firefox, curl-impersonate, additional Chromium builds and versions |
-| Planned | Precision, recall and false-positive rate of the detection rules on labeled traffic |
+| Done | Security audit, CI, parser fuzz coverage, reproducible fingerprint and detection evaluation, lab-derived client intelligence |
+| Next | Real Firefox, Safari and Edge captures, and a second operating system, to replace impersonation stand-ins |
+| Planned | Rules that need cleartext HTTP (`ua_mismatch`, `os_mismatch`) evaluated on labeled traffic |
 | Planned | Cross-layer impersonation classifier evaluated against the rule baseline |
 | Planned | Per-host fingerprint drift detection |
 | Planned | Evasion study (uTLS, curl-impersonate) and Encrypted Client Hello impact |

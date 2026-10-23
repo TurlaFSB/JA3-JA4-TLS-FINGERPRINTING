@@ -1,0 +1,934 @@
+{
+  "aggregate": {
+    "benign_clients_raising_non_info_alerts": [],
+    "benign_clients_seen_by_feed": {
+      "benign": 100.0,
+      "clients": 17,
+      "handshakes": 328,
+      "malicious": 0.0,
+      "none": 0.0,
+      "suspicious": 0.0,
+      "unknown": 0.0
+    },
+    "benign_clients_unseen_by_feed": {
+      "benign": 0.0,
+      "clients": 5,
+      "handshakes": 100,
+      "malicious": 0.0,
+      "none": 20.0,
+      "suspicious": 0.0,
+      "unknown": 80.0
+    },
+    "benign_clients_with_any_suspicious_or_malicious_verdict": [],
+    "impersonation_profiles_seen_by_feed": {
+      "benign": 9.1,
+      "clients": 11,
+      "handshakes": 220,
+      "malicious": 0.0,
+      "none": 0.0,
+      "suspicious": 90.9,
+      "unknown": 0.0
+    },
+    "impersonation_profiles_unseen_by_feed": {
+      "benign": 41.2,
+      "clients": 17,
+      "handshakes": 340,
+      "malicious": 0.0,
+      "none": 0.0,
+      "suspicious": 58.8,
+      "unknown": 0.0
+    },
+    "impersonation_profiles_vouched_benign": [
+      "curl_cffi-chrome104",
+      "curl_cffi-chrome107",
+      "curl_cffi-chrome110",
+      "curl_cffi-chrome116",
+      "curl_cffi-chrome99",
+      "curl_cffi-chrome99_android",
+      "curl_cffi-edge101",
+      "curl_cffi-edge99"
+    ]
+  },
+  "dataset_version": "v0.3",
+  "feed_dataset": "dataset/v0.2",
+  "per_client": {
+    "chromium-headless": {
+      "alerts": {
+        "first_seen": 6
+      },
+      "best_match": {
+        "exact": 8
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Chromium (headless, Playwright build)": 8
+      },
+      "handshakes": 8,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 8
+      }
+    },
+    "curl": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "curl (OpenSSL, HTTP/1.1)": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl-http2": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "curl (OpenSSL, HTTP/2) / PHP cURL": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl-tls12": {
+      "alerts": {
+        "first_seen": 5
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "curl (OpenSSL, TLS 1.2 only)": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl-tls13": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {},
+      "class": "benign",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "none": 20
+      }
+    },
+    "curl_cffi-chrome104": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-chrome107": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-chrome110": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-chrome116": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-chrome120": {
+      "alerts": {
+        "first_seen": 5,
+        "known_bad": 2
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome120": 4,
+        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 16
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome124": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome131": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome131_android": {
+      "alerts": {
+        "first_seen": 5,
+        "known_bad": 2
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome120": 4,
+        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 16
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome133a": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome142": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome136": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome142": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome142": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome142": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome145": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome142": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome146": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome142": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome150": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating chrome150": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-chrome99": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-chrome99_android": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-edge101": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-edge99": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Google Chrome": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-firefox133": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating firefox133": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-firefox135": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating firefox147": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-firefox144": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating firefox147": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-firefox147": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating firefox147": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-safari170": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "cipher_and_prefix": 20
+      },
+      "class": "tool",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-safari180_ios": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating safari180_ios": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-safari184": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating safari180_ios": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-safari260": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "cipher_and_prefix": 20
+      },
+      "class": "tool",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-safari2601": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating safari2601": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "curl_cffi-tor145": {
+      "alerts": {
+        "first_seen": 4,
+        "known_bad": 1
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "curl_cffi impersonating tor145": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "suspicious": 20
+      }
+    },
+    "go-http2": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "cipher_only": 20
+      },
+      "class": "benign",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "unknown": 20
+      }
+    },
+    "go-net-http": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Go net/http": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "java-httpclient": {
+      "alerts": {
+        "first_seen": 6
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Java HttpClient": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "java-urlconnection": {
+      "alerts": {
+        "first_seen": 6
+      },
+      "best_match": {
+        "cipher_only": 20
+      },
+      "class": "benign",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "unknown": 20
+      }
+    },
+    "node-https": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Node.js https": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "openssl-s_client": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "OpenSSL s_client": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "openssl-s_client-alpn-h2": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "cipher_only": 20
+      },
+      "class": "benign",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "unknown": 20
+      }
+    },
+    "openssl-s_client-tls12": {
+      "alerts": {
+        "first_seen": 5
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "OpenSSL s_client (TLS 1.2 only)": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "php-curl": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "curl (OpenSSL, HTTP/2) / PHP cURL": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "php-stream": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "PHP streams": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "python-aiohttp": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Python aiohttp / Python httpx": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "python-httpx": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Python aiohttp / Python httpx": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "python-requests": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Python requests (urllib3)": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "python-urllib": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Python urllib": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "ruby-net-http": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "Ruby Net::HTTP": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "wget": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "benign",
+      "exact_labels": {
+        "wget (OpenSSL)": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "wget-tls12": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "cipher_only": 20
+      },
+      "class": "benign",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "unknown": 20
+      }
+    }
+  },
+  "single_address": [
+    {
+      "alerts": 42,
+      "rule": "first_seen",
+      "severity": "info"
+    },
+    {
+      "alerts": 30,
+      "rule": "fp_rotation",
+      "severity": "medium"
+    },
+    {
+      "alerts": 11,
+      "rule": "known_bad",
+      "severity": "medium"
+    }
+  ],
+  "stability": {
+    "compared": 28,
+    "different": [],
+    "identical_ja4_sets": 28
+  }
+}

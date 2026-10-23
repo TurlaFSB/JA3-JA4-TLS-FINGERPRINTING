@@ -54,8 +54,17 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libpcap-dev
       - name: Build
         run: cargo build --release --bin tlsfp
-      - name: Evaluation reproduces committed results
-        run: python3 eval/evaluate.py --dataset dataset/v0.1 --out eval/results/v0.1 --check
+      - name: Fingerprint evaluation reproduces committed results
+        run: |
+          for v in v0.1 v0.2 v0.3; do
+            python3 eval/evaluate.py --dataset dataset/$v --out eval/results/$v --check
+          done
+      - name: Detection evaluation reproduces committed results
+        run: python3 eval/detections.py --dataset dataset/v0.3 --feed-dataset dataset/v0.2 --out eval/results/v0.3 --check
+      - name: Lab intelligence feed matches its generator
+        run: |
+          python3 dataset/lab/make_intel_feed.py --dataset dataset/v0.2 --out "$RUNNER_TEMP/lab-clients.csv"
+          diff "$RUNNER_TEMP/lab-clients.csv" crates/tlsfp-intel/seeds/lab-clients.csv
 
   frontend:
     runs-on: ubuntu-latest

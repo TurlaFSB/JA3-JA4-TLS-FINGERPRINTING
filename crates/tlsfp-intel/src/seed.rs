@@ -1,7 +1,7 @@
 // ©AngelaMos | 2026
 // seed.rs
 
-//! Loading the three vendored feeds into the database.
+//! Loading the vendored feeds into the database.
 //!
 //! The feeds are compiled into the binary, so seeding needs no network. Each
 //! feed has its own column layout, so each gets its own small parser, but they
@@ -26,12 +26,14 @@ use super::{NewFingerprint, get_or_create_source, insert_fingerprint, refresh_so
 const SSLBL: &str = include_str!("../seeds/sslbl-ja3.csv");
 const SALESFORCE: &str = include_str!("../seeds/salesforce-osx-nix-ja3.csv");
 const CURATED: &str = include_str!("../seeds/curated-c2-intel.csv");
+const LAB: &str = include_str!("../seeds/lab-clients.csv");
 
 const SSLBL_NAME: &str = "abuse.ch SSLBL";
 const SSLBL_URL: &str = "https://sslbl.abuse.ch/blacklist/ja3_fingerprints.csv";
 const SALESFORCE_NAME: &str = "salesforce/ja3 osx-nix";
 const SALESFORCE_URL: &str = "https://github.com/salesforce/ja3";
 const CURATED_NAME: &str = "tlsfp curated";
+const LAB_NAME: &str = "tlsfp lab";
 
 /// How many rows one feed contributed on a seed run.
 #[derive(Debug, Clone)]
@@ -59,7 +61,7 @@ impl SeedSummary {
     }
 }
 
-/// Loads all three vendored feeds inside a single transaction.
+/// Loads every vendored feed inside a single transaction.
 pub fn load_bundled(conn: &mut Connection) -> Result<SeedSummary> {
     let tx = conn.transaction()?;
     let mut feeds = Vec::new();
@@ -90,10 +92,19 @@ pub fn load_bundled(conn: &mut Connection) -> Result<SeedSummary> {
     });
 
     let curated_id = get_or_create_source(&tx, CURATED_NAME, None, Some("project"), "bundled")?;
-    let (inserted, parsed) = load_curated(&tx, curated_id)?;
+    let (inserted, parsed) = load_labeled(&tx, curated_id, CURATED)?;
     refresh_source_count(&tx, curated_id)?;
     feeds.push(FeedLoad {
         name: CURATED_NAME.to_string(),
+        inserted,
+        parsed,
+    });
+
+    let lab_id = get_or_create_source(&tx, LAB_NAME, None, Some("AGPL-3.0-only"), "bundled")?;
+    let (inserted, parsed) = load_labeled(&tx, lab_id, LAB)?;
+    refresh_source_count(&tx, lab_id)?;
+    feeds.push(FeedLoad {
+        name: LAB_NAME.to_string(),
         inserted,
         parsed,
     });
@@ -185,14 +196,16 @@ fn load_salesforce(conn: &Connection, source_id: i64) -> Result<(usize, usize)> 
     Ok((inserted, parsed))
 }
 
-/// The curated file: `fp_kind, value, label, category, reference`, each row a
-/// hand classified entry from a named source.
-fn load_curated(conn: &Connection, source_id: i64) -> Result<(usize, usize)> {
+/// A labeled file: `fp_kind, value, label, category, reference`, each row a
+/// classified entry with its own category. The curated file is hand classified
+/// from named sources; the lab file is generated from the project's own
+/// labeled captures.
+fn load_labeled(conn: &Connection, source_id: i64, data: &str) -> Result<(usize, usize)> {
     let mut reader = csv::ReaderBuilder::new()
         .has_headers(true)
         .flexible(true)
         .comment(Some(b'#'))
-        .from_reader(CURATED.as_bytes());
+        .from_reader(data.as_bytes());
 
     let mut inserted = 0;
     let mut parsed = 0;
@@ -245,6 +258,15 @@ mod tests {
     use crate::IntelStore;
     use crate::model::{Category, FpKind};
 
+    /// Data rows in the generated lab feed: everything but comments, the header
+    /// and blank lines.
+    fn lab_rows() -> usize {
+        super::LAB
+            .lines()
+            .filter(|line| line.starts_with("ja"))
+            .count()
+    }
+
     fn category_of(store: &IntelStore, value: &str, source: &str) -> Option<String> {
         store
             .conn
@@ -262,7 +284,7 @@ mod tests {
     fn seeds_every_vendored_row() {
         let mut store = IntelStore::open_in_memory().unwrap();
         let summary = store.seed_bundled().unwrap();
-        assert_eq!(summary.parsed(), 97 + 157 + 17);
+        assert_eq!(summary.parsed(), 97 + 157 + 17 + lab_rows());
         assert_eq!(summary.inserted(), summary.parsed());
     }
 

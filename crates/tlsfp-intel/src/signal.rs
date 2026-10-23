@@ -240,6 +240,11 @@ pub fn ua_family(user_agent: &str) -> Option<Family> {
 #[must_use]
 pub fn label_family(label: &str) -> Option<Family> {
     let label = label.to_ascii_lowercase();
+    // An impersonation framework is a script by definition, whatever browser
+    // it copies, so its label must not be read as that browser.
+    if label.contains("impersonat") || label.contains("curl_cffi") {
+        return Some(Family::Curl);
+    }
     if label.contains("edge") {
         return Some(Family::Edge);
     }
@@ -311,6 +316,20 @@ mod tests {
         ua_family, ua_os_class,
     };
     use crate::model::Category;
+
+    #[test]
+    fn impersonation_labels_are_not_browsers_even_when_they_name_one() {
+        for label in [
+            "curl_cffi impersonating Chrome 142",
+            "curl-impersonate (Firefox profile)",
+            "Impersonated Safari",
+        ] {
+            assert_eq!(label_family(label), Some(Family::Curl), "{label}");
+            assert!(!label_is_browser(label), "{label}");
+            assert!(label_is_non_browser(label, Category::Tool), "{label}");
+        }
+        assert!(label_is_browser("Google Chrome"));
+    }
 
     #[test]
     fn windows_user_agent_is_windows() {

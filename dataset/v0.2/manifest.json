@@ -1,0 +1,185 @@
+{
+  "dataset_version": "v0.2",
+  "created_utc": "2026-10-23T10:54:16Z",
+  "environment": {
+    "os": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "kernel": "6.18.44-fc-v153",
+    "machine": "x86_64",
+    "server_tls": "OpenSSL 3.0.13 30 Jan 2024",
+    "target_host": "localhost",
+    "transport": "loopback",
+    "server_alpn": [
+      "http/1.1"
+    ]
+  },
+  "labels": {
+    "curl": {
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl.pcap",
+      "sha256": "761d13d33fa1524e3fbdaf7975e2258805d586de1023e7478c6e37923cd77a23",
+      "requested_connections": 20
+    },
+    "curl-http2": {
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl-http2.pcap",
+      "sha256": "7dd5d38ed6eae913428e4d70e748e42a951c56243459f25b77cb4a08b7eb7f3c",
+      "requested_connections": 20
+    },
+    "wget": {
+      "client_version": "GNU Wget 1.21.4 built on linux-gnu.",
+      "pcap": "pcap/wget.pcap",
+      "sha256": "369e61e18ac52ba3c7b8c6b11f5c15ea664d90bdabaa3264e053c61f97fa3635",
+      "requested_connections": 20
+    },
+    "openssl-s_client": {
+      "client_version": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+      "pcap": "pcap/openssl-s_client.pcap",
+      "sha256": "c60ae439bbde025dd2fea46360190ebb7e9b5b7c6ed08516f4aec5d4afbc16f8",
+      "requested_connections": 20
+    },
+    "python-requests": {
+      "client_version": "requests 2.34.2 urllib3 2.8.0 python 3.13.16",
+      "pcap": "pcap/python-requests.pcap",
+      "sha256": "8fa75a0e39eea7572fd884465e7cb43b8b9e4b01e2224cb95ad9fd0215ddcc62",
+      "requested_connections": 20
+    },
+    "python-urllib": {
+      "client_version": "python 3.13.16 OpenSSL 3.0.13 30 Jan 2024",
+      "pcap": "pcap/python-urllib.pcap",
+      "sha256": "394511f8241e42da84a13496f03a212486bb4c9880ac4ca4d33e58fdb28b940f",
+      "requested_connections": 20
+    },
+    "go-net-http": {
+      "client_version": "go version go1.24.7 linux/amd64",
+      "pcap": "pcap/go-net-http.pcap",
+      "sha256": "a9fe0621e441912a47e0c5f589a3f0ba368c236070a72f8ab7529db3d2a2cf52",
+      "requested_connections": 20
+    },
+    "node-https": {
+      "client_version": "node v22.22.0",
+      "pcap": "pcap/node-https.pcap",
+      "sha256": "bcc5aa97646b38306269c2b5648ab0d0fa4a93c54edd9aedb9f1cfb10074a68b",
+      "requested_connections": 20
+    },
+    "python-httpx": {
+      "client_version": "httpx 0.28.1 python 3.13.16 OpenSSL 3.0.13 30 Jan 2024",
+      "pcap": "pcap/python-httpx.pcap",
+      "sha256": "d278f6f8c98ba24d180cfa14c29cb6e60d14b4f518aa60adbf398a9086765bcd",
+      "requested_connections": 20
+    },
+    "python-aiohttp": {
+      "client_version": "aiohttp 3.14.5 python 3.13.16 OpenSSL 3.0.13 30 Jan 2024",
+      "pcap": "pcap/python-aiohttp.pcap",
+      "sha256": "728928147d348156003b35e0225ad086c1d180ea07fb932e3cac9e03264e57af",
+      "requested_connections": 20
+    },
+    "curl-tls12": {
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl-tls12.pcap",
+      "sha256": "a88f6d7f35ae9dbcfc31908592ede356658c7267e570451bd40b84ad4cbb94d0",
+      "requested_connections": 20
+    },
+    "openssl-s_client-tls12": {
+      "client_version": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+      "pcap": "pcap/openssl-s_client-tls12.pcap",
+      "sha256": "f29dc2124c058627e8c2f359c446bd45f0ec245ebe1e0bc4f16a9f89b48a99b9",
+      "requested_connections": 20
+    },
+    "java-httpclient": {
+      "client_version": "openjdk version \"21.0.12.1\" 2026-08-18",
+      "pcap": "pcap/java-httpclient.pcap",
+      "sha256": "438b759c9548327e03b7b074e537ef490a3d69153c1f0281bf7b06ac55e6f3d0",
+      "requested_connections": 20
+    },
+    "ruby-net-http": {
+      "client_version": "ruby 3.3.6 (2024-11-05 revision 75015d4c1f) [x86_64-linux]",
+      "pcap": "pcap/ruby-net-http.pcap",
+      "sha256": "0a501fa7a99070e6048385cc0f15bc44a74c73b8e020d77f345d8e5adbf659bb",
+      "requested_connections": 20
+    },
+    "php-stream": {
+      "client_version": "PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS)",
+      "pcap": "pcap/php-stream.pcap",
+      "sha256": "42a0a82c06282d4f2fbff113d12defa54130e8308f586e3e91c395d290187d22",
+      "requested_connections": 20
+    },
+    "php-curl": {
+      "client_version": "PHP 8.3.6 (cli) (built: Oct  7 2026 18:06:38) (NTS); 8.5.0 OpenSSL/3.0.13",
+      "pcap": "pcap/php-curl.pcap",
+      "sha256": "58ae260f2e0e1ba3f9e1069d512bb5670a6d0d936d1804658d334a94085c65fa",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome150": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome150; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome150.pcap",
+      "sha256": "25d8bd69910edefd812c04d11bbf9e705ebacc97a77d427e4e258ac0f425ed3a",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome142": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome142; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome142.pcap",
+      "sha256": "c23b90c1e11c3e52364a0cb0f30c100761f391a8620008218de1e66a1d3b2a14",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome131": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome131; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome131.pcap",
+      "sha256": "54340cbfeaabfb1ceb83d80d0a5202d1d1f8f339605f5651b8b55e38766f2766",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome124": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome124; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome124.pcap",
+      "sha256": "40ef0a0f8b484efe469add9bbb75f930b83d37ecf9d500c6ffe1df87c3762ccd",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome120": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome120; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome120.pcap",
+      "sha256": "7b3bb6a0f83cd00f7f95ccea2fd3e3f83605d0b14afdaad27ecfd9429aee06ba",
+      "requested_connections": 20
+    },
+    "curl_cffi-edge101": {
+      "client_version": "curl_cffi 0.16.3 impersonate=edge101; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-edge101.pcap",
+      "sha256": "8d0a0307d04735f8c44c1524cc3a420889b0ea89aadcca6198e4e611f541970d",
+      "requested_connections": 20
+    },
+    "curl_cffi-firefox147": {
+      "client_version": "curl_cffi 0.16.3 impersonate=firefox147; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-firefox147.pcap",
+      "sha256": "39f95ae7d4266ac155387d296475ce4894fb29af1944f15fde9e2b93a9e904ee",
+      "requested_connections": 20
+    },
+    "curl_cffi-firefox133": {
+      "client_version": "curl_cffi 0.16.3 impersonate=firefox133; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-firefox133.pcap",
+      "sha256": "070792a816191cf4d160708c7e7894e223666b305eeeccde618997af9128a128",
+      "requested_connections": 20
+    },
+    "curl_cffi-safari2601": {
+      "client_version": "curl_cffi 0.16.3 impersonate=safari2601; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-safari2601.pcap",
+      "sha256": "a867f171357f493ef1ec09615bfd7afee7f3a545a7d51858a2fecfec5a61a337",
+      "requested_connections": 20
+    },
+    "curl_cffi-safari180_ios": {
+      "client_version": "curl_cffi 0.16.3 impersonate=safari180_ios; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-safari180_ios.pcap",
+      "sha256": "c37d7bf3aa9b6aacb2eeec687b2ada77744096f7df25469a31fe9f4f25addcff",
+      "requested_connections": 20
+    },
+    "curl_cffi-tor145": {
+      "client_version": "curl_cffi 0.16.3 impersonate=tor145; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-tor145.pcap",
+      "sha256": "788795bca6bb580ab86f194880fd6a491dc100534464ff9b02c9e8a548769533",
+      "requested_connections": 20
+    },
+    "chromium-headless": {
+      "client_version": "Chromium 141.0.7390.37",
+      "pcap": "pcap/chromium-headless.pcap",
+      "sha256": "e7cb5a363b7195929ace5c527cadf50c2fe3d9a3acf3c01bf63b3577198742b9",
+      "requested_connections": 20
+    }
+  }
+}

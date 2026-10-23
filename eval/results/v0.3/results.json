@@ -1,0 +1,912 @@
+{
+  "dataset_version": "v0.3",
+  "ja3": {
+    "clients": 50,
+    "clients_with_unique_dominant_fingerprint": 33,
+    "mean_distinct_per_client": 5.74,
+    "mean_dominant_share": 0.7525,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 8,
+        "dominant": "7e99578e9f3643035cf8c50e2e08f5e6",
+        "dominant_share": 0.125,
+        "handshakes": 8,
+        "shared_with": []
+      },
+      "curl": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl-http2",
+          "php-curl"
+        ]
+      },
+      "curl-http2": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl",
+          "php-curl"
+        ]
+      },
+      "curl-tls12": {
+        "distinct": 1,
+        "dominant": "87b9bfc7da97115ed2276737b09f8d74",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl-tls13": {
+        "distinct": 1,
+        "dominant": "7151f05ca35c6c51fde8f326e859e943",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome104": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome107": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome110": {
+        "distinct": 20,
+        "dominant": "b260d2c46efad6f69f81518aa8eaff93",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome116": {
+        "distinct": 20,
+        "dominant": "ced3850802e4dff6635d47b5cf706c22",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome120": {
+        "distinct": 20,
+        "dominant": "d0c10db7c3f04bd62836fd86f1254d69",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome124": {
+        "distinct": 20,
+        "dominant": "fb9bb86406819d95316a2051ac9f69b1",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome131": {
+        "distinct": 20,
+        "dominant": "0c57b14ee7592d109008bc61db9ddeb2",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome131_android": {
+        "distinct": 20,
+        "dominant": "08187ca4193df680776b7ecfcbb73d0b",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome133a": {
+        "distinct": 20,
+        "dominant": "7b34af1412ae4646c75470fa95b3aaee",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome136": {
+        "distinct": 20,
+        "dominant": "2e613c5550a91fb76ce107e5c3157768",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome142": {
+        "distinct": 20,
+        "dominant": "6a9a2049ab546a9facd3036a70b8a48d",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome145": {
+        "distinct": 20,
+        "dominant": "941eb2633e2fb85b94127760fcf19290",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome146": {
+        "distinct": 20,
+        "dominant": "74c694a1a8247b53f433fee2fe906d70",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome150": {
+        "distinct": 20,
+        "dominant": "55f6e88c6f905492855adc55029b7e4e",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome99": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome99_android": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge101": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge99": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101"
+        ]
+      },
+      "curl_cffi-firefox133": {
+        "distinct": 1,
+        "dominant": "2d692a4485ca2f5f2b10ecb2d2909ad3",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-firefox135": {
+        "distinct": 1,
+        "dominant": "6f7889b9fb1a62a9577e685c1fcfa919",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-firefox144",
+          "curl_cffi-firefox147"
+        ]
+      },
+      "curl_cffi-firefox144": {
+        "distinct": 1,
+        "dominant": "6f7889b9fb1a62a9577e685c1fcfa919",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-firefox135",
+          "curl_cffi-firefox147"
+        ]
+      },
+      "curl_cffi-firefox147": {
+        "distinct": 1,
+        "dominant": "6f7889b9fb1a62a9577e685c1fcfa919",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-firefox135",
+          "curl_cffi-firefox144"
+        ]
+      },
+      "curl_cffi-safari170": {
+        "distinct": 1,
+        "dominant": "773906b0efdefa24a7f2b8eb6985bf37",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-safari180_ios",
+          "curl_cffi-safari184"
+        ]
+      },
+      "curl_cffi-safari180_ios": {
+        "distinct": 1,
+        "dominant": "773906b0efdefa24a7f2b8eb6985bf37",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-safari170",
+          "curl_cffi-safari184"
+        ]
+      },
+      "curl_cffi-safari184": {
+        "distinct": 1,
+        "dominant": "773906b0efdefa24a7f2b8eb6985bf37",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-safari170",
+          "curl_cffi-safari180_ios"
+        ]
+      },
+      "curl_cffi-safari260": {
+        "distinct": 1,
+        "dominant": "6618231821d2d40f8d1859f5a43a0307",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-safari2601": {
+        "distinct": 1,
+        "dominant": "ecdf4f49dd59effc439639da29186671",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-tor145": {
+        "distinct": 1,
+        "dominant": "0faf2a91198d40dbd58b9308f3fca2fd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "go-http2": {
+        "distinct": 1,
+        "dominant": "ceb419f4203d3159e7a7cb3aa7efd5bd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "go-net-http": {
+        "distinct": 1,
+        "dominant": "8bee49baa010986785a9e74d688ed7e9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "java-httpclient": {
+        "distinct": 2,
+        "dominant": "57128db24fb3c2fc035d6a39ccb08cac",
+        "dominant_share": 0.95,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "java-urlconnection": {
+        "distinct": 2,
+        "dominant": "d9f868cf1c706c4d2e8f9bb06d3f6882",
+        "dominant_share": 0.95,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "node-https": {
+        "distinct": 1,
+        "dominant": "944d1e1858cd278718f8a46b65d3212f",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client": {
+        "distinct": 1,
+        "dominant": "a3afc2c46ba4a7d7fbe1cfb7a3031c2f",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client-alpn-h2": {
+        "distinct": 1,
+        "dominant": "5a1edc7f170af1014fc65c994878e63c",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client-tls12": {
+        "distinct": 1,
+        "dominant": "871a754af286dfb70c1b53c6887c62e0",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "php-curl": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl",
+          "curl-http2"
+        ]
+      },
+      "php-stream": {
+        "distinct": 1,
+        "dominant": "a468eae2a82cd86fea9fd0c541ed8ff0",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-aiohttp": {
+        "distinct": 1,
+        "dominant": "304734bb1c086c3453b387400cf83f11",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-httpx"
+        ]
+      },
+      "python-httpx": {
+        "distinct": 1,
+        "dominant": "304734bb1c086c3453b387400cf83f11",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-aiohttp"
+        ]
+      },
+      "python-requests": {
+        "distinct": 1,
+        "dominant": "a48c0d5f95b1ef98f560f324fd275da1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-urllib": {
+        "distinct": 1,
+        "dominant": "93c7d42c0df602fb91589311534831f5",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "ruby-net-http": {
+        "distinct": 1,
+        "dominant": "86d37534033d9c5b60a83ff8b2fbeea3",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget": {
+        "distinct": 1,
+        "dominant": "e91ce64088cf382a3a56b713620f0204",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget-tls12": {
+        "distinct": 1,
+        "dominant": "6f76bd606fa8602be764490776c8b678",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      }
+    }
+  },
+  "ja4": {
+    "clients": 50,
+    "clients_with_unique_dominant_fingerprint": 24,
+    "mean_distinct_per_client": 1.1,
+    "mean_dominant_share": 0.9825,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_e15453cad77d",
+        "dominant_share": 0.625,
+        "handshakes": 8,
+        "shared_with": []
+      },
+      "curl": {
+        "distinct": 1,
+        "dominant": "t13d3112h1_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl-http2": {
+        "distinct": 1,
+        "dominant": "t13d3112h2_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "php-curl"
+        ]
+      },
+      "curl-tls12": {
+        "distinct": 1,
+        "dominant": "t12d2807h1_d943125447b4_a44c6288192a",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl-tls13": {
+        "distinct": 1,
+        "dominant": "t13d0411h1_16476d049b0b_303c7117418d",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome104": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome107": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome110": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome116": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome120": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 0.8,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome124",
+          "curl_cffi-chrome131",
+          "curl_cffi-chrome131_android"
+        ]
+      },
+      "curl_cffi-chrome124": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome131",
+          "curl_cffi-chrome131_android"
+        ]
+      },
+      "curl_cffi-chrome131": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome124",
+          "curl_cffi-chrome131_android"
+        ]
+      },
+      "curl_cffi-chrome131_android": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 0.8,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome124",
+          "curl_cffi-chrome131"
+        ]
+      },
+      "curl_cffi-chrome133a": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome136": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome142": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome145": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome146": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145"
+        ]
+      },
+      "curl_cffi-chrome150": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_806a8c22fdea",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome99": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome99_android": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge101": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge99": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-chrome99_android",
+          "curl_cffi-edge101"
+        ]
+      },
+      "curl_cffi-firefox133": {
+        "distinct": 1,
+        "dominant": "t13d1716h2_5b57614c22b0_eeeea6562960",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-firefox135": {
+        "distinct": 1,
+        "dominant": "t13d1717h2_5b57614c22b0_3cbfd9057e0d",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-firefox144",
+          "curl_cffi-firefox147"
+        ]
+      },
+      "curl_cffi-firefox144": {
+        "distinct": 1,
+        "dominant": "t13d1717h2_5b57614c22b0_3cbfd9057e0d",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-firefox135",
+          "curl_cffi-firefox147"
+        ]
+      },
+      "curl_cffi-firefox147": {
+        "distinct": 1,
+        "dominant": "t13d1717h2_5b57614c22b0_3cbfd9057e0d",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-firefox135",
+          "curl_cffi-firefox144"
+        ]
+      },
+      "curl_cffi-safari170": {
+        "distinct": 1,
+        "dominant": "t13d2014h2_a09f3c656075_14788d8d241b",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-safari180_ios": {
+        "distinct": 1,
+        "dominant": "t13d2014h2_a09f3c656075_e42f34c56612",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-safari184"
+        ]
+      },
+      "curl_cffi-safari184": {
+        "distinct": 1,
+        "dominant": "t13d2014h2_a09f3c656075_e42f34c56612",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl_cffi-safari180_ios"
+        ]
+      },
+      "curl_cffi-safari260": {
+        "distinct": 1,
+        "dominant": "t13d2014h2_a09f3c656075_d0a99439f9b1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-safari2601": {
+        "distinct": 1,
+        "dominant": "t13d2013h2_a09f3c656075_7f0f34a4126d",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-tor145": {
+        "distinct": 1,
+        "dominant": "t13d1513h2_8daaf6152771_748f4c70de1c",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "go-http2": {
+        "distinct": 1,
+        "dominant": "t13d1311h2_f57a46bbacb6_e7c285222651",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "go-net-http": {
+        "distinct": 1,
+        "dominant": "t13d131000_f57a46bbacb6_e7c285222651",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "java-httpclient": {
+        "distinct": 2,
+        "dominant": "t13d311300_1d947a95fc68_d6a918353cf0",
+        "dominant_share": 0.95,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "java-urlconnection": {
+        "distinct": 2,
+        "dominant": "t13i311200_1d947a95fc68_d6a918353cf0",
+        "dominant_share": 0.95,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "node-https": {
+        "distinct": 1,
+        "dominant": "t13d521100_b262b3658495_8e6e362c5eac",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client": {
+        "distinct": 1,
+        "dominant": "t13d311000_e8f1e7e78f70_1f22a2ca17c4",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client-alpn-h2": {
+        "distinct": 1,
+        "dominant": "t13d3111h2_e8f1e7e78f70_1f22a2ca17c4",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client-tls12": {
+        "distinct": 1,
+        "dominant": "t12d280700_d943125447b4_e7e480e5a997",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "php-curl": {
+        "distinct": 1,
+        "dominant": "t13d3112h2_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl-http2"
+        ]
+      },
+      "php-stream": {
+        "distinct": 1,
+        "dominant": "t13d751100_479067518aa3_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-aiohttp": {
+        "distinct": 1,
+        "dominant": "t13d1812h1_85036bcba153_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-httpx"
+        ]
+      },
+      "python-httpx": {
+        "distinct": 1,
+        "dominant": "t13d1812h1_85036bcba153_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "python-aiohttp"
+        ]
+      },
+      "python-requests": {
+        "distinct": 1,
+        "dominant": "t13d1812h1_85036bcba153_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-urllib": {
+        "distinct": 1,
+        "dominant": "t13d181100_85036bcba153_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "ruby-net-http": {
+        "distinct": 1,
+        "dominant": "t13d311200_e8f1e7e78f70_d339722ba4af",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget": {
+        "distinct": 1,
+        "dominant": "t13d751100_479067518aa3_fb8d5ffd48c1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget-tls12": {
+        "distinct": 1,
+        "dominant": "t13d311100_e8f1e7e78f70_fb8d5ffd48c1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      }
+    }
+  }
+}
