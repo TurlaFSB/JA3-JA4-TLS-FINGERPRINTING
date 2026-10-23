@@ -161,6 +161,49 @@ pub enum Skip {
 /// tunnel, the ARP chatter, and the malformed frame that share every real
 /// network with the TLS and QUIC it cares about.
 pub fn decode_frame(link: i32, data: &[u8]) -> Result<Decoded<'_>, Skip> {
+    match decode_link(link, data) {
+        // Windows pktmon labels Wi-Fi captures as Ethernet but writes raw
+        // 802.11 frames with the radio layer already decrypted.
+        Err(Skip::NotIp | Skip::Malformed) if link == link_type::ETHERNET => {
+            match wifi_payload(data) {
+                Some((ether_type, inner)) => {
+                    decode_sliced(SlicedPacket::from_ether_type(ether_type, inner))
+                }
+                None => decode_link(link, data),
+            }
+        }
+        other => other,
+    }
+}
+
+/// Locates the LLC/SNAP payload of an 802.11 data frame: its EtherType and
+/// the bytes after the 8 byte LLC header.
+fn wifi_payload(data: &[u8]) -> Option<(EtherType, &[u8])> {
+    let (&fc0, &fc1) = (data.first()?, data.get(1)?);
+    let subtype = fc0 >> 4;
+    // Frame type 2 is data; subtypes with bit 2 set carry no payload.
+    if (fc0 >> 2) & 0b11 != 2 || subtype & 0b0100 != 0 {
+        return None;
+    }
+    let mut len = 24;
+    if fc1 & 0b11 == 0b11 {
+        len += 6; // fourth address in WDS frames
+    }
+    if subtype & 0b1000 != 0 {
+        len += 2; // QoS control
+        if fc1 & 0x80 != 0 {
+            len += 4; // HT control
+        }
+    }
+    let llc = data.get(len..len + 8)?;
+    if llc[..3] != [0xaa, 0xaa, 0x03] {
+        return None;
+    }
+    let ether_type = u16::from_be_bytes([llc[6], llc[7]]);
+    Some((EtherType(ether_type), &data[len + 8..]))
+}
+
+fn decode_link(link: i32, data: &[u8]) -> Result<Decoded<'_>, Skip> {
     let sliced = match link {
         link_type::ETHERNET => SlicedPacket::from_ethernet(data),
         link_type::LINUX_SLL => SlicedPacket::from_linux_sll(data),
@@ -182,6 +225,12 @@ pub fn decode_frame(link: i32, data: &[u8]) -> Result<Decoded<'_>, Skip> {
         }
         _ => return Err(Skip::UnsupportedLinkType),
     };
+    decode_sliced(sliced)
+}
+
+fn decode_sliced(
+    sliced: Result<SlicedPacket<'_>, etherparse::err::packet::SliceError>,
+) -> Result<Decoded<'_>, Skip> {
     let sliced = sliced.map_err(|_| Skip::Malformed)?;
 
     let (src_ip, dst_ip): (IpAddr, IpAddr) = match &sliced.net {
@@ -285,6 +334,25 @@ mod tests {
             Ok(Decoded::Tcp(seg)) => seg,
             other => panic!("expected a TCP segment, got {other:?}"),
         }
+    }
+
+    #[test]
+    fn decodes_wifi_frames_labelled_ethernet() {
+        // A TCP SYN as Windows pktmon writes it on Wi-Fi: 802.11 data header,
+        // LLC/SNAP, then IPv4.
+        let frame: Vec<u8> = [
+            "08010080 7e5afb270c37 2c98113 66ee3 7e5afb270c37 0000 aaaa03000000 0800",
+            "45000034ff0c400080 0640dc 0a885e5c 36e61b11 f854 01bb dab2bf5e 00000000 8002ffff 20140000",
+            "020405b4 01030308 01010402",
+        ]
+        .join(" ")
+        .replace(' ', "")
+        .as_bytes()
+        .chunks(2)
+        .map(|h| u8::from_str_radix(std::str::from_utf8(h).unwrap(), 16).unwrap())
+        .collect();
+        let seg = tcp_segment(link_type::ETHERNET, &frame);
+        assert_eq!(seg.dst.port(), 443, "destination port of the decoded SYN");
     }
 
     fn tcp_frame(payload: &[u8]) -> Vec<u8> {
