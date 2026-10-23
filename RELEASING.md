@@ -48,3 +48,13 @@ GitHub shows a "Verified" badge on the tag when the signing key is registered.
 git fetch --tags
 git verify-tag v0.1.0
 ```
+
+## What pushing a tag does
+
+`.github/workflows/release.yml` runs on every tag matching `vMAJOR.MINOR.PATCH`:
+
+1. checks that the tag equals the version in `Cargo.toml`;
+2. builds the Linux x86_64 binary with the dashboard assets and publishes `tlsfp-<version>-linux-x86_64.tar.gz`, its SHA-256 file and a build provenance attestation as a GitHub release;
+3. publishes the container images `ghcr.io/<owner>/tlsfp` (sensor and API) and `ghcr.io/<owner>/tlsfp-dashboard` (nginx and the dashboard) with the version and `latest` tags.
+
+Verify a downloaded archive with `sha256sum -c tlsfp-*.sha256` and `gh attestation verify tlsfp-*.tar.gz --repo <owner>/<repo>`. The first run of this workflow is the first test of it; if a step fails, fix the workflow, delete the tag and release, and push the tag again.

@@ -1,0 +1,109 @@
+# © Pranav Verma | 2026
+# release.yml
+#
+# Runs when a version tag is pushed. Builds the Linux x86_64 binary with the
+# dashboard assets, attaches it to a GitHub release with a SHA-256 file and a
+# build provenance attestation, and publishes the two container images to the
+# GitHub Container Registry. See RELEASING.md for the tagging procedure.
+
+name: release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag must match the workspace version
+        id: v
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          crate="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          if [ "$tag" != "$crate" ]; then
+            echo "tag $GITHUB_REF_NAME does not match Cargo.toml version $crate" >&2
+            exit 1
+          fi
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+
+  binary:
+    needs: verify
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install libpcap
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the dashboard
+        working-directory: frontend
+        run: |
+          corepack enable && corepack prepare pnpm@10.29.1 --activate
+          pnpm install --frozen-lockfile
+          pnpm build
+      - name: Build tlsfp
+        run: cargo build --release --locked --bin tlsfp
+      - name: Package
+        run: |
+          name="tlsfp-${{ needs.verify.outputs.version }}-linux-x86_64"
+          mkdir -p "dist/$name"
+          cp target/release/tlsfp "dist/$name/"
+          cp -r frontend/dist "dist/$name/web"
+          cp LICENSE NOTICE.md README.md CHANGES.md "dist/$name/"
+          tar -C dist -czf "$name.tar.gz" "$name"
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: tlsfp-*.tar.gz
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" tlsfp-*.tar.gz tlsfp-*.tar.gz.sha256 \
+            --title "$GITHUB_REF_NAME" --generate-notes
+
+  images:
+    needs: verify
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: tlsfp
+            dockerfile: infra/docker/tlsfp.prod
+          - name: tlsfp-dashboard
+            dockerfile: infra/docker/vite.prod
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ matrix.name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
