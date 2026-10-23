@@ -10,9 +10,11 @@ import { Toaster } from 'sonner'
 
 import { queryClient } from '@/core/api'
 import { router } from '@/core/app/routers'
+import { resolveTheme, useTheme } from '@/core/lib/shell.ui.store'
 import '@/core/app/toast.module.scss'
 
 export default function App(): React.ReactElement {
+  const painted = resolveTheme(useTheme())
   return (
     <QueryClientProvider client={queryClient}>
       <div className="app">
@@ -20,12 +22,12 @@ export default function App(): React.ReactElement {
         <Toaster
           position="top-right"
           duration={2000}
-          theme="dark"
+          theme={painted}
           toastOptions={{
             style: {
-              background: 'hsl(0, 0%, 12.2%)',
-              border: '1px solid hsl(0, 0%, 18%)',
-              color: 'hsl(0, 0%, 98%)',
+              background: 'var(--ink-700)',
+              border: '1px solid var(--line-strong)',
+              color: 'var(--bone)',
             },
           }}
         />

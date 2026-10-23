@@ -61,3 +61,12 @@ export const useTheme = (): Theme => useUIStore((s) => s.theme)
 export const useSidebarOpen = (): boolean => useUIStore((s) => s.sidebarOpen)
 export const useSidebarCollapsed = (): boolean =>
   useUIStore((s) => s.sidebarCollapsed)
+
+// The theme actually painted: "system" follows the operating system setting.
+export function resolveTheme(theme: Theme): 'light' | 'dark' {
+  if (theme !== 'system') return theme
+  return typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-color-scheme: light)').matches
+    ? 'light'
+    : 'dark'
+}

@@ -10,6 +10,7 @@ import { useMeta } from '@/api/hooks'
 import { describeSource } from '@/api/types'
 import { cx, RegMark, Ticker } from '@/components'
 import { ROUTES } from '@/config'
+import { resolveTheme, useTheme, useUIStore } from '@/core/lib/shell.ui.store'
 import styles from './shell.module.scss'
 
 const NAV = [
@@ -86,6 +87,28 @@ function SensorStatus(): React.ReactElement {
   )
 }
 
+// Applies the chosen theme to the document and offers the switch.
+function ThemeToggle(): React.ReactElement {
+  const theme = useTheme()
+  const setTheme = useUIStore((state) => state.setTheme)
+  const painted = resolveTheme(theme)
+  useEffect(() => {
+    document.documentElement.dataset.theme = painted
+  }, [painted])
+  const next = painted === 'dark' ? 'light' : 'dark'
+  return (
+    <button
+      type="button"
+      className={styles.theme}
+      onClick={() => setTheme(next)}
+      aria-label={`Switch to the ${next} theme`}
+      title={`Switch to the ${next} theme`}
+    >
+      {painted}
+    </button>
+  )
+}
+
 function ShellError({ error }: FallbackProps): React.ReactElement {
   const message = error instanceof Error ? error.message : String(error)
   return (
@@ -138,6 +161,7 @@ export function Shell(): React.ReactElement {
 
         <div className={styles.status}>
           <SensorStatus />
+          <ThemeToggle />
         </div>
       </header>
 

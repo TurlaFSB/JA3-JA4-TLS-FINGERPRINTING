@@ -9,9 +9,9 @@ members = ["crates/tlsfp-core", "crates/tlsfp-intel", "crates/tlsfp"]
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
-license = "MIT"
-authors = ["Carter Perez"]
-repository = "https://github.com/CarterPerez-dev/Cybersecurity-Projects"
+license = "AGPL-3.0-only"
+authors = ["Pranav Verma", "Carter Perez (upstream)"]
+repository = "https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING"
 
 [workspace.dependencies]
 tlsfp-core = { path = "crates/tlsfp-core" }

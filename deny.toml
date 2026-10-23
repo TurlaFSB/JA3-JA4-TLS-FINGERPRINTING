@@ -13,6 +13,7 @@ yanked = "deny"
 version = 2
 confidence-threshold = 0.93
 allow = [
+    "AGPL-3.0-only", # this project's own licence, for the workspace crates
     "MIT",
     "Apache-2.0",
     "BSD-2-Clause",

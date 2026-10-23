@@ -9,40 +9,104 @@
 // the instrument itself. Neutral type sits between.
 
 // The void and the panels lifted just off it.
-$void: #000;
-$ink-1000: #050506;
-$ink-900: #0a0b0d;
-$ink-800: #0f1113;
-$ink-700: #15181b;
-$ink-600: #1c2024;
-$ink-500: #262b30;
+$void: var(--void);
+$ink-1000: var(--ink-1000);
+$ink-900: var(--ink-900);
+$ink-800: var(--ink-800);
+$ink-700: var(--ink-700);
+$ink-600: var(--ink-600);
+$ink-500: var(--ink-500);
 
 // Bone white for the artifacts, chalk for the few things that must shout.
-$chalk: #fff;
-$bone: #f2f0e9;
-$paper: #d8d6cd;
+$chalk: var(--chalk);
+$bone: var(--bone);
+$paper: var(--paper);
 
 // The instrument's own dim labels, the small print on a scan sheet.
-$ash: #8b8f95;
-$dust: #5a5f65;
-$soot: #34383d;
+$ash: var(--ash);
+$dust: var(--dust);
+$soot: var(--soot);
 
 // Hairlines. The grid the specimens are pinned to.
-$line-faint: rgb(255, 255, 255, 6%);
-$line: rgb(255, 255, 255, 11%);
-$line-strong: rgb(255, 255, 255, 20%);
-$line-hot: rgb(255, 77, 18, 55%);
+$line-faint: var(--line-faint);
+$line: var(--line);
+$line-strong: var(--line-strong);
+$line-hot: var(--line-hot);
 
 // The hot channels: what the x-ray exposes, what bleeds through the black.
-$fire: #ff4d12; // the butterfly's fire, the snake; primary anomaly
-$fire-soft: #ff7a45;
-$blood: #ff2733; // the wolf, the critical
-$magma: #ffae3a; // amber, the medium warning
-$volt: #2f7bff; // x-ray blue, the cold signal, information
-$volt-soft: #6ea3ff;
-$thermal: #14e7d2; // specimen-tag cyan, the benign-alive accent
-$orchid: #ff3ec8; // thermal magenta, the rare flag
-$acid: #c6ff2e; // used almost never, for the one thing that must sting
+$fire: var(--fire); // the butterfly's fire, the snake; primary anomaly
+$fire-soft: var(--fire-soft);
+$blood: var(--blood); // the wolf, the critical
+$magma: var(--magma); // amber, the medium warning
+$volt: var(--volt); // x-ray blue, the cold signal, information
+$volt-soft: var(--volt-soft);
+$thermal: var(--thermal); // specimen-tag cyan, the benign-alive accent
+$orchid: var(--orchid); // thermal magenta, the rare flag
+$acid: var(--acid); // used almost never, for the one thing that must sting
+
+// The palette is a set of custom properties so the whole console can switch
+// theme at runtime. Dark is the default; the light set keeps the same meaning
+// for every channel (hot is still anomaly, cyan still benign) on a paper
+// ground, with the accents darkened to hold contrast.
+@mixin palette-dark {
+  --void: #000;
+  --ink-1000: #050506;
+  --ink-900: #0a0b0d;
+  --ink-800: #0f1113;
+  --ink-700: #15181b;
+  --ink-600: #1c2024;
+  --ink-500: #262b30;
+  --chalk: #fff;
+  --bone: #f2f0e9;
+  --paper: #d8d6cd;
+  --ash: #8b8f95;
+  --dust: #5a5f65;
+  --soot: #34383d;
+  --line-faint: rgb(255, 255, 255, 6%);
+  --line: rgb(255, 255, 255, 11%);
+  --line-strong: rgb(255, 255, 255, 20%);
+  --line-hot: rgb(255, 77, 18, 55%);
+  --fire: #ff4d12;
+  --fire-soft: #ff7a45;
+  --blood: #ff2733;
+  --magma: #ffae3a;
+  --volt: #2f7bff;
+  --volt-soft: #6ea3ff;
+  --thermal: #14e7d2;
+  --orchid: #ff3ec8;
+  --acid: #c6ff2e;
+  color-scheme: dark;
+}
+
+@mixin palette-light {
+  --void: #f3f1ea;
+  --ink-1000: #ebe8df;
+  --ink-900: #e4e1d7;
+  --ink-800: #ddd9ce;
+  --ink-700: #d3cfc3;
+  --ink-600: #c5c1b4;
+  --ink-500: #b5b1a3;
+  --chalk: #000;
+  --bone: #16181a;
+  --paper: #2b2e32;
+  --ash: #565a61;
+  --dust: #6f737a;
+  --soot: #8e9298;
+  --line-faint: rgb(0, 0, 0, 7%);
+  --line: rgb(0, 0, 0, 13%);
+  --line-strong: rgb(0, 0, 0, 24%);
+  --line-hot: rgb(200, 55, 5, 55%);
+  --fire: #d0390a;
+  --fire-soft: #b8461c;
+  --blood: #c20f1d;
+  --magma: #a85f00;
+  --volt: #1857d6;
+  --volt-soft: #2a62c9;
+  --thermal: #007a6d;
+  --orchid: #a8148f;
+  --acid: #4f7a00;
+  color-scheme: light;
+}
 
 // Semantic mappings. Severity, verdict, and category all draw from the channels
 // above so the whole console agrees on what a colour means.
@@ -72,14 +136,14 @@ $crop-weight: 1.5px;
 // purpose so it reads as emission, never as a web-app drop shadow.
 @mixin glow($color, $strength: 0.5) {
   box-shadow:
-    0 0 0 1px rgba($color, 0.4),
-    0 0 11px -5px rgba($color, $strength),
-    inset 0 0 20px -16px rgba($color, $strength);
+    0 0 0 1px color-mix(in srgb, #{$color} 40%, transparent),
+    0 0 11px -5px color-mix(in srgb, #{$color} #{$strength * 100%}, transparent),
+    inset 0 0 20px -16px color-mix(in srgb, #{$color} #{$strength * 100%}, transparent);
 }
 
 @mixin text-glow($color, $strength: 0.4) {
   color: $color;
-  text-shadow: 0 0 9px rgba($color, $strength);
+  text-shadow: 0 0 9px color-mix(in srgb, #{$color} #{$strength * 100%}, transparent);
 }
 
 // Crop-mark corners drawn with two crossing gradients per corner, the frame a
@@ -114,8 +178,8 @@ $crop-weight: 1.5px;
 @mixin scanlines($opacity: 0.035) {
   background-image: repeating-linear-gradient(
     0deg,
-    rgba(255, 255, 255, $opacity) 0,
-    rgba(255, 255, 255, $opacity) 1px,
+    color-mix(in srgb, var(--chalk) #{$opacity * 100%}, transparent) 0,
+    color-mix(in srgb, var(--chalk) #{$opacity * 100%}, transparent) 1px,
     transparent 1px,
     transparent 3px
   );

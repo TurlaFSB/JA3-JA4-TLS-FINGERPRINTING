@@ -56,6 +56,14 @@
   src: url('/fonts/anton-400.woff2') format('woff2');
 }
 
+:root {
+  @include palette-dark;
+}
+
+:root[data-theme='light'] {
+  @include palette-light;
+}
+
 html {
   background-color: $void;
 }

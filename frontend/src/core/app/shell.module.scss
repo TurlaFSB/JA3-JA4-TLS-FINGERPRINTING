@@ -228,3 +228,22 @@
     opacity: 0.4;
   }
 }
+
+.theme {
+  padding: 2px $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    border-color: $line-strong;
+    outline: none;
+  }
+}

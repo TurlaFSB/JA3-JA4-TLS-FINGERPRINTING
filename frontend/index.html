@@ -3,7 +3,7 @@
   <head>
     <!--
   JA3/JA4 TLS Fingerprinting
-  Author(s): © AngelaMos, CarterPerez-dev
+  tlsfp, passive TLS fingerprinting. AGPL-3.0; see NOTICE.md for attribution.
 -->
     <meta charset="UTF-8" />
     <link
@@ -28,14 +28,14 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'self'; worker-src 'self' blob:;"
     />
-    <title>MKUtra Valedictorian</title>
+    <title>tlsfp</title>
     <meta
       name="description"
-      content="raul"
+      content="Passive TLS fingerprinting sensor: JA3, JA4 and the JA4+ family, QUIC Initial decryption, and fingerprint intelligence."
     />
     <meta
       name="author"
-      content=" ©AngelaMos | 2026 | CarterPerez-dev"
+      content="Pranav Verma"
     />
     <meta
       property="og:type"
@@ -43,60 +43,38 @@
     />
     <meta
       property="og:site_name"
-      content="MKUtra Valedictorian"
+      content="tlsfp"
     />
     <meta
       property="og:title"
-      content="MKUtra Valedictorian"
+      content="tlsfp"
     />
     <meta
       property="og:description"
-      content="raul"
-    />
-    <meta
-      property="og:image"
-      content="https://mkultraalumni.com/assets/og-image.jpg"
-    />
-    <meta
-      property="og:image:secure_url"
-      content="https://mkultraalumni.com/assets/og-image.jpg"
-    />
-    <meta
-      property="og:image:type"
-      content="image/jpeg"
-    />
-    <meta
-      property="og:image:width"
-      content="1200"
-    />
-    <meta
-      property="og:image:height"
-      content="630"
-    />
-    <meta
-      property="og:image:alt"
-      content="raul"
+      content="Passive TLS fingerprinting sensor: JA3, JA4 and the JA4+ family, QUIC Initial decryption, and fingerprint intelligence."
     />
     <meta
       name="twitter:card"
-      content="summary_large_image"
+      content="summary"
     />
     <meta
       name="twitter:title"
-      content="MKUtra Valedictorian"
+      content="tlsfp"
     />
     <meta
       name="twitter:description"
-      content="raul"
+      content="Passive TLS fingerprinting sensor: JA3, JA4 and the JA4+ family, QUIC Initial decryption, and fingerprint intelligence."
     />
-    <meta
-      name="twitter:image"
-      content="https://mkultraalumni.com/assets/og-image.jpg"
-    />
-    <meta
-      name="twitter:image:alt"
-      content="raul"
-    />
+    <script>
+      try {
+        var t = JSON.parse(localStorage.getItem('ui-storage') || '{}').state;
+        var theme = (t && t.theme) || 'dark';
+        if (theme === 'system') {
+          theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+        }
+        document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
