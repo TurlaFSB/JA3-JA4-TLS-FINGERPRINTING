@@ -40,7 +40,7 @@
   position: relative;
   z-index: 1;
   padding: $space-3;
-  background: rgb(8, 9, 10, 82%);
+  background: color-mix(in sRGB, var(--ink-900) 82%, transparent);
   border: 1px solid $line;
   border-left: 2px solid var(--accent);
   box-shadow: 0 0 20px -10px var(--accent);

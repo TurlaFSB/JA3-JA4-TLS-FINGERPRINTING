@@ -55,8 +55,8 @@
       90deg,
       transparent 0,
       transparent 7px,
-      rgb(255, 255, 255, 3%) 7px,
-      rgb(255, 255, 255, 3%) 8px
+      color-mix(in sRGB, var(--chalk) 3%, transparent) 7px,
+      color-mix(in sRGB, var(--chalk) 3%, transparent) 8px
     ),
     $ink-700;
   border: 1px solid $line-faint;
@@ -68,7 +68,7 @@
   background: var(--accent);
   box-shadow:
     0 0 7px -4px var(--accent),
-    inset -1px 0 0 rgb(255, 255, 255, 30%);
+    inset -1px 0 0 color-mix(in sRGB, var(--chalk) 30%, transparent);
   transition: width $duration-slow $ease-out;
 }
 

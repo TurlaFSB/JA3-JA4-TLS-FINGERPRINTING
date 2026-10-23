@@ -15,9 +15,9 @@
   width: min(480px, 100%);
   padding: $space-4;
   overflow: hidden auto;
-  background: rgb(10, 11, 13, 97%);
+  background: color-mix(in sRGB, var(--ink-900) 97%, transparent);
   border-left: 1px solid $line-strong;
-  box-shadow: -18px 0 30px -18px rgb(0, 0, 0, 80%);
+  box-shadow: -18px 0 30px -18px rgb(0, 0, 0, 45%);
   font-family: $font-mono;
   font-size: $font-size-2xs;
   color: $paper;

@@ -23,7 +23,7 @@
   padding: 0 6px;
   color: var(--accent);
   border: 1px solid var(--accent);
-  background: rgb(0, 0, 0, 35%);
+  background: color-mix(in sRGB, var(--void) 55%, transparent);
 }
 
 .cat {

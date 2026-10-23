@@ -1,0 +1,278 @@
+// ===================
+// ©AngelaMos | 2026
+// profiles.module.scss
+// ===================
+
+@use 'index' as *;
+
+.aside {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  color: $ash;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-2;
+  padding: $space-2 $space-3;
+  border-bottom: 1px solid $line-faint;
+}
+
+.tabs {
+  display: flex;
+  gap: $space-1-5;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chip {
+  padding: 3px $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    border-color: $line-strong;
+    outline: none;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+.chipOn {
+  color: $ink-1000;
+  background: $fire;
+  border-color: $fire;
+
+  &:hover,
+  &:focus-visible {
+    color: $ink-1000;
+    border-color: $fire-soft;
+  }
+}
+
+.empty {
+  padding: $space-8 $space-4;
+  text-align: center;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $dust;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.5fr) minmax(120px, 1.2fr) 56px 56px 92px;
+  align-items: center;
+  gap: $space-3;
+  width: 100%;
+  padding: 6px $space-3;
+  margin: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid $line-faint;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+
+  @include breakpoint-down('md') {
+    grid-template-columns: minmax(0, 1fr) 48px 80px;
+
+    > :nth-child(2),
+    > :nth-child(4) {
+      display: none;
+    }
+  }
+}
+
+button.row {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible,
+  &[aria-expanded='true'] {
+    background: $ink-800;
+    outline: none;
+  }
+}
+
+.head {
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $dust;
+}
+
+.key {
+  @include truncate;
+
+  color: $volt-soft;
+}
+
+.what {
+  @include truncate;
+
+  color: $paper;
+}
+
+.num {
+  text-align: right;
+  color: $ash;
+  font-feature-settings: 'tnum' 1;
+}
+
+.more {
+  padding: $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    outline: none;
+  }
+}
+
+.detail {
+  padding: $space-3 $space-4 $space-4;
+  background: $ink-900;
+  border-bottom: 1px solid $line;
+}
+
+.note {
+  margin: 0 0 $space-3;
+  font-size: $font-size-xs;
+  color: $paper;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $space-5;
+}
+
+.sub {
+  margin: 0 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: $fire-soft;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px $space-3;
+  margin: 0 0 $space-3;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+
+  dt {
+    color: $dust;
+  }
+
+  dd {
+    margin: 0;
+    color: $paper;
+    overflow-wrap: anywhere;
+  }
+}
+
+.hint {
+  color: $ash;
+  font-family: $font-grotesk;
+}
+
+.labels {
+  margin: 0;
+  font-size: $font-size-xs;
+  color: $thermal;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: $space-3;
+  }
+}
+
+.listName {
+  @include truncate;
+
+  color: $paper;
+}
+
+.listCount {
+  color: $ash;
+}
+
+.anatomy {
+  border-collapse: collapse;
+  font-size: $font-size-2xs;
+
+  th,
+  td {
+    padding: 2px $space-2 2px 0;
+    text-align: left;
+    vertical-align: top;
+    color: $ash;
+  }
+
+  th {
+    color: $dust;
+    font-family: $font-mono;
+    font-weight: 400;
+  }
+}
+
+.code {
+  font-family: $font-mono;
+  color: $volt-soft;
+}

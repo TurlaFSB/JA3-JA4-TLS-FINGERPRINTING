@@ -9,6 +9,7 @@ import {
   AnomalyHighlights,
   Distribution,
   LiveStream,
+  Profiles,
   StatCluster,
 } from '@/components'
 import styles from './scope.module.scss'
@@ -48,6 +49,7 @@ export function Component(): React.ReactElement {
         />
         <AnomalyHighlights className={styles.anomaly} />
         <Distribution className={styles.dist} />
+        <Profiles feed={live.feed} className={styles.profiles} />
         <AlertFeed className={styles.alerts} />
       </section>
     </div>

@@ -3,7 +3,7 @@
  * live-stream.tsx
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LiveItem } from '@/api/hooks'
 import {
   type Alert,
@@ -186,6 +186,24 @@ export function LiveStream({
   // Clearing hides everything seen so far without touching the running counts.
   const [clearedThrough, setClearedThrough] = useState(0)
 
+  const searchRef = useRef<HTMLInputElement>(null)
+
+  // "/" jumps to the filter box from anywhere that is not already a text field.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent): void => {
+      const target = event.target as HTMLElement | null
+      const typing =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement
+      if (event.key === '/' && !typing) {
+        event.preventDefault()
+        searchRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   const paused = frozen !== null
   const source = frozen ?? feed
   const needle = query.trim().toLowerCase()
@@ -237,7 +255,8 @@ export function LiveStream({
         <input
           type="search"
           className={styles.search}
-          placeholder="filter ip, sni, fingerprint"
+          ref={searchRef}
+          placeholder="filter ip, sni, fingerprint  ( / )"
           aria-label="Filter the live stream"
           value={query}
           onChange={(event) => setQuery(event.target.value)}

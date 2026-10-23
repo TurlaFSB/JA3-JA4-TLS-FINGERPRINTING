@@ -86,6 +86,7 @@
   grid-template:
     'live anomaly' minmax(300px, auto)
     'live dist' minmax(260px, auto)
+    'profiles profiles' auto
     'alerts alerts' auto
     / minmax(0, 1.62fr) minmax(0, 1fr);
   gap: $space-4;
@@ -95,6 +96,7 @@
       'live'
       'anomaly'
       'dist'
+      'profiles'
       'alerts'
       / 1fr;
   }
@@ -110,6 +112,10 @@
 
 .dist {
   grid-area: dist;
+}
+
+.profiles {
+  grid-area: profiles;
 }
 
 .alerts {
