@@ -56,3 +56,26 @@ jobs:
         run: cargo build --release --bin tlsfp
       - name: Evaluation reproduces committed results
         run: python3 eval/evaluate.py --dataset dataset/v0.1 --out eval/results/v0.1 --check
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@10.29.1 --activate
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm exec biome check .
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Stylelint
+        run: pnpm lint:scss
+      - name: Build
+        run: pnpm build

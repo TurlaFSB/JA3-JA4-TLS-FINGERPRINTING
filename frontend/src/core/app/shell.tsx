@@ -5,7 +5,9 @@
 
 import { Suspense, useEffect, useState } from 'react'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useMeta } from '@/api/hooks'
+import { describeSource } from '@/api/types'
 import { cx, RegMark, Ticker } from '@/components'
 import { ROUTES } from '@/config'
 import styles from './shell.module.scss'
@@ -35,18 +37,52 @@ function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
 
-function Clock(): React.ReactElement {
+function useNow(): number {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+  return now
+}
+
+function formatUptime(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000))
+  const hours = Math.floor(total / 3600)
+  const minutes = Math.floor((total % 3600) / 60)
+  const days = Math.floor(hours / 24)
+  if (days > 0) return `${days}d ${pad(hours % 24)}h`
+  return `${pad(hours)}:${pad(minutes)}:${pad(total % 60)}`
+}
+
+// The sensor's real, live state: whether the backend answers, what it is
+// reading from, how long it has been up, and the operator's own location label
+// when one was set. Nothing here is guessed or hardcoded.
+function SensorStatus(): React.ReactElement {
+  const { data, isSuccess } = useMeta()
+  const now = useNow()
   const date = new Date(now)
   return (
-    <span className={styles.clock}>
-      {pad(date.getUTCHours())}:{pad(date.getUTCMinutes())}:
-      {pad(date.getUTCSeconds())} utc
-    </span>
+    <>
+      <span className={cx(styles.link, isSuccess && styles.linkOn)}>
+        {isSuccess ? 'online' : 'offline'}
+      </span>
+      {data && (
+        <span className={styles.source} title={`tlsfp ${data.version}`}>
+          {describeSource(data)}
+        </span>
+      )}
+      {data?.location && <span className={styles.where}>{data.location}</span>}
+      {data && (
+        <span className={styles.uptime}>
+          up {formatUptime(now - data.started_unix_ms)}
+        </span>
+      )}
+      <span className={styles.clock}>
+        {pad(date.getUTCHours())}:{pad(date.getUTCMinutes())}:
+        {pad(date.getUTCSeconds())} utc
+      </span>
+    </>
   )
 }
 
@@ -64,7 +100,17 @@ function ShellLoading(): React.ReactElement {
   return <div className={styles.loading}>acquiring</div>
 }
 
+const TITLES: Record<string, string> = {
+  [ROUTES.SCOPE]: 'Live scope',
+  [ROUTES.INTEL]: 'Intelligence',
+}
+
 export function Shell(): React.ReactElement {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    document.title = `${TITLES[pathname] ?? 'Dashboard'} · tlsfp`
+  }, [pathname])
+
   return (
     <div className={styles.shell}>
       <header className={styles.top}>
@@ -91,8 +137,7 @@ export function Shell(): React.ReactElement {
         </nav>
 
         <div className={styles.status}>
-          <span className={styles.coord}>37.7749n / 122.4194w</span>
-          <Clock />
+          <SensorStatus />
         </div>
       </header>
 

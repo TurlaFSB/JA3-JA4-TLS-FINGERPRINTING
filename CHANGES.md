@@ -29,5 +29,12 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - Tests: satisfy the `assert_is_empty` lint added in Clippy 1.99 (assertions now carry failure messages).
 - README rewritten to a reference-style document: capabilities, install, usage, fingerprint reference, detection rules, output, architecture, validation, deployment and security, limitations.
 
+## Dashboard
+- Replaced the hardcoded San Francisco coordinates in the header with live sensor state from a new `/api/meta` endpoint: backend reachability, active feed, uptime, and an optional operator-set `--location` / `TLSFP_SENSOR_LOCATION` label.
+- Live stream: event-type filters, free-text filter, pause/resume, and a detail panel with all fingerprints, a field-by-field JA4 breakdown, intelligence matches and alerts.
+- Throughput trace (flows per second) in the stat cluster.
+- Document title per page.
+- CI: frontend job (lint, typecheck, stylelint, build).
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

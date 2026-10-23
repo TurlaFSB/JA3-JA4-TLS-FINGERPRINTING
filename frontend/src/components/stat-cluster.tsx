@@ -5,16 +5,20 @@
 
 import { useStats } from '@/api/hooks'
 import { cx } from './cx'
+import { Sparkline } from './sparkline'
 import styles from './stat-cluster.module.scss'
 
 export function StatCluster({
   flowCount,
+  rate,
   className,
 }: {
   flowCount: number
+  rate: number[]
   className?: string
 }): React.ReactElement {
   const { data } = useStats()
+  const perSecond = rate.length > 0 ? rate[rate.length - 1] : 0
   const stats = [
     {
       value: data?.intel.total ?? 0,
@@ -27,7 +31,12 @@ export function StatCluster({
       label: 'feeds',
       sub: 'sources fused',
     },
-    { value: flowCount, label: 'live flows', sub: 'seen this session' },
+    {
+      value: flowCount,
+      label: 'live flows',
+      sub: `${perSecond}/s now`,
+      trace: rate,
+    },
   ]
 
   return (
@@ -37,6 +46,9 @@ export function StatCluster({
           <span className={styles.value}>{stat.value.toLocaleString()}</span>
           <span className={styles.label}>{stat.label}</span>
           <span className={styles.sub}>{stat.sub}</span>
+          {'trace' in stat && stat.trace && (
+            <Sparkline values={stat.trace} className={styles.trace} />
+          )}
         </div>
       ))}
     </div>

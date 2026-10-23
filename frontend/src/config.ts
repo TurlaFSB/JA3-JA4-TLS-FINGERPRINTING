@@ -17,10 +17,12 @@ export const API_ENDPOINTS = {
   SEARCH: '/search',
   EXPORT: '/export',
   HEALTH: '/health',
+  META: '/meta',
 } as const
 
 export const QUERY_KEYS = {
   STATS: ['stats'] as const,
+  META: ['meta'] as const,
   ALERTS: (limit: number) => ['alerts', limit] as const,
   SEARCH: (query: string, kind: string) => ['search', query, kind] as const,
 } as const
@@ -57,6 +59,7 @@ export const LIVE = {
   STREAM_BUFFER: 140,
   ALERT_PAGE: 60,
   SEARCH_PAGE: 40,
+  RATE_WINDOW: 60,
 } as const
 
 export const HTTP_STATUS = {

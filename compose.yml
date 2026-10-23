@@ -53,6 +53,7 @@ services:
       - backend
     environment:
       - RUST_LOG=${RUST_LOG:-tlsfp=info}
+      - TLSFP_SENSOR_LOCATION=${TLSFP_SENSOR_LOCATION:-}
     volumes:
       - tlsfp_data:/data
     networks:

@@ -1,0 +1,211 @@
+// ===================
+// ©AngelaMos | 2026
+// event-detail.module.scss
+// ===================
+
+@use 'index' as *;
+
+.panel {
+  position: absolute;
+  inset: 0 0 0 auto;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  width: min(480px, 100%);
+  padding: $space-4;
+  overflow: hidden auto;
+  background: rgb(10, 11, 13, 97%);
+  border-left: 1px solid $line-strong;
+  box-shadow: -18px 0 30px -18px rgb(0, 0, 0, 80%);
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $paper;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+}
+
+.headText {
+  display: flex;
+  align-items: baseline;
+  gap: $space-3;
+}
+
+.kind {
+  font-family: $font-display;
+  font-size: $font-size-xl;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $bone;
+}
+
+.time {
+  color: $dust;
+  font-size: $font-size-3xs;
+}
+
+.close,
+.copy {
+  padding: 2px 8px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $chalk;
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+.route {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $space-2;
+  color: $bone;
+
+  i {
+    font-style: normal;
+    color: $dust;
+  }
+}
+
+.arrow {
+  color: $soot;
+}
+
+.block {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+}
+
+.title {
+  margin: 0;
+  padding-bottom: $space-1;
+  font-size: $font-size-3xs;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: $fire-soft;
+  border-bottom: 1px solid $line-faint;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  margin: 0;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: $space-2;
+  align-items: start;
+
+  dt {
+    color: $dust;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  dd {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: $space-2;
+    margin: 0;
+    min-width: 0;
+  }
+}
+
+.value {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: $volt-soft;
+}
+
+.anatomy {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 3px $space-2 3px 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid $line-faint;
+  }
+
+  th {
+    width: 96px;
+    font-weight: 400;
+    color: $dust;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+}
+
+.code {
+  color: $thermal;
+  white-space: nowrap;
+}
+
+.intel,
+.alert {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-2;
+  border: 1px solid $line;
+  background: $ink-900;
+}
+
+.intelHead,
+.alertHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.intelKind,
+.rule {
+  color: $ash;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.score,
+.hitMeta,
+.alertDetail {
+  color: $dust;
+}
+
+.hit {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.alertTitle,
+.alertDetail {
+  margin: 0;
+}
+
+.alertTitle {
+  color: $bone;
+}

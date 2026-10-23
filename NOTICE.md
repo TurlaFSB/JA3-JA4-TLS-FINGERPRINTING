@@ -77,3 +77,16 @@ The intelligence database is seeded from public sources with their own terms:
 - The salesforce/ja3 application lists are MIT licensed.
 - The ja4db.com database has no stated redistribution license, so it is fetched
   at install time rather than bundled, and entries are validated on import.
+
+# Dashboard assets
+
+Fonts bundled in `frontend/public/fonts/`: Space Grotesk, Geist Mono and Anton,
+each distributed under the SIL Open Font License 1.1 by their respective
+authors.
+
+The x-ray artwork under `frontend/public/assets/objects/` (`xray-butterfly.png`,
+`xray-lily.png`) and the other images in `frontend/public/assets/` came with the
+upstream project. The upstream repository does not record their source or a
+separate licence. They are retained here at the maintainer's direction;
+confirm redistribution rights before publishing this repository or its container
+images beyond the project's own use, or replace them.

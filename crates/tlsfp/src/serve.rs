@@ -100,6 +100,10 @@ pub struct ServeConfig {
     pub db: PathBuf,
     pub web: PathBuf,
     pub source: Source,
+    /// A free-text label for where this sensor is deployed, shown in the
+    /// dashboard header. Never derived from the network; absent unless the
+    /// operator sets it.
+    pub location: Option<String>,
 }
 
 /// Shared state every handler reads through. The store is the read side of the
@@ -108,6 +112,67 @@ pub struct ServeConfig {
 struct AppState {
     store: Mutex<IntelStore>,
     tx: broadcast::Sender<Arc<str>>,
+    meta: Meta,
+}
+
+/// The longest sensor location label the header will carry.
+const MAX_LOCATION_CHARS: usize = 80;
+
+/// What this sensor is doing, as the dashboard header shows it. Every field is
+/// real runtime state or an operator-supplied label; nothing is guessed from
+/// the network, and no filesystem path is exposed.
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+struct Meta {
+    version: &'static str,
+    source: SourceMeta,
+    started_unix_ms: u64,
+    location: Option<String>,
+}
+
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+struct SourceMeta {
+    /// `tail`, `replay` or `live`.
+    kind: &'static str,
+    /// The interface for `live`, the capture file name (not its path) for
+    /// `replay`, nothing for `tail`.
+    detail: Option<String>,
+    looping: bool,
+}
+
+impl Meta {
+    fn new(config: &ServeConfig, started_unix_ms: u64) -> Self {
+        let source = match &config.source {
+            Source::Tail => SourceMeta {
+                kind: "tail",
+                detail: None,
+                looping: false,
+            },
+            Source::Replay { path, looping, .. } => SourceMeta {
+                kind: "replay",
+                detail: path
+                    .file_name()
+                    .map(|name| name.to_string_lossy().into_owned()),
+                looping: *looping,
+            },
+            Source::Live { interface, .. } => SourceMeta {
+                kind: "live",
+                detail: Some(interface.clone()),
+                looping: false,
+            },
+        };
+        let location = config
+            .location
+            .as_deref()
+            .map(str::trim)
+            .filter(|label| !label.is_empty())
+            .map(|label| label.chars().take(MAX_LOCATION_CHARS).collect());
+        Self {
+            version: env!("CARGO_PKG_VERSION"),
+            source,
+            started_unix_ms,
+            location,
+        }
+    }
 }
 
 impl AppState {
@@ -162,9 +227,15 @@ async fn serve(config: ServeConfig) -> Result<()> {
     }
 
     let (tx, _) = broadcast::channel::<Arc<str>>(STREAM_BUFFER);
+    let started_unix_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_or(0, |elapsed| {
+            u64::try_from(elapsed.as_millis()).unwrap_or(u64::MAX)
+        });
     let state: Shared = Arc::new(AppState {
         store: Mutex::new(store),
         tx: tx.clone(),
+        meta: Meta::new(&config, started_unix_ms),
     });
 
     let shutdown = Arc::new(AtomicBool::new(false));
@@ -197,6 +268,7 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .route("/search", get(search))
         .route("/export", get(export))
         .route("/health", get(health))
+        .route("/meta", get(meta))
         .layer(CompressionLayer::new());
 
     let stream_api = Router::new().route("/stream", get(stream));
@@ -333,6 +405,10 @@ async fn export(
         )
             .into_response())
     }
+}
+
+async fn meta(State(state): State<Shared>) -> Json<Meta> {
+    Json(state.meta.clone())
 }
 
 async fn health() -> impl IntoResponse {
@@ -667,5 +743,69 @@ impl From<tokio::task::JoinError> for ApiError {
             status: StatusCode::INTERNAL_SERVER_ERROR,
             message: format!("request task failed: {error}"),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn config(source: Source, location: Option<&str>) -> ServeConfig {
+        ServeConfig {
+            bind: "127.0.0.1:0".to_owned(),
+            db: PathBuf::from("/var/lib/tlsfp/intel.db"),
+            web: PathBuf::from("frontend/dist"),
+            source,
+            location: location.map(str::to_owned),
+        }
+    }
+
+    #[test]
+    fn replay_reports_the_file_name_never_the_path() {
+        let source = Source::Replay {
+            path: PathBuf::from("/secret/captures/demo.pcap"),
+            looping: true,
+            interval: Duration::ZERO,
+        };
+        let meta = Meta::new(&config(source, None), 7);
+        assert_eq!(meta.source.kind, "replay");
+        assert_eq!(meta.source.detail.as_deref(), Some("demo.pcap"));
+        assert!(meta.source.looping);
+        assert_eq!(meta.started_unix_ms, 7);
+        let json = serde_json::to_string(&meta).unwrap();
+        assert!(!json.contains("secret"), "{json}");
+        assert!(!json.contains("intel.db"), "{json}");
+    }
+
+    #[test]
+    fn live_reports_the_interface_and_tail_reports_nothing() {
+        let live = Source::Live {
+            interface: "eth0".to_owned(),
+            filter: String::new(),
+            promiscuous: true,
+        };
+        let meta = Meta::new(&config(live, None), 0);
+        assert_eq!(meta.source.kind, "live");
+        assert_eq!(meta.source.detail.as_deref(), Some("eth0"));
+
+        let tail = Meta::new(&config(Source::Tail, None), 0);
+        assert_eq!(tail.source.kind, "tail");
+        assert_eq!(tail.source.detail, None);
+    }
+
+    #[test]
+    fn location_is_operator_supplied_trimmed_and_bounded() {
+        let none = Meta::new(&config(Source::Tail, None), 0);
+        assert_eq!(none.location, None);
+
+        let blank = Meta::new(&config(Source::Tail, Some("   ")), 0);
+        assert_eq!(blank.location, None);
+
+        let named = Meta::new(&config(Source::Tail, Some("  DC-2 rack 14 ")), 0);
+        assert_eq!(named.location.as_deref(), Some("DC-2 rack 14"));
+
+        let long = "x".repeat(500);
+        let capped = Meta::new(&config(Source::Tail, Some(&long)), 0);
+        assert_eq!(capped.location.unwrap().chars().count(), MAX_LOCATION_CHARS);
     }
 }

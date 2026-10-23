@@ -22,6 +22,8 @@ import {
   type FpKind,
   isLiveMessage,
   type LiveMessage,
+  type MetaResponse,
+  metaSchema,
   type StatsResponse,
   statsResponseSchema,
 } from '../types'
@@ -29,6 +31,11 @@ import {
 async function getStats(): Promise<StatsResponse> {
   const { data } = await apiClient.get(API_ENDPOINTS.STATS)
   return statsResponseSchema.parse(data)
+}
+
+async function getMeta(): Promise<MetaResponse> {
+  const { data } = await apiClient.get(API_ENDPOINTS.META)
+  return metaSchema.parse(data)
 }
 
 async function getAlerts(limit: number): Promise<Alert[]> {
@@ -54,6 +61,18 @@ export function useStats(): UseQueryResult<StatsResponse> {
     queryKey: QUERY_KEYS.STATS,
     queryFn: getStats,
     refetchInterval: QUERY_CONFIG.STALE_TIME.FREQUENT,
+  })
+}
+
+// What the sensor is doing right now: its feed, uptime origin and any operator
+// label. A failed fetch means the backend is unreachable, which the header
+// shows as offline.
+export function useMeta(): UseQueryResult<MetaResponse> {
+  return useQuery({
+    queryKey: QUERY_KEYS.META,
+    queryFn: getMeta,
+    refetchInterval: QUERY_CONFIG.STALE_TIME.FREQUENT * 2,
+    retry: QUERY_CONFIG.RETRY.NONE,
   })
 }
 
@@ -94,6 +113,8 @@ export interface LiveState {
   connected: boolean
   flowCount: number
   alertCount: number
+  // Flows per second over the last RATE_WINDOW seconds, oldest first.
+  rate: number[]
 }
 
 const EMPTY_LIVE: LiveState = {
@@ -101,6 +122,7 @@ const EMPTY_LIVE: LiveState = {
   connected: false,
   flowCount: 0,
   alertCount: 0,
+  rate: Array.from({ length: LIVE.RATE_WINDOW }, () => 0),
 }
 
 function parseMessage(data: string): LiveMessage | null {
@@ -120,6 +142,16 @@ export function useLiveStream(maxItems: number = LIVE.STREAM_BUFFER): LiveState 
   const max = useRef(maxItems)
   max.current = maxItems
   const seq = useRef(0)
+  const bucket = useRef(0)
+
+  useEffect(() => {
+    const tick = setInterval(() => {
+      const count = bucket.current
+      bucket.current = 0
+      setState((prev) => ({ ...prev, rate: [...prev.rate.slice(1), count] }))
+    }, 1000)
+    return () => clearInterval(tick)
+  }, [])
 
   useEffect(() => {
     const source = new EventSource(STREAM_URL)
@@ -136,6 +168,7 @@ export function useLiveStream(maxItems: number = LIVE.STREAM_BUFFER): LiveState 
       const message = parseMessage(event.data)
       if (!message) return
       seq.current += 1
+      if (message.type === 'flow') bucket.current += 1
       const item: LiveItem = { seq: seq.current, message }
       setState((prev) => {
         const feed = [item, ...prev.feed].slice(0, max.current)
@@ -148,6 +181,7 @@ export function useLiveStream(maxItems: number = LIVE.STREAM_BUFFER): LiveState 
           connected: true,
           flowCount,
           alertCount: prev.alertCount + inlineAlerts + standalone,
+          rate: prev.rate,
         }
       })
     }

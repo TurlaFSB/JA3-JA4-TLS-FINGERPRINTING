@@ -70,6 +70,7 @@ tlsfp intel alerts                           # recent alerts
 tlsfp serve 127.0.0.1:8080                   # API and dashboard, tails the database
 tlsfp serve --replay capture.pcapng --loop   # dashboard fed from a replayed capture
 tlsfp serve --live eth0                      # dashboard fed from a live interface
+tlsfp serve --location "DC-2 rack 14"        # label shown in the dashboard header (or TLSFP_SENSOR_LOCATION)
 ```
 
 Live capture needs raw-socket capabilities. Grant them to the binary instead of running as root:
@@ -149,6 +150,16 @@ JSON (`--json`), one object per line:
 ```
 
 Forensic report (`--report`) summarizes a whole capture: frame and flow counts, fingerprints by kind, top client JA4 values, top server names, and per-endpoint fingerprints, verdicts and alerts.
+
+## Dashboard
+
+`tlsfp serve` serves a web dashboard and a JSON API from one process. The dashboard shows a live stream of fingerprinted handshakes with intelligence verdicts and alerts, a throughput trace, rule and category distributions, and a searchable, exportable view of the intelligence catalogue.
+
+- **Live stream:** filter by event type (client, server, certificate, HTTP, TCP) or free text (IP, SNI, fingerprint); pause and resume; click any row for the full detail: every fingerprint in raw and hashed form, a field-by-field JA4 breakdown, matching intelligence and any alerts, with copy buttons.
+- **Header:** backend reachability, the active feed (live interface, replayed capture, or database tail), uptime, and the operator-set `--location` label. Nothing in it is estimated from the network.
+- **API:** `/api/stats`, `/api/alerts`, `/api/search`, `/api/export?format=json|csv`, `/api/meta` (sensor state, no filesystem paths), `/api/health`, and `/api/stream` (Server-Sent Events).
+
+Build the frontend once with `cd frontend && pnpm install && pnpm build`; `tlsfp serve` serves `frontend/dist` by default (`--web` to change). The Docker setup builds it for you.
 
 ## Architecture
 

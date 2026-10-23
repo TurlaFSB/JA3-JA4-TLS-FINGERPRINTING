@@ -32,7 +32,11 @@ export function Component(): React.ReactElement {
             the lie they tell.
           </p>
         </div>
-        <StatCluster flowCount={live.flowCount} className={styles.stats} />
+        <StatCluster
+          flowCount={live.flowCount}
+          rate={live.rate}
+          className={styles.stats}
+        />
       </section>
 
       <section className={styles.grid}>

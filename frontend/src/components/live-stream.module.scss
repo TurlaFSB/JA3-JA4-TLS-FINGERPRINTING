@@ -45,13 +45,105 @@
   color: $ash;
 }
 
+.controls {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  height: 40px;
+  padding: 0 $space-3;
+  background: $ink-900;
+  border-bottom: 1px solid $line;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.filters {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: $space-1;
+  overflow: hidden;
+}
+
+.chip {
+  padding: 2px 7px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $chalk;
+    border-color: $line-strong;
+    outline: none;
+  }
+}
+
+.chipOn {
+  color: $ink-1000;
+  background: $fire;
+  border-color: $fire;
+
+  &:hover,
+  &:focus-visible {
+    color: $ink-1000;
+    border-color: $fire-soft;
+  }
+}
+
+.search {
+  flex: 1;
+  min-width: 90px;
+  height: 24px;
+  padding: 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $bone;
+  background: $ink-1000;
+  border: 1px solid $line;
+
+  &::placeholder {
+    color: $dust;
+  }
+
+  &:focus-visible {
+    border-color: $fire;
+    outline: none;
+  }
+}
+
 .scroll {
   position: absolute;
-  inset: 0;
+  inset: 40px 0 0;
   overflow: hidden auto;
 }
 
 .row {
+  width: 100%;
+  margin: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0 solid transparent;
+  cursor: pointer;
   display: grid;
   grid-template-columns:
     82px 38px minmax(96px, 1.05fr) minmax(150px, 1.7fr) auto;
@@ -63,8 +155,15 @@
   font-size: $font-size-2xs;
   line-height: 1.45;
 
-  &:hover {
+  &:hover,
+  &:focus-visible {
     background: $ink-800;
+    outline: none;
+  }
+
+  &[data-selected='true'] {
+    background: $ink-700;
+    box-shadow: inset 2px 0 0 $volt-soft;
   }
 }
 
@@ -172,6 +271,7 @@
 }
 
 .alertRow {
+  cursor: default;
   border-left: 2px solid var(--accent);
   background: linear-gradient(
     90deg,

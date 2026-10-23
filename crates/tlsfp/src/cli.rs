@@ -145,6 +145,11 @@ pub enum Command {
         #[arg(long, default_value = "frontend/dist")]
         web: PathBuf,
 
+        /// Label for where this sensor is deployed, shown in the dashboard
+        /// header. Free text; never guessed from the network.
+        #[arg(long, env = "TLSFP_SENSOR_LOCATION", value_name = "TEXT")]
+        location: Option<String>,
+
         /// Replay this capture file as the live feed.
         #[arg(long, value_name = "PCAP")]
         replay: Option<PathBuf>,
@@ -287,6 +292,7 @@ impl Cli {
                 bind,
                 db,
                 web,
+                location,
                 replay,
                 repeat,
                 interval_ms,
@@ -297,6 +303,7 @@ impl Cli {
                 bind,
                 db,
                 web,
+                location,
                 replay,
                 repeat,
                 interval_ms,
@@ -469,6 +476,7 @@ fn run_serve(
     bind: String,
     db: Option<PathBuf>,
     web: PathBuf,
+    location: Option<String>,
     replay: Option<PathBuf>,
     repeat: bool,
     interval_ms: u64,
@@ -503,6 +511,7 @@ fn run_serve(
         db,
         web,
         source,
+        location,
     })
 }
 
