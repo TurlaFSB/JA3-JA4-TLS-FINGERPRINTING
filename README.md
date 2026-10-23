@@ -202,7 +202,7 @@ Design decisions:
 
 ## Performance
 
-Single core: fingerprinting alone runs at about 90,000 TLS handshakes per second; with intelligence matching and detection (SQLite) about 3,000 per second. Methodology, caveats and what has not been measured: [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+Single core: fingerprinting alone runs at about 90,000 TLS handshakes or 80,000 QUIC Initials per second; with intelligence matching and detection (SQLite) about 3,000 per second. Methodology, caveats and what has not been measured: [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
 ## Validation
 
