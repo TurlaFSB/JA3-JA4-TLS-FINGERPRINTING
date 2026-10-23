@@ -1,0 +1,71 @@
+{
+  "dataset_version": "v0.1",
+  "created_utc": "2026-10-23T05:40:32Z",
+  "environment": {
+    "os": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "kernel": "6.18.44-fc-v153",
+    "machine": "x86_64",
+    "server_tls": "OpenSSL 3.0.13 30 Jan 2024",
+    "target_host": "localhost",
+    "transport": "loopback",
+    "server_alpn": [
+      "http/1.1"
+    ]
+  },
+  "labels": {
+    "curl": {
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl.pcap",
+      "sha256": "b7e1be21d7afb2da410fc0d47f4fb7166d93c1feff70008e900e710f2ec50b13",
+      "requested_connections": 20
+    },
+    "curl-http2": {
+      "client_version": "curl 8.5.0 (x86_64-pc-linux-gnu) libcurl/8.5.0 OpenSSL/3.0.13 zlib/1.3 brotli/1.1.0 zstd/1.5.5 libidn2/2.3.7 libpsl/0.21.2 (+libidn2/2.3.7) libssh/0.10.6/openssl/zlib nghttp2/1.59.0 librtmp/2.3 OpenLDAP/2.6.10",
+      "pcap": "pcap/curl-http2.pcap",
+      "sha256": "f4ecef37a97e4eef51549c7a3244158d633f1ff423d003b9aafbe928ff6bbb7d",
+      "requested_connections": 20
+    },
+    "wget": {
+      "client_version": "GNU Wget 1.21.4 built on linux-gnu.",
+      "pcap": "pcap/wget.pcap",
+      "sha256": "a225f2e0513628c5d74c3d2544dc8b01f75b1438ce6cd437bf6d70789c84fb53",
+      "requested_connections": 20
+    },
+    "openssl-s_client": {
+      "client_version": "OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)",
+      "pcap": "pcap/openssl-s_client.pcap",
+      "sha256": "b5469fb830647091ea9c1f7cd9e69d339e7628d4ed4d049d47ecea0fc67c05a6",
+      "requested_connections": 20
+    },
+    "python-requests": {
+      "client_version": "requests 2.34.2 urllib3 2.8.0 python 3.13.16",
+      "pcap": "pcap/python-requests.pcap",
+      "sha256": "e3b6870e068bd4dd149f12a0367339d9efd6f9887adbb154db2e583d7bcc2404",
+      "requested_connections": 20
+    },
+    "python-urllib": {
+      "client_version": "python 3.13.16 OpenSSL 3.0.13 30 Jan 2024",
+      "pcap": "pcap/python-urllib.pcap",
+      "sha256": "cb6a9f09a8777a1da4e2e7cdf70214127750bc7838b5bf94d8cfce57bfe9efdf",
+      "requested_connections": 20
+    },
+    "go-net-http": {
+      "client_version": "go version go1.24.7 linux/amd64",
+      "pcap": "pcap/go-net-http.pcap",
+      "sha256": "1605a94c429395ba359483ff37e280922652074bcafba6ffd662fbb8cc1a7fe3",
+      "requested_connections": 20
+    },
+    "node-https": {
+      "client_version": "node v22.22.0",
+      "pcap": "pcap/node-https.pcap",
+      "sha256": "62ad3849aa65513470bc51c00098275dd12435e78a1bc453699ea3e40fd8336d",
+      "requested_connections": 20
+    },
+    "chromium-headless": {
+      "client_version": "Chromium 141.0.7390.37",
+      "pcap": "pcap/chromium-headless.pcap",
+      "sha256": "1fd195b0f9aad9bcb5397bfa8aa38ac543378e016da34a144930f4f314face92",
+      "requested_connections": 20
+    }
+  }
+}

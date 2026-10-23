@@ -1,0 +1,149 @@
+{
+  "dataset_version": "v0.1",
+  "ja3": {
+    "clients": 9,
+    "clients_with_unique_dominant_fingerprint": 7,
+    "mean_distinct_per_client": 1.778,
+    "mean_dominant_share": 0.9028,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 8,
+        "dominant": "600169d73f96c89d21b3d8260407d78c",
+        "dominant_share": 0.125,
+        "handshakes": 8,
+        "shared_with": []
+      },
+      "curl": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl-http2"
+        ]
+      },
+      "curl-http2": {
+        "distinct": 1,
+        "dominant": "0149f47eabf9a20d0893e2a44e5a6323",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "curl"
+        ]
+      },
+      "go-net-http": {
+        "distinct": 1,
+        "dominant": "8bee49baa010986785a9e74d688ed7e9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "node-https": {
+        "distinct": 1,
+        "dominant": "944d1e1858cd278718f8a46b65d3212f",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client": {
+        "distinct": 1,
+        "dominant": "a3afc2c46ba4a7d7fbe1cfb7a3031c2f",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-requests": {
+        "distinct": 1,
+        "dominant": "a48c0d5f95b1ef98f560f324fd275da1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-urllib": {
+        "distinct": 1,
+        "dominant": "93c7d42c0df602fb91589311534831f5",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget": {
+        "distinct": 1,
+        "dominant": "e91ce64088cf382a3a56b713620f0204",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      }
+    }
+  },
+  "ja4": {
+    "clients": 9,
+    "clients_with_unique_dominant_fingerprint": 9,
+    "mean_distinct_per_client": 1.111,
+    "mean_dominant_share": 0.9583,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_e15453cad77d",
+        "dominant_share": 0.625,
+        "handshakes": 8,
+        "shared_with": []
+      },
+      "curl": {
+        "distinct": 1,
+        "dominant": "t13d3112h1_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl-http2": {
+        "distinct": 1,
+        "dominant": "t13d3112h2_e8f1e7e78f70_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "go-net-http": {
+        "distinct": 1,
+        "dominant": "t13d131000_f57a46bbacb6_e7c285222651",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "node-https": {
+        "distinct": 1,
+        "dominant": "t13d521100_b262b3658495_8e6e362c5eac",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "openssl-s_client": {
+        "distinct": 1,
+        "dominant": "t13d311000_e8f1e7e78f70_1f22a2ca17c4",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-requests": {
+        "distinct": 1,
+        "dominant": "t13d1812h1_85036bcba153_b26ce05bbdd6",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "python-urllib": {
+        "distinct": 1,
+        "dominant": "t13d181100_85036bcba153_d41ae481755e",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "wget": {
+        "distinct": 1,
+        "dominant": "t13d751100_479067518aa3_fb8d5ffd48c1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      }
+    }
+  }
+}

@@ -367,6 +367,10 @@ fn run_pcap(
         }
     })?;
     if let Some(error) = write_failure {
+        // A reader that closes early, as in `tlsfp pcap x | head`, is not an error.
+        if error.kind() == std::io::ErrorKind::BrokenPipe {
+            return Ok(());
+        }
         return Err(anyhow::Error::from(error).context("writing events to stdout"));
     }
     out.flush().context("flushing events to stdout")?;

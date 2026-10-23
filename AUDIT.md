@@ -7,7 +7,7 @@ Scope: the Rust workspace (`tlsfp-core`, `tlsfp-intel`, `tlsfp`), container and 
 | Check | Result |
 |---|---|
 | `cargo build --workspace --all-targets` | passes (needs `libpcap-dev`) |
-| `cargo test --workspace` | 204 tests passed before this audit, 215 after |
+| `cargo test --workspace` | 204 tests passed before this audit, 216 after |
 | `cargo fmt --all --check` | clean |
 | `cargo clippy --workspace --all-targets -- -D warnings` | clean |
 | `cargo audit` | 2 warnings before, 0 after (see F1) |
@@ -23,7 +23,8 @@ Scope: the Rust workspace (`tlsfp-core`, `tlsfp-intel`, `tlsfp`), container and 
 | F5 | Info | SQL built with `format!` in `matcher.rs` interpolates only compile-time constants; all values are bound parameters. | No action needed. |
 | F6 | Info | Container images run as non-root (`USER tlsfp`, `USER nginx`); live capture drops to two capabilities. | No action needed. |
 | F7 | Info | README performance claim (about 380k to 500k fingerprints/s) is from the upstream author and was not reproduced in this audit. | Open: re-measure with `cargo bench -p tlsfp-core` on the target hardware before citing. |
-| F8 | Info | `install.sh` clones the upstream repository, not this one. | Open: README directs users to `cargo build`; script to be rewritten or removed. |
+| F8 | Low | `install.sh` cloned the upstream repository, not this one. | Fixed: rewritten to build from the local checkout; tested with a temporary prefix. |
+| F9 | Low | `tlsfp pcap` reported `Broken pipe` with a backtrace when piped to `head`; the `live` path already handled it. | Fixed with a regression test (verified failing before the fix). |
 
 ## Not covered
 

@@ -45,3 +45,14 @@ jobs:
         run: cargo install cargo-audit --locked
       - name: Audit dependencies
         run: cargo audit
+
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install libpcap
+        run: sudo apt-get update && sudo apt-get install -y libpcap-dev
+      - name: Build
+        run: cargo build --release --bin tlsfp
+      - name: Evaluation reproduces committed results
+        run: python3 eval/evaluate.py --dataset dataset/v0.1 --out eval/results/v0.1 --check

@@ -1,7 +1,6 @@
 # ©AngelaMos | 2026
 # .gitignore
 
-docs/
 target/
 *.db
 *.sqlite

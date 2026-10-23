@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below, and cite the upstream project it derives from."
+title: "JA3/JA4 TLS Fingerprinting"
+type: software
+version: 0.1.0
+date-released: 2026-10-23
+license: AGPL-3.0-only
+repository-code: "https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING"
+authors:
+  - family-names: Verma
+    given-names: Pranav
+    alias: TurlaFSB
+keywords:
+  - TLS
+  - JA3
+  - JA4
+  - fingerprinting
+  - network security
+  - QUIC
+references:
+  - type: software
+    title: "ja3-ja4-tls-fingerprinting (Cybersecurity-Projects)"
+    authors:
+      - alias: CarterPerez-dev
+    url: "https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting"
+    commit: bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8
+    license: AGPL-3.0-only
+  - type: software
+    title: "JA4+ network fingerprinting"
+    authors:
+      - name: FoxIO
+    url: "https://github.com/FoxIO-LLC/ja4"
+  - type: software
+    title: "JA3 - a method for profiling SSL/TLS clients"
+    authors:
+      - family-names: Althouse
+        given-names: John
+      - family-names: Atkinson
+        given-names: Jeff
+      - family-names: Atkins
+        given-names: Josh
+    url: "https://github.com/salesforce/ja3"

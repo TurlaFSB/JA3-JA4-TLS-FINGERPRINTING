@@ -116,3 +116,27 @@ fn top_flag_caps_ranked_rows() {
         serde_json::from_slice(&output.stdout).expect("report is valid JSON");
     assert!(value["distribution"]["top_sni"].as_array().unwrap().len() <= 2);
 }
+
+#[test]
+fn closed_stdout_is_a_clean_exit_not_an_error() {
+    use std::process::Stdio;
+
+    let mut child = Command::new(env!("CARGO_BIN_EXE_tlsfp"))
+        .arg("pcap")
+        .arg(capture())
+        .arg("--json")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawning the tlsfp binary");
+    // Close the read end before the sensor writes, as `tlsfp pcap x | head` does.
+    drop(child.stdout.take());
+    let output = child.wait_with_output().expect("waiting for tlsfp");
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(
+        output.status.success(),
+        "exit status {:?}: {stderr}",
+        output.status
+    );
+    assert!(!stderr.contains("Broken pipe"), "{stderr}");
+}
