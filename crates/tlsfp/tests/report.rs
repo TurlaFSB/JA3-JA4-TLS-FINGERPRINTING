@@ -92,7 +92,8 @@ fn json_report_is_well_formed() {
         !value["distribution"]["top_ja4"]
             .as_array()
             .unwrap()
-            .is_empty()
+            .is_empty(),
+        "report lists no top JA4 fingerprints"
     );
     let endpoints = value["endpoints"].as_array().unwrap();
     assert!(endpoints.iter().any(|e| e["ip"] == "192.168.1.168"));

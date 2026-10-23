@@ -26,6 +26,7 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - `tlsfp pcap` no longer prints an error and stack trace when its output is piped to a program that exits early (`| head`); regression test added.
 
 - CI: fixed `rustup --component` usage that failed every build, test and lint job on current runners.
+- Tests: satisfy the `assert_is_empty` lint added in Clippy 1.99 (assertions now carry failure messages).
 
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

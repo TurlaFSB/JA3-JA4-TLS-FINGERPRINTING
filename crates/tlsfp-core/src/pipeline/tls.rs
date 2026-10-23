@@ -368,7 +368,7 @@ mod tests {
 
         let partial = b"GET / HTTP/1.1\r\nHost: example.com\r\n";
         advance(&mut proto, partial, &mut |e| events.push(e));
-        assert!(events.is_empty());
+        assert!(events.is_empty(), "unexpected events: {events:?}");
         assert!(matches!(proto, StreamProtocol::Http));
 
         let full = b"GET / HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\n\r\n";
@@ -389,7 +389,7 @@ mod tests {
 
         let full = record(&[0x01, 0x00, 0x00, 0x02, 0xaa, 0xbb]);
         advance(&mut proto, &full[..7], &mut |e| events.push(e));
-        assert!(events.is_empty());
+        assert!(events.is_empty(), "unexpected events: {events:?}");
         assert!(matches!(proto, StreamProtocol::Tls(_)));
         assert!(!proto.finished());
     }
@@ -402,6 +402,6 @@ mod tests {
         let stream = [0x16, 0x03, 0x01, 0xff, 0xff, 0x00, 0x00, 0x00];
         advance(&mut proto, &stream, &mut |e| events.push(e));
         assert!(matches!(proto, StreamProtocol::Ignored));
-        assert!(events.is_empty());
+        assert!(events.is_empty(), "unexpected events: {events:?}");
     }
 }

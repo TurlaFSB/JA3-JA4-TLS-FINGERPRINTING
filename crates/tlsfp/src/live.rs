@@ -554,7 +554,7 @@ mod tests {
         let _ = std::net::TcpStream::connect(("127.0.0.1", 39999));
 
         let seen = source.next_frame().unwrap().expect("a SYN on loopback");
-        assert!(!seen.data.is_empty());
+        assert!(!seen.data.is_empty(), "captured frame has no bytes");
 
         let stats = source.close().expect("final capture statistics");
         assert!(stats.received >= 1);
