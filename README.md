@@ -223,8 +223,9 @@ cargo bench -p tlsfp-core        # throughput benchmarks
 |---|---|
 | Known-good clients receiving a suspicious or malicious verdict | 0 of 22 (428 handshakes) |
 | Known-good clients unseen by the feed that were wrongly vouched for | 0 of 5 (reported unknown) |
-| Real Chromium builds whose JA4 equals the nearest-version curl-impersonate profile | 8 of 9 |
-| curl-impersonate Chrome and Edge profiles whose JA4 equals a real build's | 15 of 16 |
+| Real Chromium headless-shell builds whose JA4 equals the nearest-version curl-impersonate profile | 8 of 9 |
+| Real full Chrome builds (25, versions 118 to 143) whose JA4 equals it | 0 of 25: the profiles send ECH, the lab Chrome does not |
+| Distinct JA4 families across 25 real full Chrome builds | 3, plus a resumption variant of each |
 | Lying libraries caught by `ua_mismatch` (a library claiming Chrome or Safari) | 16 of 16, no false alarms on 8 honest libraries and 10 real browsers |
 | Windows claims from a Linux host caught by `os_mismatch` | 14 of 14 |
 | Impersonation tools left on defaults caught by `header_anomaly` | 17 of 17, no false alarms |
@@ -232,7 +233,7 @@ cargo bench -p tlsfp-core        # throughput benchmarks
 | JA4 sets reproducing across two lab runs | 28 of 28 clients |
 | Distinct fingerprints per client, JA3 against JA4 | 5.74 against 1.10 |
 
-JA3 changes on every connection for any client that randomizes extension order, while JA4 collapses them. Impersonation is the finding that matters: **a tool that impersonates Chrome with curl-impersonate produces the same JA3/JA4 as the real browser**, so TLS fingerprints cannot catch it. The sensor therefore never lists such profiles as tools. What does separate them is the HTTP layer: curl-impersonate sends Client Hints, `Sec-Fetch-*` headers and an h2c upgrade over cleartext, which real browsers never do, so `header_anomaly` catches the default configuration. An attacker who removes those headers and claims a Unix User-Agent evades every rule here, and real-browser automation looks like a user at every measured layer. The evaluation also led to fixes in the matcher and label logic and to the `--shared-network` option for NAT gateways. Method, results and limits: [`eval/README.md`](eval/README.md); clients and threats to validity: [`dataset/README.md`](dataset/README.md).
+JA3 changes on every connection for any client that randomizes extension order, while JA4 collapses them. Impersonation is where the evaluation changed the most. Against Chromium headless shells the curl-impersonate profile is byte-identical (8 of 9); against full Chrome in the lab it never is (0 of 25), because the profiles send ECH, use a stale ALPS codepoint for Chrome 127 to 131 and lack the trust-anchors extension of Chrome 141 and later. Chrome's ClientHello depends on build flavour and configuration, and the lab could not make Chrome send ECH (feature flag, secure DNS and a non-loopback address all failed), so whether a profile separates from a typical desktop user is not something the lab can settle. The sensor therefore never lists impersonation profiles as tools, because the opposite error would flag real users, and it catches impersonation at other layers: curl-impersonate sends Client Hints, `Sec-Fetch-*` headers and an h2c upgrade over cleartext, which real browsers never do, so `header_anomaly` catches the default configuration. An attacker who removes those headers and claims a Unix User-Agent evades every rule here, and real-browser automation looks like a user at every measured layer. The evaluation also led to fixes in the matcher and label logic and to the `--shared-network` option for NAT gateways. Method, results and limits: [`eval/README.md`](eval/README.md); clients and threats to validity: [`dataset/README.md`](dataset/README.md).
 
 ## Deployment and security
 
@@ -250,7 +251,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 - JA4X needs the certificate in the clear (TLS 1.2 and earlier). JA4H covers cleartext HTTP/1.x only.
 - QUIC support covers client Initial packets; no 0-RTT, Handshake packets, or connection migration.
 - The bundled intelligence (305 fingerprints) is a baseline, not coverage of current malware. Its client entries come from one Linux host and drift as client libraries change.
-- Tools that reproduce a real browser's ClientHello exactly (curl-impersonate Chrome and Edge profiles; measured against twelve real Chromium builds) cannot be separated from that browser by JA3 or JA4. This is measured, not hidden, in [`eval/README.md`](eval/README.md).
+- A tool that reproduces a real browser's ClientHello cannot be separated from it by JA3 or JA4, and whether curl-impersonate does depends on browser configuration the sensor cannot see (see the fidelity results in [`eval/README.md`](eval/README.md)). Curated browser fingerprints are families, not single values: 25 real Chrome builds produced three.
 - Accuracy is measured on lab captures only (see Validation); it has not been quantified on real-world traffic.
 
 ## Documentation

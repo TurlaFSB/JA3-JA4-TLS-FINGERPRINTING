@@ -53,5 +53,10 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - New rule `header_anomaly`: a browser User-Agent on a cleartext request to a non-loopback origin that carries `Sec-Fetch-*`, `Sec-CH-*` or an h2c upgrade. Registered in the dashboard.
 - Detection evaluation now also reports the NAT scenario with the address declared shared (30 `fp_rotation` alerts to 0).
 
+## Real full Chrome and a second correction
+- Found that real full Chrome builds are downloadable from Chrome for Testing (`dataset/lab/fetch_chrome.sh`); an earlier statement that real desktop Chrome was out of reach was my error. Dataset v0.6: 31 builds (113 to 143), 25 of which produced traffic, beside 20 impersonation profiles.
+- The fidelity result is configuration-dependent, which qualifies the v0.4 conclusion: profiles equal Chromium headless shells (8 of 9) but differ from the lab's full Chrome (0 of 25) in ECH, the ALPS codepoint (127 to 131) and trust anchors (141+). The lab could not make Chrome send ECH, so the question of typical desktop users stays open. Docs and feed policy wording corrected; profiles are still never listed.
+- `eval/fidelity.py` reports the extensions that differ per build and excludes builds that produced no traffic.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

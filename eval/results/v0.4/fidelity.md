@@ -2,6 +2,7 @@
 
 9 real browser builds (0 full Chrome) against 16 curl-impersonate Chrome and Edge profiles. A profile whose JA4 equals a real build's cannot be separated from it by any ClientHello hash; one that differs can, until the profile is updated.
 
+- real builds that produced no handshake in the lab and are excluded: none
 - real builds whose JA4 equals their nearest-version profile's: **8 of 9**
 - profiles whose JA4 equals some real build's: **15 of 16** (chrome104, chrome107, chrome110, chrome116, chrome120, chrome124, chrome131, chrome133a, chrome136, chrome142, chrome145, chrome146, chrome99, edge101, edge99)
 - profiles matching no real build: 1 (chrome150)

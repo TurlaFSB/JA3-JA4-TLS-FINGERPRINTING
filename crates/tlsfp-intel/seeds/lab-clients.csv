@@ -7,8 +7,9 @@
 # expect drift across versions.
 #
 # Impersonation profiles (curl_cffi / curl-impersonate) are deliberately not listed.
-# Measured against real Chromium builds they reproduce the ClientHello exactly, so a
-# tool entry would be a real browser's fingerprint and would flag its users.
+# They equal Chromium headless shells of their era and differ from full Chrome only by
+# configuration-dependent extensions, so a tool entry could be a real browser's
+# fingerprint and would flag its users.
 # Do not edit by hand; regenerate.
 # Not listed: curl_cffi chrome104 profile; its JA4 equals real Chromium 107.0.0, 110.0.1.
 # Not listed: curl_cffi chrome107 profile; its JA4 equals real Chromium 107.0.0, 110.0.1.

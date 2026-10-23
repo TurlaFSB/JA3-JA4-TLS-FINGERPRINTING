@@ -10,9 +10,10 @@ One row per distinct JA4 a client produced; JA3 rows only for clients whose JA3
 is stable (JA3 of a client that randomizes extension order is meaningless as an
 identifier). Real Chromium builds and ordinary libraries are known-good baselines
 (`benign`). Impersonation profiles (curl_cffi) are NEVER listed: measured against
-real Chromium builds of the same era they reproduce the ClientHello exactly (see
-eval/fidelity.py), so any hash of an impersonation profile is also the real
-browser's, and listing it as a tool would flag every real user of that browser.
+Chromium headless shells of the same era they reproduce the ClientHello exactly,
+and differ from full Chrome only in configuration-dependent extensions such as
+ECH (see eval/fidelity.py). A profile therefore equals a plausible real browser
+configuration, and listing it as a tool would flag real users.
 
     python3 dataset/lab/make_intel_feed.py --dataset dataset/v0.2 \
         --out crates/tlsfp-intel/seeds/lab-clients.csv
@@ -152,8 +153,9 @@ def main():
             "# expect drift across versions.\n"
             "#\n"
             "# Impersonation profiles (curl_cffi / curl-impersonate) are deliberately not listed.\n"
-            "# Measured against real Chromium builds they reproduce the ClientHello exactly, so a\n"
-            "# tool entry would be a real browser's fingerprint and would flag its users.\n"
+            "# They equal Chromium headless shells of their era and differ from full Chrome only by\n"
+            "# configuration-dependent extensions, so a tool entry could be a real browser's\n"
+            "# fingerprint and would flag its users.\n"
             "# Do not edit by hand; regenerate.\n"
             + "".join(
                 f"# Not listed: curl_cffi {name} profile; "

@@ -337,5 +337,6 @@
   ],
   "real_builds": 9,
   "real_builds_identical_to_nearest_profile": 8,
+  "real_builds_without_traffic": [],
   "real_full_chrome_builds": 0
 }

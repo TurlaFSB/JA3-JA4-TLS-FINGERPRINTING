@@ -60,7 +60,9 @@ jobs:
             python3 eval/evaluate.py --dataset dataset/$v --out eval/results/$v --check
           done
       - name: Impersonation fidelity reproduces committed results
-        run: python3 eval/fidelity.py --dataset dataset/v0.4 --out eval/results/v0.4 --check
+        run: |
+          python3 eval/fidelity.py --dataset dataset/v0.4 --out eval/results/v0.4 --check
+          python3 eval/fidelity.py --dataset dataset/v0.6 --out eval/results/v0.6 --check
       - name: Cross-layer rule evaluation reproduces committed results
         run: |
           python3 eval/scenarios.py --dataset dataset/v0.5 --out eval/results/v0.5 --check

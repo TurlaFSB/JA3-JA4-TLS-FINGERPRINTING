@@ -1,0 +1,801 @@
+{
+  "dataset_version": "v0.6",
+  "ja4_groups": {
+    "t13d1515h2_8daaf6152771_22334254f9f7": {
+      "profiles": [],
+      "real": [
+        "127",
+        "128",
+        "129",
+        "130",
+        "131",
+        "132",
+        "133",
+        "134",
+        "135",
+        "136",
+        "137",
+        "138",
+        "139",
+        "140"
+      ]
+    },
+    "t13d1515h2_8daaf6152771_f37e75b10bcc": {
+      "profiles": [],
+      "real": [
+        "118",
+        "119",
+        "120",
+        "122",
+        "123",
+        "124",
+        "125",
+        "126"
+      ]
+    },
+    "t13d1516h2_8daaf6152771_02713d6af862": {
+      "profiles": [
+        "chrome119",
+        "chrome120",
+        "chrome123",
+        "chrome124",
+        "chrome131"
+      ],
+      "real": []
+    },
+    "t13d1516h2_8daaf6152771_806a8c22fdea": {
+      "profiles": [
+        "chrome150"
+      ],
+      "real": []
+    },
+    "t13d1516h2_8daaf6152771_d8a2da3f94cd": {
+      "profiles": [
+        "chrome133a",
+        "chrome136",
+        "chrome142",
+        "chrome145",
+        "chrome146"
+      ],
+      "real": []
+    },
+    "t13d1516h2_8daaf6152771_e15453cad77d": {
+      "profiles": [],
+      "real": [
+        "141",
+        "142",
+        "143"
+      ]
+    },
+    "t13d1516h2_8daaf6152771_e2868af24dc0": {
+      "profiles": [],
+      "real": [
+        "129",
+        "130",
+        "131",
+        "132",
+        "133",
+        "134",
+        "135",
+        "136",
+        "137",
+        "138",
+        "139",
+        "140"
+      ]
+    },
+    "t13d1516h2_8daaf6152771_e5627efa2ab1": {
+      "profiles": [
+        "chrome100",
+        "chrome101",
+        "chrome104",
+        "chrome107",
+        "chrome110",
+        "chrome116",
+        "chrome99",
+        "edge101",
+        "edge99"
+      ],
+      "real": []
+    },
+    "t13d1517h2_8daaf6152771_b1ff8ab2d16f": {
+      "profiles": [
+        "chrome119",
+        "chrome120",
+        "chrome123"
+      ],
+      "real": []
+    },
+    "t13d1517h2_8daaf6152771_eacfb8afcfec": {
+      "profiles": [],
+      "real": [
+        "141",
+        "142",
+        "143"
+      ]
+    }
+  },
+  "per_profile": {
+    "chrome100": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome101": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome104": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome107": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome110": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome116": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "chrome119": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome120": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome123": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome124": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome131": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome133a": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome136": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome142": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome145": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome146": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome150": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_806a8c22fdea"
+      ]
+    },
+    "chrome99": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "edge101": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    },
+    "edge99": {
+      "equals_a_real_build": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ]
+    }
+  },
+  "per_real_build": {
+    "chrome-real-118": {
+      "client_version": "Google Chrome for Testing 118.0.5993.70",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello",
+          "padding"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome119",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome-real-119": {
+      "client_version": "Google Chrome for Testing 119.0.6045.105",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello",
+          "padding"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome119",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome-real-120": {
+      "client_version": "Google Chrome for Testing 120.0.6099.109",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello",
+          "padding"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome120",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome-real-122": {
+      "client_version": "Google Chrome for Testing 122.0.6261.69",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello",
+          "padding"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome123",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome-real-123": {
+      "client_version": "Google Chrome for Testing 123.0.6312.58",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello",
+          "padding"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome123",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862",
+        "t13d1517h2_8daaf6152771_b1ff8ab2d16f"
+      ]
+    },
+    "chrome-real-124": {
+      "client_version": "Google Chrome for Testing 124.0.6367.60",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome124",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-125": {
+      "client_version": "Google Chrome for Testing 125.0.6422.60",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome124",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-126": {
+      "client_version": "Google Chrome for Testing 126.0.6478.55",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_f37e75b10bcc"
+      ],
+      "nearest_profile": "chrome124",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-127": {
+      "client_version": "Google Chrome for Testing 127.0.6533.72",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "alps (legacy codepoint 0x4469)",
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "alps (new codepoint 0x44cd)"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7"
+      ],
+      "nearest_profile": "chrome124",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-128": {
+      "client_version": "Google Chrome for Testing 128.0.6613.84",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "alps (legacy codepoint 0x4469)",
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "alps (new codepoint 0x44cd)"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7"
+      ],
+      "nearest_profile": "chrome131",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-129": {
+      "client_version": "Google Chrome for Testing 129.0.6668.58",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "alps (legacy codepoint 0x4469)",
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "alps (new codepoint 0x44cd)"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome131",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-130": {
+      "client_version": "Google Chrome for Testing 130.0.6723.58",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "alps (legacy codepoint 0x4469)",
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "alps (new codepoint 0x44cd)"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome131",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-131": {
+      "client_version": "Google Chrome for Testing 131.0.6778.85",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "alps (legacy codepoint 0x4469)",
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "alps (new codepoint 0x44cd)"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome131",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ]
+    },
+    "chrome-real-132": {
+      "client_version": "Google Chrome for Testing 132.0.6834.83",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome133a",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-133": {
+      "client_version": "Google Chrome for Testing 133.0.6943.53",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome133a",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-134": {
+      "client_version": "Google Chrome for Testing 134.0.6998.35",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome133a",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-135": {
+      "client_version": "Google Chrome for Testing 135.0.7049.42",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome136",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-136": {
+      "client_version": "Google Chrome for Testing 136.0.7103.49",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome136",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-137": {
+      "client_version": "Google Chrome for Testing 137.0.7151.55",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome136",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-138": {
+      "client_version": "Google Chrome for Testing 138.0.7204.49",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome136",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-139": {
+      "client_version": "Google Chrome for Testing 139.0.7258.66",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-140": {
+      "client_version": "Google Chrome for Testing 140.0.7339.80",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1515h2_8daaf6152771_22334254f9f7",
+        "t13d1516h2_8daaf6152771_e2868af24dc0"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-141": {
+      "client_version": "Google Chrome for Testing 141.0.7390.54",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "trust_anchors"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e15453cad77d",
+        "t13d1517h2_8daaf6152771_eacfb8afcfec"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-142": {
+      "client_version": "Google Chrome for Testing 142.0.7444.59",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "trust_anchors"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e15453cad77d",
+        "t13d1517h2_8daaf6152771_eacfb8afcfec"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    },
+    "chrome-real-143": {
+      "client_version": "Google Chrome for Testing 143.0.7499.40",
+      "differences_from_nearest_profile": {
+        "ciphers_equal": true,
+        "extensions_only_in_profile": [
+          "encrypted_client_hello"
+        ],
+        "extensions_only_in_real": [
+          "trust_anchors"
+        ],
+        "signature_algorithms_equal": true
+      },
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e15453cad77d",
+        "t13d1517h2_8daaf6152771_eacfb8afcfec"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ]
+    }
+  },
+  "profiles": 20,
+  "profiles_matching_no_real_build": [
+    "chrome100",
+    "chrome101",
+    "chrome104",
+    "chrome107",
+    "chrome110",
+    "chrome116",
+    "chrome119",
+    "chrome120",
+    "chrome123",
+    "chrome124",
+    "chrome131",
+    "chrome133a",
+    "chrome136",
+    "chrome142",
+    "chrome145",
+    "chrome146",
+    "chrome150",
+    "chrome99",
+    "edge101",
+    "edge99"
+  ],
+  "profiles_with_ja4_identical_to_a_real_build": [],
+  "real_builds": 25,
+  "real_builds_identical_to_nearest_profile": 0,
+  "real_builds_without_traffic": [
+    "chrome-real-113",
+    "chrome-real-114",
+    "chrome-real-115",
+    "chrome-real-116",
+    "chrome-real-117",
+    "chrome-real-121"
+  ],
+  "real_full_chrome_builds": 25
+}

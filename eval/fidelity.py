@@ -70,7 +70,10 @@ def evaluate(tlsfp, dataset):
             sys.exit(f"{path}: checksum differs from manifest")
         seen[label] = (entry["client_version"], hellos(tlsfp, path))
 
-    real = {k: v for k, v in seen.items() if k.startswith(REAL_PREFIXES)}
+    all_real = {k: v for k, v in seen.items() if k.startswith(REAL_PREFIXES)}
+    # A build that produced no handshake in the lab is a data gap, not a mismatch.
+    silent = sorted(k for k, v in all_real.items() if not v[1])
+    real = {k: v for k, v in all_real.items() if v[1]}
     profiles = {k: v for k, v in seen.items() if k.startswith(PROFILE_PREFIXES) and "android" not in k}
 
     def hashes(entry):
@@ -120,6 +123,7 @@ def evaluate(tlsfp, dataset):
     return {
         "dataset_version": manifest["dataset_version"],
         "real_builds": len(real), "real_full_chrome_builds": len(full), "profiles": len(profiles),
+        "real_builds_without_traffic": silent,
         "real_builds_identical_to_nearest_profile": sum(1 for v in per_real.values() if v["identical_to_nearest_profile"]),
         "profiles_with_ja4_identical_to_a_real_build": sorted(k for k, v in profile_summary.items() if v["equals_a_real_build"]),
         "profiles_matching_no_real_build": sorted(k for k, v in profile_summary.items() if not v["equals_a_real_build"]),
@@ -133,6 +137,7 @@ def markdown(r):
              f"{r['real_builds']} real browser builds ({r['real_full_chrome_builds']} full Chrome) against {r['profiles']} "
              "curl-impersonate Chrome and Edge profiles. A profile whose JA4 equals a real build's cannot be separated "
              "from it by any ClientHello hash; one that differs can, until the profile is updated.", "",
+             f"- real builds that produced no handshake in the lab and are excluded: {', '.join(r['real_builds_without_traffic']) or 'none'}",
              f"- real builds whose JA4 equals their nearest-version profile's: **{r['real_builds_identical_to_nearest_profile']} of {r['real_builds']}**",
              f"- profiles whose JA4 equals some real build's: **{len(r['profiles_with_ja4_identical_to_a_real_build'])} of {r['profiles']}**"
              + (f" ({', '.join(r['profiles_with_ja4_identical_to_a_real_build'])})" if r["profiles_with_ja4_identical_to_a_real_build"] else ""),

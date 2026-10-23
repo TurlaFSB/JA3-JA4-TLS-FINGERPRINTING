@@ -1,0 +1,323 @@
+{
+  "dataset_version": "v0.6",
+  "created_utc": "2026-10-23T12:31:43Z",
+  "environment": {
+    "os": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "kernel": "6.18.44-fc-v153",
+    "machine": "x86_64",
+    "server_tls": "OpenSSL 3.0.13 30 Jan 2024",
+    "target_host": "lab.test",
+    "transport": "loopback",
+    "server_alpn": [
+      "http/1.1"
+    ]
+  },
+  "labels": {
+    "curl_cffi-chrome150": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome150; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome150.pcap",
+      "sha256": "32f13a15e7b7e2686c6eea20bb711b47d69f75c684566f43f5f6e9f0d01b9b56",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome142": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome142; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome142.pcap",
+      "sha256": "426809e4f6696fd414cadd4b158a418dc52a826d1344ad9b95690bec47c8144f",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome131": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome131; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome131.pcap",
+      "sha256": "b9f056d41390b3255277524f58f25361cd53e2c9966868e0db32eb2d55e17c7f",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome124": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome124; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome124.pcap",
+      "sha256": "14e4b4b227679f6dfb10b98bcb5f0f8044fbdf2aaf02b5641a56a65d44f481ce",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome120": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome120; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome120.pcap",
+      "sha256": "5c1e36edf5144bd7d20881354dbcbab1be530b40da86e23ac873f75fb7318129",
+      "requested_connections": 12
+    },
+    "curl_cffi-edge101": {
+      "client_version": "curl_cffi 0.16.3 impersonate=edge101; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-edge101.pcap",
+      "sha256": "56a94c45633a45f15e422a2005b24771629bf537ce9c7085ad7df7c7f1fe0e00",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome100": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome100; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome100.pcap",
+      "sha256": "5ac9b6f1222b01f2ca9ba7ed0cc67cfbd3fa1e745310882793d5a705f98d3748",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome101": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome101; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome101.pcap",
+      "sha256": "b74218a03498cf66af3d8aee579d1b1970767c7aea431a74404221686102e4da",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome104": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome104; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome104.pcap",
+      "sha256": "ec2b83a21e7379f0ad4dd880bfbaf6136897638e9ec6547480abd510c03c00f4",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome107": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome107; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome107.pcap",
+      "sha256": "5499f879cc5a6dd30a26338b23cdae176ac036983addef0a655af780b5ece2be",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome110": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome110; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome110.pcap",
+      "sha256": "4e166805718e0165c31f8238508d9b9793fafe9bf52b9c71c9132a2e266d22bf",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome116": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome116; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome116.pcap",
+      "sha256": "adceb7f44899aee8fbde6caf0f07913176bdf893bb5c6fb39e48704c201351d2",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome119": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome119; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome119.pcap",
+      "sha256": "a2740a8b2aa256f94e124dd96e45cf6b830ab801568d3a998b1269d2f32fb12e",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome123": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome123; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome123.pcap",
+      "sha256": "f70e344f8f09e701a4501fc453e1ddcc84d4fd441df4cfa41bf71d1076f78316",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome99": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome99; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome99.pcap",
+      "sha256": "f8e3619df2af429c1fde9d7500b14c0cdf6eee8f580533687c3bcda485ea6b68",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome133a": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome133a; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome133a.pcap",
+      "sha256": "2e9bbb814b2388f9dfac428932e9a9165d2224366af4faa59840bd6808fa0817",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome136": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome136; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome136.pcap",
+      "sha256": "a69c712060474c77cdd5c7fb34ad0b11092b260f4a873a7ddd9de7c34d9d8220",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome145": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome145; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome145.pcap",
+      "sha256": "e0bb9fd2e46f73801115402cca4e22e66a6349b6fac8cbccc3bbfe769cf99138",
+      "requested_connections": 12
+    },
+    "curl_cffi-chrome146": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome146; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome146.pcap",
+      "sha256": "2373273fd225d1a9b8b6c21fe8d949534b641e7b77861995a02a48d922db372c",
+      "requested_connections": 12
+    },
+    "curl_cffi-edge99": {
+      "client_version": "curl_cffi 0.16.3 impersonate=edge99; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-edge99.pcap",
+      "sha256": "732623ff7c79b8000c193b6f048b1664332956594bd1de9ebf1275a97c3a41d7",
+      "requested_connections": 12
+    },
+    "chrome-real-113": {
+      "client_version": "Google Chrome for Testing 113.0.5672.63",
+      "pcap": "pcap/chrome-real-113.pcap",
+      "sha256": "704e5e5b3234433c01fcfd1b20a306e77e985038120492dc53965c3edd38a4ea",
+      "requested_connections": 12
+    },
+    "chrome-real-114": {
+      "client_version": "Google Chrome for Testing 114.0.5735.90",
+      "pcap": "pcap/chrome-real-114.pcap",
+      "sha256": "704e5e5b3234433c01fcfd1b20a306e77e985038120492dc53965c3edd38a4ea",
+      "requested_connections": 12
+    },
+    "chrome-real-115": {
+      "client_version": "Google Chrome for Testing 115.0.5790.102",
+      "pcap": "pcap/chrome-real-115.pcap",
+      "sha256": "704e5e5b3234433c01fcfd1b20a306e77e985038120492dc53965c3edd38a4ea",
+      "requested_connections": 12
+    },
+    "chrome-real-116": {
+      "client_version": "Google Chrome for Testing 116.0.5845.96",
+      "pcap": "pcap/chrome-real-116.pcap",
+      "sha256": "704e5e5b3234433c01fcfd1b20a306e77e985038120492dc53965c3edd38a4ea",
+      "requested_connections": 12
+    },
+    "chrome-real-117": {
+      "client_version": "Google Chrome for Testing 117.0.5938.62",
+      "pcap": "pcap/chrome-real-117.pcap",
+      "sha256": "704e5e5b3234433c01fcfd1b20a306e77e985038120492dc53965c3edd38a4ea",
+      "requested_connections": 12
+    },
+    "chrome-real-118": {
+      "client_version": "Google Chrome for Testing 118.0.5993.70",
+      "pcap": "pcap/chrome-real-118.pcap",
+      "sha256": "12c28ae5b8f606649c5ceccefd30ad3f28a4a026a4a5a96ac42608a912bee819",
+      "requested_connections": 12
+    },
+    "chrome-real-119": {
+      "client_version": "Google Chrome for Testing 119.0.6045.105",
+      "pcap": "pcap/chrome-real-119.pcap",
+      "sha256": "4a9853cac8ec81cfc82464e9924dbf4946ad5370bc0a44bbb81e4dcec1aff02b",
+      "requested_connections": 12
+    },
+    "chrome-real-120": {
+      "client_version": "Google Chrome for Testing 120.0.6099.109",
+      "pcap": "pcap/chrome-real-120.pcap",
+      "sha256": "b67a77f362b453d105bd4cff8c3a639d4431de2a42fb120c5ce30fcbb63c3f8f",
+      "requested_connections": 12
+    },
+    "chrome-real-121": {
+      "client_version": "Google Chrome for Testing 121.0.6167.85",
+      "pcap": "pcap/chrome-real-121.pcap",
+      "sha256": "704e5e5b3234433c01fcfd1b20a306e77e985038120492dc53965c3edd38a4ea",
+      "requested_connections": 12
+    },
+    "chrome-real-122": {
+      "client_version": "Google Chrome for Testing 122.0.6261.69",
+      "pcap": "pcap/chrome-real-122.pcap",
+      "sha256": "f71a2a5377889f0b1b7ee9f1286b84ce36dd1d68b41bb37dcf04ed9b5d1db9b1",
+      "requested_connections": 12
+    },
+    "chrome-real-123": {
+      "client_version": "Google Chrome for Testing 123.0.6312.58",
+      "pcap": "pcap/chrome-real-123.pcap",
+      "sha256": "821d0ec905b28a4a96184173e7b9251a6a0cc5d81d3a8873061eb95f10185447",
+      "requested_connections": 12
+    },
+    "chrome-real-124": {
+      "client_version": "Google Chrome for Testing 124.0.6367.60",
+      "pcap": "pcap/chrome-real-124.pcap",
+      "sha256": "07b54aaf54c75d884549b7f4d9fff6a32016565c11c270525ac8d5b71bcf712d",
+      "requested_connections": 12
+    },
+    "chrome-real-125": {
+      "client_version": "Google Chrome for Testing 125.0.6422.60",
+      "pcap": "pcap/chrome-real-125.pcap",
+      "sha256": "61576631b122897e4303da5aff6c2ea87280a4ee5094f6c3f545e1cedc76b280",
+      "requested_connections": 12
+    },
+    "chrome-real-126": {
+      "client_version": "Google Chrome for Testing 126.0.6478.55",
+      "pcap": "pcap/chrome-real-126.pcap",
+      "sha256": "c198a6d1332041bde8390c9f6ec7c3287980a4450bf7dbaf3c9f071f2ba871fc",
+      "requested_connections": 12
+    },
+    "chrome-real-127": {
+      "client_version": "Google Chrome for Testing 127.0.6533.72",
+      "pcap": "pcap/chrome-real-127.pcap",
+      "sha256": "3a076d9dc879b3e6f4e4070925f6e8664dece9ae5e98ddf3b15ff0dbcce82aa3",
+      "requested_connections": 12
+    },
+    "chrome-real-128": {
+      "client_version": "Google Chrome for Testing 128.0.6613.84",
+      "pcap": "pcap/chrome-real-128.pcap",
+      "sha256": "0d00d979e9b77c70e0286818a549d5813dafaa0427f7c5c7dd277affb03271fa",
+      "requested_connections": 12
+    },
+    "chrome-real-129": {
+      "client_version": "Google Chrome for Testing 129.0.6668.58",
+      "pcap": "pcap/chrome-real-129.pcap",
+      "sha256": "b92124abeda9328ed1721bd47485cf959912bd78c8b169cd3dbc9a2aaafe497c",
+      "requested_connections": 12
+    },
+    "chrome-real-130": {
+      "client_version": "Google Chrome for Testing 130.0.6723.58",
+      "pcap": "pcap/chrome-real-130.pcap",
+      "sha256": "fc9a50b231f8b3bf65eb86a823553acbd5e8d73e1b092f88d66d64c0a7d472bd",
+      "requested_connections": 12
+    },
+    "chrome-real-131": {
+      "client_version": "Google Chrome for Testing 131.0.6778.85",
+      "pcap": "pcap/chrome-real-131.pcap",
+      "sha256": "4fe1a71e1e8aa0d4480b4a6926681ba47c1b557c8578702dc264e49a19a6cfdd",
+      "requested_connections": 12
+    },
+    "chrome-real-132": {
+      "client_version": "Google Chrome for Testing 132.0.6834.83",
+      "pcap": "pcap/chrome-real-132.pcap",
+      "sha256": "723d25df22c3075d61d66970c68e66bab4a5ea9591c4a523867728edb2308419",
+      "requested_connections": 12
+    },
+    "chrome-real-133": {
+      "client_version": "Google Chrome for Testing 133.0.6943.53",
+      "pcap": "pcap/chrome-real-133.pcap",
+      "sha256": "1315fdd80b582c97fad9facb6bf847459231a9f32eb3eba079dba241f11fd498",
+      "requested_connections": 12
+    },
+    "chrome-real-134": {
+      "client_version": "Google Chrome for Testing 134.0.6998.35",
+      "pcap": "pcap/chrome-real-134.pcap",
+      "sha256": "a13783c477d79049bece329b3918bfc2b7c2b08cc37c8f86f84e3d127c7a8702",
+      "requested_connections": 12
+    },
+    "chrome-real-135": {
+      "client_version": "Google Chrome for Testing 135.0.7049.42",
+      "pcap": "pcap/chrome-real-135.pcap",
+      "sha256": "7eb615071f8567246b51a86d8cf99af3195abff0f8bb492027e8872291e8b593",
+      "requested_connections": 12
+    },
+    "chrome-real-136": {
+      "client_version": "Google Chrome for Testing 136.0.7103.49",
+      "pcap": "pcap/chrome-real-136.pcap",
+      "sha256": "a4385fc6837be1ee5d6ec45eedba3fbd894dbccaa2456b5a378f5da79a013b93",
+      "requested_connections": 12
+    },
+    "chrome-real-137": {
+      "client_version": "Google Chrome for Testing 137.0.7151.55",
+      "pcap": "pcap/chrome-real-137.pcap",
+      "sha256": "1aba5e01c01f4cdb41fb1d77d7a2e97d8c2e4b42c3b4f3347325b7ae80c2ab96",
+      "requested_connections": 12
+    },
+    "chrome-real-138": {
+      "client_version": "Google Chrome for Testing 138.0.7204.49",
+      "pcap": "pcap/chrome-real-138.pcap",
+      "sha256": "be86b77379e0cc3ba31396e2be4c4de66fdd3129d65a3bc638c0ebff2620c92c",
+      "requested_connections": 12
+    },
+    "chrome-real-139": {
+      "client_version": "Google Chrome for Testing 139.0.7258.66",
+      "pcap": "pcap/chrome-real-139.pcap",
+      "sha256": "9830e8869ca6b57a03551b8844cf2472b5b5accefc57c84999e78907e09925ec",
+      "requested_connections": 12
+    },
+    "chrome-real-140": {
+      "client_version": "Google Chrome for Testing 140.0.7339.80",
+      "pcap": "pcap/chrome-real-140.pcap",
+      "sha256": "d8043aba846351e28fa861dc603d0ed49fec20df19c87dc7dd7508fefc1f07fd",
+      "requested_connections": 12
+    },
+    "chrome-real-141": {
+      "client_version": "Google Chrome for Testing 141.0.7390.54",
+      "pcap": "pcap/chrome-real-141.pcap",
+      "sha256": "02321c63f460c94ead462824764a3e85de356b5a3781271dcbf881b60184bd5e",
+      "requested_connections": 12
+    },
+    "chrome-real-142": {
+      "client_version": "Google Chrome for Testing 142.0.7444.59",
+      "pcap": "pcap/chrome-real-142.pcap",
+      "sha256": "595ca5457be1dd30990070b98f34ab5910aad8039f4fee89c4afc9d697f2cbae",
+      "requested_connections": 12
+    },
+    "chrome-real-143": {
+      "client_version": "Google Chrome for Testing 143.0.7499.40",
+      "pcap": "pcap/chrome-real-143.pcap",
+      "sha256": "c08051c5a27ef6388830f0f08f08b4e95215bf3916bc3fc5a17c3e98b0bcdf04",
+      "requested_connections": 12
+    }
+  }
+}
