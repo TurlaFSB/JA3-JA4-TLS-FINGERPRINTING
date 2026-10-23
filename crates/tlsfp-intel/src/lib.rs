@@ -16,6 +16,7 @@
 
 mod detect;
 mod import;
+mod infer;
 mod matcher;
 mod model;
 mod net;
@@ -33,6 +34,7 @@ use tlsfp_core::FingerprintEvent;
 
 pub use detect::{Alert, AlertSeverity, DetectConfig, Rule};
 pub use import::ImportSummary;
+pub use infer::{ClientFamily, ClientGuess, Confidence, infer_client};
 pub use model::{CatalogEntry, Category, FpKind, IntelHit, MatchReport, MatchStrength, Verdict};
 pub use net::Network;
 pub use seed::{FeedLoad, SeedSummary};

@@ -188,6 +188,17 @@ pub enum Command {
         )]
         shared_network: Vec<Network>,
 
+        /// Directory of capture files to find and identify, shown on the
+        /// Library page. Repeatable; new and changed files are picked up
+        /// while the server runs. Analysis only: nothing is alerted or stored.
+        #[arg(
+            long = "library",
+            value_name = "DIR",
+            env = "TLSFP_LIBRARY",
+            value_delimiter = ','
+        )]
+        library: Vec<PathBuf>,
+
         /// Replay this capture file as the live feed.
         #[arg(long, value_name = "PCAP")]
         replay: Option<PathBuf>,
@@ -211,6 +222,25 @@ pub enum Command {
         /// Capture only the interface's own traffic instead of promiscuous mode.
         #[arg(long)]
         no_promisc: bool,
+    },
+
+    /// Say which client made each handshake in one or more capture files.
+    ///
+    /// Reads every file once and names the clients in it: from an exact
+    /// intelligence match when there is one, otherwise from the shape of the
+    /// ClientHello. Analysis only; nothing is written to the database.
+    Identify {
+        /// Capture files (.pcap, .pcapng) or directories to scan.
+        #[arg(required = true)]
+        paths: Vec<PathBuf>,
+
+        /// Print one JSON object per file.
+        #[arg(long)]
+        json: bool,
+
+        /// Path to the intelligence database, defaulting to the data directory.
+        #[arg(long)]
+        db: Option<PathBuf>,
     },
 
     /// Manage the local threat intelligence database.
@@ -344,6 +374,7 @@ impl Cli {
                 web,
                 location,
                 shared_network,
+                library,
                 replay,
                 repeat,
                 interval_ms,
@@ -356,6 +387,7 @@ impl Cli {
                 web,
                 location,
                 shared_network,
+                library,
                 replay,
                 repeat,
                 interval_ms,
@@ -363,6 +395,7 @@ impl Cli {
                 filter,
                 no_promisc,
             ),
+            Command::Identify { paths, json, db } => run_identify(&paths, json, db),
             Command::Intel { action } => action.run(),
         }
     }
@@ -551,6 +584,7 @@ fn run_serve(
     web: PathBuf,
     location: Option<String>,
     shared_networks: Vec<Network>,
+    library: Vec<PathBuf>,
     replay: Option<PathBuf>,
     repeat: bool,
     interval_ms: u64,
@@ -587,6 +621,7 @@ fn run_serve(
         source,
         location,
         shared_networks,
+        library,
     })
 }
 
@@ -1087,4 +1122,68 @@ fn read_input(path: &Path) -> Result<String> {
         std::fs::read_to_string(path)
             .with_context(|| format!("reading ja4db JSON from {}", path.display()))
     }
+}
+
+/// Reads capture files (or every capture under a directory) and prints which
+/// client each handshake came from.
+fn run_identify(paths: &[PathBuf], json: bool, db: Option<PathBuf>) -> Result<()> {
+    let store = IntelStore::open(&resolve_db(db)).context("opening the intelligence database")?;
+    let mut files = Vec::new();
+    for path in paths {
+        if path.is_dir() {
+            files.extend(crate::library::discover(path));
+        } else if path.is_file() {
+            let name = path.file_name().map_or_else(
+                || path.display().to_string(),
+                |n| n.to_string_lossy().into_owned(),
+            );
+            files.push((path.clone(), name));
+        } else {
+            anyhow::bail!("{} is neither a file nor a directory", path.display());
+        }
+    }
+    if files.is_empty() {
+        anyhow::bail!("no .pcap or .pcapng files found");
+    }
+    let mut out = std::io::stdout().lock();
+    for (path, name) in files {
+        let summary = crate::library::analyse(&path, name, &store);
+        if json {
+            writeln!(out, "{}", serde_json::to_string(&summary)?)?;
+            continue;
+        }
+        writeln!(
+            out,
+            "{}  ({} handshakes, {} QUIC)",
+            summary.name, summary.tls_handshakes, summary.quic_initials
+        )?;
+        if let Some(error) = &summary.error {
+            writeln!(out, "  error: {error}")?;
+        }
+        match &summary.headline {
+            Some(head) => {
+                writeln!(
+                    out,
+                    "  likely: {} [{}, {:?} confidence]",
+                    head.text, head.basis, head.confidence
+                )?;
+                if let Some(caveat) = head.caveat {
+                    writeln!(out, "  note:   {caveat}")?;
+                }
+            }
+            None => writeln!(out, "  no TLS or QUIC client hellos found")?,
+        }
+        for client in &summary.clients {
+            let who = client
+                .known_as
+                .clone()
+                .unwrap_or_else(|| client.guess.family.display().to_string());
+            writeln!(
+                out,
+                "    {:>5} x {} {}  {}",
+                client.connections, client.transport, client.ja4, who
+            )?;
+        }
+    }
+    Ok(())
 }

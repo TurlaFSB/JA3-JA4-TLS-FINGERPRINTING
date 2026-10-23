@@ -48,6 +48,7 @@ use tlsfp_intel::{
     Alert, CatalogEntry, DetectConfig, FpKind, IntelStore, MatchReport, Network, Rule, Stats,
 };
 
+use crate::library::Library;
 use crate::live::{LiveConfig, LiveSource, StopHandle};
 
 /// How many serialised live lines the broadcast channel holds before the
@@ -59,6 +60,9 @@ const STREAM_BUFFER: usize = 1024;
 /// the moment it connects, so a fresh page shows what already happened instead
 /// of replaying it one event at a time.
 const HISTORY_LINES: usize = 500;
+
+/// How often the library directories are scanned again for new or changed files.
+const LIBRARY_RESCAN_SECS: u64 = 20;
 
 /// How often the keep-alive comment is sent on an idle stream, below the
 /// common sixty second proxy idle timeout so a quiet link stays open.
@@ -113,6 +117,8 @@ pub struct ServeConfig {
     pub location: Option<String>,
     /// Addresses fronting many clients; the rotation and monoculture rules skip them.
     pub shared_networks: Vec<Network>,
+    /// Directories of capture files to find and identify.
+    pub library: Vec<PathBuf>,
 }
 
 /// The live channel plus a bounded memory of what has crossed it. Publishing
@@ -164,6 +170,7 @@ impl Feed {
 struct AppState {
     store: Mutex<IntelStore>,
     feed: Feed,
+    library: Library,
     meta: Meta,
 }
 
@@ -287,10 +294,25 @@ async fn serve(config: ServeConfig) -> Result<()> {
     let state: Shared = Arc::new(AppState {
         store: Mutex::new(store),
         feed: feed.clone(),
+        library: Library::default(),
         meta: Meta::new(&config, started_unix_ms),
     });
 
     let shutdown = Arc::new(AtomicBool::new(false));
+    let scanner = (!config.library.is_empty()).then(|| {
+        let library = state.library.clone();
+        let dirs = config.library.clone();
+        let db = config.db.clone();
+        let stop = Arc::clone(&shutdown);
+        std::thread::Builder::new()
+            .name("library".into())
+            .spawn(move || {
+                library.watch(&dirs, &db, Duration::from_secs(LIBRARY_RESCAN_SECS), &stop);
+            })
+    });
+    if let Some(Err(error)) = &scanner {
+        tracing::error!(%error, "could not start the library scanner");
+    }
     let mut capture = spawn_source(&config, feed, Arc::clone(&shutdown), Arc::clone(&state))?;
 
     let app = router(&config.web, Arc::clone(&state));
@@ -321,6 +343,7 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .route("/export", get(export))
         .route("/health", get(health))
         .route("/meta", get(meta))
+        .route("/library", get(library))
         .layer(CompressionLayer::new());
 
     let stream_api = Router::new().route("/stream", get(stream));
@@ -461,6 +484,10 @@ async fn export(
 
 async fn meta(State(state): State<Shared>) -> Json<Meta> {
     Json(state.meta.clone())
+}
+
+async fn library(State(state): State<Shared>) -> impl IntoResponse {
+    Json(state.library.view())
 }
 
 async fn health() -> impl IntoResponse {
@@ -855,6 +882,7 @@ mod tests {
             source,
             location: location.map(str::to_owned),
             shared_networks: Vec::new(),
+            library: Vec::new(),
         }
     }
 

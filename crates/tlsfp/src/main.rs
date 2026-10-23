@@ -2,6 +2,7 @@
 // main.rs
 
 mod cli;
+mod library;
 mod live;
 mod report;
 mod serve;

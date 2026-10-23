@@ -61,6 +61,7 @@ jobs:
           done
       - name: Impersonation fidelity reproduces committed results
         run: |
+          python3 eval/identify.py --dataset dataset/v0.3 --dataset dataset/v0.6 --out eval/results/identify --check
           python3 eval/fidelity.py --dataset dataset/v0.4 --out eval/results/v0.4 --check
           python3 eval/fidelity.py --dataset dataset/v0.6 --out eval/results/v0.6 --check
       - name: Cross-layer rule evaluation reproduces committed results

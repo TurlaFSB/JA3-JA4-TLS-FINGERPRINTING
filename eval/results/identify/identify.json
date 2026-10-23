@@ -1,0 +1,878 @@
+{
+  "per_capture": [
+    {
+      "client": "chromium-headless",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "curl-http2",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "curl-tls12",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "curl-tls13",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "curl_cffi-chrome104",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome107",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome110",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome116",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome120",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome124",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome131",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome131_android",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome133a",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome136",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome142",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome145",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome146",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome150",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome99",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome99_android",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-edge101",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-edge99",
+      "dataset": "v0.3",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-firefox133",
+      "dataset": "v0.3",
+      "expected": "firefox",
+      "families_seen": [
+        "firefox"
+      ],
+      "headline_family": "firefox"
+    },
+    {
+      "client": "curl_cffi-firefox135",
+      "dataset": "v0.3",
+      "expected": "firefox",
+      "families_seen": [
+        "firefox"
+      ],
+      "headline_family": "firefox"
+    },
+    {
+      "client": "curl_cffi-firefox144",
+      "dataset": "v0.3",
+      "expected": "firefox",
+      "families_seen": [
+        "firefox"
+      ],
+      "headline_family": "firefox"
+    },
+    {
+      "client": "curl_cffi-firefox147",
+      "dataset": "v0.3",
+      "expected": "firefox",
+      "families_seen": [
+        "firefox"
+      ],
+      "headline_family": "firefox"
+    },
+    {
+      "client": "curl_cffi-safari170",
+      "dataset": "v0.3",
+      "expected": "safari_like",
+      "families_seen": [
+        "safari_like"
+      ],
+      "headline_family": "safari_like"
+    },
+    {
+      "client": "curl_cffi-safari180_ios",
+      "dataset": "v0.3",
+      "expected": "safari_like",
+      "families_seen": [
+        "safari_like"
+      ],
+      "headline_family": "safari_like"
+    },
+    {
+      "client": "curl_cffi-safari184",
+      "dataset": "v0.3",
+      "expected": "safari_like",
+      "families_seen": [
+        "safari_like"
+      ],
+      "headline_family": "safari_like"
+    },
+    {
+      "client": "curl_cffi-safari260",
+      "dataset": "v0.3",
+      "expected": "safari_like",
+      "families_seen": [
+        "safari_like"
+      ],
+      "headline_family": "safari_like"
+    },
+    {
+      "client": "curl_cffi-safari2601",
+      "dataset": "v0.3",
+      "expected": "safari_like",
+      "families_seen": [
+        "safari_like"
+      ],
+      "headline_family": "safari_like"
+    },
+    {
+      "client": "curl_cffi-tor145",
+      "dataset": "v0.3",
+      "expected": "firefox",
+      "families_seen": [
+        "firefox"
+      ],
+      "headline_family": "firefox"
+    },
+    {
+      "client": "go-http2",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "library"
+      ],
+      "headline_family": "library"
+    },
+    {
+      "client": "go-net-http",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "library"
+      ],
+      "headline_family": "library"
+    },
+    {
+      "client": "java-httpclient",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "library"
+      ],
+      "headline_family": "library"
+    },
+    {
+      "client": "java-urlconnection",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "library"
+      ],
+      "headline_family": "library"
+    },
+    {
+      "client": "node-https",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "openssl-s_client",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "openssl-s_client-alpn-h2",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "openssl-s_client-tls12",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "php-curl",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "php-stream",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "python-aiohttp",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "python-httpx",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "python-requests",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "python-urllib",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "ruby-net-http",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "wget",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "wget-tls12",
+      "dataset": "v0.3",
+      "expected": "non_browser",
+      "families_seen": [
+        "open_ssl"
+      ],
+      "headline_family": "open_ssl"
+    },
+    {
+      "client": "chrome-real-118",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-119",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-120",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-122",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-123",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-124",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-125",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-126",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-127",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-128",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-129",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-130",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-131",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-132",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-133",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-134",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-135",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-136",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-137",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-138",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-139",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-140",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-141",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-142",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "chrome-real-143",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome100",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome101",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome104",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome107",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome110",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome116",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome119",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome120",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome123",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome124",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome131",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome133a",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome136",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome142",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome145",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome146",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome150",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-chrome99",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-edge101",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    },
+    {
+      "client": "curl_cffi-edge99",
+      "dataset": "v0.6",
+      "expected": "chromium",
+      "families_seen": [
+        "chromium"
+      ],
+      "headline_family": "chromium"
+    }
+  ],
+  "summary": {
+    "browser_or_profile_captures": 74,
+    "captures": 95,
+    "family_confusion": {
+      "chromium": {
+        "chromium": 64
+      },
+      "firefox": {
+        "firefox": 5
+      },
+      "safari_like": {
+        "safari_like": 5
+      }
+    },
+    "libraries_called_a_browser": [],
+    "library_captures": 21,
+    "misnamed_browsers": [],
+    "named_with_the_right_family": 74
+  }
+}
