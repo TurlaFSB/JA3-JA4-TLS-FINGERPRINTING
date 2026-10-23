@@ -48,7 +48,7 @@ services:
     command:
       - |
         tlsfp intel seed --db /data/intel.db || true
-        exec tlsfp serve 0.0.0.0:8080 --db /data/intel.db --replay /demo/demo.pcap --loop --interval-ms 600
+        exec tlsfp serve 0.0.0.0:8080 --db /data/intel.db --replay ${REPLAY_PCAP:-/demo/demo.pcap} --loop --interval-ms 600
     profiles:
       - backend
     environment:
@@ -56,6 +56,9 @@ services:
       - TLSFP_SENSOR_LOCATION=${TLSFP_SENSOR_LOCATION:-}
     volumes:
       - tlsfp_data:/data
+      # To replay your own capture: set CAPTURE_DIR to its folder and
+      # REPLAY_PCAP to /cap/<file> (see docs/BROWSER_CAPTURE.md).
+      - ${CAPTURE_DIR:-./testdata}:/cap:ro
     networks:
       - app
     deploy:

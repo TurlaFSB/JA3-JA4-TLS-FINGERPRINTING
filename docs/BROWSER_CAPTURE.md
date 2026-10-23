@@ -50,3 +50,16 @@ docker run --rm -v "%CD%:/cap" --entrypoint tlsfp tlsfp:local pcap /cap/chrome.p
 ## Privacy
 
 The recording contains the IP addresses and server names of everything the computer connected to on port 443 while it ran. Close other programs first, keep the run short, and read the output before sharing anything. Share the printed fingerprint lines, not the `.pcapng`. Do not commit captures to the repository.
+
+## Watching a capture in the dashboard
+
+The dashboard replays one capture in a loop. By default it is the bundled demo. To replay your own (PowerShell, from the repository folder):
+
+```
+$env:CAPTURE_DIR = "$env:USERPROFILE\tlsfp-captures"
+$env:REPLAY_PCAP = "/cap/edge.pcapng"
+docker compose down -v
+docker compose --profile backend up --build -d
+```
+
+Then open http://localhost:11790. The Scope page lists every handshake with its JA4 or JA4S; the Intel page is the fingerprint catalogue. The capture stays on your machine and is mounted read-only. Use `docker compose down -v` before switching captures, so earlier alerts do not carry over.
