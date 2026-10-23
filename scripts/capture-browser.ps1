@@ -16,6 +16,7 @@
 param(
     [Parameter(Mandatory = $true)][ValidateSet('chrome', 'edge', 'firefox', 'brave')][string]$Browser,
     [string]$OutDir = (Join-Path $env:USERPROFILE 'tlsfp-captures'),
+    [string]$ExePath,
     [int]$Seconds = 45,
     [string]$Image = 'tlsfp:local'
 )
@@ -34,13 +35,26 @@ $candidates = @{
     edge    = @('C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
                 'C:\Program Files\Microsoft\Edge\Application\msedge.exe')
     firefox = @('C:\Program Files\Mozilla Firefox\firefox.exe',
-                'C:\Program Files (x86)\Mozilla Firefox\firefox.exe')
+                'C:\Program Files (x86)\Mozilla Firefox\firefox.exe',
+                (Join-Path $env:LOCALAPPDATA 'Mozilla Firefox\firefox.exe'))
     brave   = @('C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe',
                 'C:\Program Files (x86)\BraveSoftware\Brave-Browser\Application\brave.exe',
                 (Join-Path $env:LOCALAPPDATA 'BraveSoftware\Brave-Browser\Application\brave.exe'))
 }
-$exe = $candidates[$Browser] | Where-Object { Test-Path $_ } | Select-Object -First 1
-if (-not $exe) { throw "Could not find $Browser. Edit the paths at the top of this script." }
+$exe = @($ExePath) + $candidates[$Browser] | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+$name = @{ chrome = 'chrome.exe'; edge = 'msedge.exe'; firefox = 'firefox.exe'; brave = 'brave.exe' }[$Browser]
+if (-not $exe) {
+    # Installed somewhere unusual: ask Windows where the program registered itself.
+    foreach ($hive in 'HKLM', 'HKCU') {
+        $key = "${hive}:\SOFTWARE\Microsoft\Windows\CurrentVersion\App Paths\$name"
+        $found = (Get-ItemProperty -Path $key -ErrorAction SilentlyContinue).'(default)'
+        if ($found -and (Test-Path $found)) { $exe = $found; break }
+    }
+}
+if (-not $exe) {
+    $exe = (Get-Command $name -ErrorAction SilentlyContinue).Source
+}
+if (-not $exe) { throw "Could not find $Browser. Run it again with -ExePath <full path to the .exe>." }
 $version = (Get-Item $exe).VersionInfo.ProductVersion
 
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
