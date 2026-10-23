@@ -1,13 +1,27 @@
+# Credits and third-party licensing
+
+## Upstream project
+
+The sensor, fingerprint implementations, intelligence store, detection rules,
+web dashboard and learning documents in this repository originate from
+`ja3-ja4-tls-fingerprinting` by CarterPerez-dev (AngelaMos), from
+https://github.com/CarterPerez-dev/Cybersecurity-Projects (directory
+`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), licensed under the GNU
+Affero General Public License v3.0. This repository is a derivative work and
+is distributed under the same licence. Copyright headers in the source files
+are retained. Modifications are recorded in `CHANGES.md`.
+
 # Third-party fingerprint algorithm licensing
 
 This project implements several published TLS fingerprinting algorithms. They do
 not all carry the same license, and the split matters. This notice records what
 applies to what.
 
-## Our own code
+## Source code licence
 
-Everything under `crates/` is original work licensed under the AGPL 3.0 License (see
-`LICENSE`). No source code from any reference implementation was copied. The
+Everything under `crates/` is licensed under the AGPL 3.0 License (see
+`LICENSE`). Per the upstream author, no source code from any reference
+implementation was copied. The
 algorithms were implemented from their published specifications.
 
 ## JA3 and JA3S
