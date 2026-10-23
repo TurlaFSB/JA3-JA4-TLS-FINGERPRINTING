@@ -61,6 +61,7 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Field observations on desktop browsers
 - `scripts/capture-browser.ps1` and `docs/BROWSER_CAPTURE.md` record a real Windows browser with pktmon. The decoder now reads the raw 802.11 frames pktmon writes for Wi-Fi under an Ethernet label, and the capture summary reports skipped-frame counters with a warning when a capture decodes to nothing.
 - First results (`docs/FIELD_OBSERVATIONS.md`): Brave 1.98.60 and Edge 155.0.4283.62 send the same JA4, with ECH and the new ALPS codepoint, and it equals the curl-impersonate `chrome150` profile's. This answers the open question above for one desktop machine: ECH did not separate real Chromium from the profile. The lab's missing ECH was a lab limit. The hash stays out of the feed.
+- Firefox 158.0.1 (NSS) has a stable JA3 and a JA4 that differs from the curl-impersonate Firefox profiles up to 147 (15 against 17 cipher suites), so for that release the profiles are separable.
 
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.
