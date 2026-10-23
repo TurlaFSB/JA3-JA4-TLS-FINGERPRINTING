@@ -449,8 +449,22 @@ fn run_pcap(
         unfinished_tls_streams = counters.unfinished_tls_streams,
         tls_miss_rate = counters.tls_miss_rate(),
         segments_dropped = counters.segments_dropped,
+        skipped_unsupported_link_type = counters.skipped_unsupported_link_type,
+        skipped_not_ip = counters.skipped_not_ip,
+        skipped_not_transport = counters.skipped_not_transport,
+        skipped_malformed = counters.skipped_malformed,
         "capture processed"
     );
+    if counters.skipped_unsupported_link_type > 0 {
+        tracing::warn!(
+            frames = counters.skipped_unsupported_link_type,
+            "frames skipped: the capture uses a link type tlsfp cannot decode"
+        );
+    } else if counters.frames > 0 && counters.skipped_not_ip == counters.frames {
+        tracing::warn!(
+            "no frame held an IPv4 or IPv6 packet; the link-layer format is probably not what was expected"
+        );
+    }
     if source.truncated() {
         tracing::warn!("capture file ended mid packet; the tail was not read");
     }
