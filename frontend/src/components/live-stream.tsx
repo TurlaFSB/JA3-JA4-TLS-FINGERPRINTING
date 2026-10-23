@@ -93,8 +93,10 @@ function FlowRow({
   intel,
   alerts,
   selected,
+  animate,
   onSelect,
 }: {
+  animate: boolean
   event: StreamEvent
   intel?: MatchReport[]
   alerts?: Alert[]
@@ -107,11 +109,12 @@ function FlowRow({
   const verdict = worstVerdict(intel)
   const severity = topSeverity(alerts ?? [])
   const hot = severity === 'high' || severity === 'critical'
+  const sni = 'sni' in event ? event.sni : undefined
 
   return (
     <button
       type="button"
-      className={cx(styles.row, styles.enter, hot && styles.rowHot)}
+      className={cx(styles.row, animate && styles.enter, hot && styles.rowHot)}
       data-verdict={verdict ?? 'unknown'}
       data-selected={selected}
       onClick={onSelect}
@@ -120,17 +123,22 @@ function FlowRow({
       <span className={styles.time}>{formatClock(event.ts_nanos)}</span>
       <span className={styles.code}>{KIND_CODE[event.kind]}</span>
       <span className={styles.route}>
-        <span className={styles.host}>{src.host}</span>
-        <span className={styles.arrow}>-&gt;</span>
-        <span className={styles.host}>{dst.host}</span>
+        <span className={styles.hosts}>
+          <span className={styles.host}>{src.host}</span>
+          <span className={styles.arrow}>-&gt;</span>
+          <span className={styles.host}>{dst.host}</span>
+        </span>
+        {sni && <span className={styles.sni}>{sni}</span>}
       </span>
       <span className={styles.fp} title={fingerprint.value}>
         <span className={styles.fpKind}>{fingerprint.kind}</span>
         <span className={styles.fpValue}>{fingerprint.value}</span>
       </span>
       <span className={styles.marks}>
-        {verdict && verdict !== 'unknown' && (
-          <span className={styles.dot} data-verdict={verdict} />
+        {verdict && (
+          <span className={styles.verdict} data-verdict={verdict}>
+            {verdict}
+          </span>
         )}
         {severity && <SeverityTag severity={severity} />}
       </span>
@@ -138,10 +146,16 @@ function FlowRow({
   )
 }
 
-function AlertRow({ alert }: { alert: Alert }): React.ReactElement {
+function AlertRow({
+  alert,
+  animate,
+}: {
+  alert: Alert
+  animate: boolean
+}): React.ReactElement {
   return (
     <div
-      className={cx(styles.row, styles.enter, styles.alertRow)}
+      className={cx(styles.row, animate && styles.enter, styles.alertRow)}
       data-sev={alert.severity}
     >
       <span className={styles.time}>{formatClock(alert.ts_nanos)}</span>
@@ -169,13 +183,18 @@ export function LiveStream({
   const [query, setQuery] = useState('')
   const [frozen, setFrozen] = useState<LiveItem[] | null>(null)
   const [selected, setSelected] = useState<LiveItem | null>(null)
+  // Clearing hides everything seen so far without touching the running counts.
+  const [clearedThrough, setClearedThrough] = useState(0)
 
   const paused = frozen !== null
   const source = frozen ?? feed
   const needle = query.trim().toLowerCase()
   const items = useMemo(
-    () => source.filter((item) => matches(item, filter, needle)),
-    [source, filter, needle]
+    () =>
+      source.filter(
+        (item) => item.seq > clearedThrough && matches(item, filter, needle)
+      ),
+    [source, filter, needle, clearedThrough]
   )
 
   const aside = (
@@ -183,7 +202,11 @@ export function LiveStream({
       <span className={cx(styles.live, connected && !paused && styles.liveOn)}>
         {!connected ? 'down' : paused ? 'paused' : 'rec'}
       </span>
-      <span className={styles.count}>{flowCount.toLocaleString()} flows</span>
+      <span className={styles.count}>
+        {items.length === source.length
+          ? `${flowCount.toLocaleString()} flows`
+          : `${items.length.toLocaleString()} shown / ${flowCount.toLocaleString()} flows`}
+      </span>
     </span>
   )
 
@@ -227,6 +250,17 @@ export function LiveStream({
         >
           {paused ? 'resume' : 'pause'}
         </button>
+        <button
+          type="button"
+          className={styles.chip}
+          onClick={() => {
+            setClearedThrough(feed[0]?.seq ?? 0)
+            setSelected(null)
+          }}
+          disabled={items.length === 0}
+        >
+          clear
+        </button>
       </div>
 
       <div className={styles.scroll}>
@@ -239,7 +273,7 @@ export function LiveStream({
             </span>
             <span className={styles.idleSub}>
               {feed.length === 0
-                ? 'the scope is open; nothing has crossed it yet'
+                ? 'nothing has crossed the scope yet. replay a capture or start a live sensor'
                 : 'clear the filter to see the full stream'}
             </span>
           </div>
@@ -251,13 +285,18 @@ export function LiveStream({
                 event={item.message.event}
                 intel={item.message.intel}
                 alerts={item.message.alerts}
+                animate={item.animate}
                 selected={selected?.seq === item.seq}
                 onSelect={() =>
                   setSelected(selected?.seq === item.seq ? null : item)
                 }
               />
             ) : (
-              <AlertRow key={item.seq} alert={item.message.alert} />
+              <AlertRow
+                key={item.seq}
+                alert={item.message.alert}
+                animate={item.animate}
+              />
             )
           )
         )}

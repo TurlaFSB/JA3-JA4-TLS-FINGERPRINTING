@@ -190,10 +190,24 @@
 
 .route {
   display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  color: $paper;
+}
+
+.hosts {
+  display: flex;
   align-items: center;
   gap: $space-2;
   min-width: 0;
-  color: $paper;
+}
+
+.sni {
+  @include truncate;
+
+  color: $ash;
+  font-size: $font-size-3xs;
 }
 
 .host {
@@ -246,11 +260,28 @@
   gap: $space-2;
 }
 
-.dot {
-  width: 7px;
-  height: 7px;
-  background: var(--accent);
-  box-shadow: 0 0 8px -1px var(--accent);
+.verdict {
+  padding: 0 4px;
+  color: $dust;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid $line-faint;
+
+  &[data-verdict='benign'] {
+    color: $thermal;
+    border-color: $thermal;
+  }
+
+  &[data-verdict='suspicious'] {
+    color: $fire;
+    border-color: $fire;
+  }
+
+  &[data-verdict='malicious'] {
+    color: $blood;
+    border-color: $blood;
+  }
 }
 
 .rowHot {

@@ -106,6 +106,9 @@ export function exportHref(format: 'json' | 'csv', limit = 1000): string {
 export interface LiveItem {
   seq: number
   message: LiveMessage
+  // False for lines delivered as the connect-time backlog, which appear at
+  // once rather than sliding in.
+  animate: boolean
 }
 
 export interface LiveState {
@@ -123,6 +126,20 @@ const EMPTY_LIVE: LiveState = {
   flowCount: 0,
   alertCount: 0,
   rate: Array.from({ length: LIVE.RATE_WINDOW }, () => 0),
+}
+
+function parseBacklog(data: string): LiveMessage[] {
+  try {
+    const parsed: unknown = JSON.parse(data)
+    return Array.isArray(parsed) ? parsed.filter(isLiveMessage) : []
+  } catch {
+    return []
+  }
+}
+
+function inlineAlertCount(message: LiveMessage): number {
+  if (message.type === 'flow') return message.alerts?.length ?? 0
+  return 1
 }
 
 function parseMessage(data: string): LiveMessage | null {
@@ -164,12 +181,34 @@ export function useLiveStream(maxItems: number = LIVE.STREAM_BUFFER): LiveState 
       setState((prev) => ({ ...prev, connected: false }))
     }
 
+    // On connect the server sends everything it remembers in one event, oldest
+    // first. Showing it in a single update means a fresh page opens already
+    // populated instead of replaying the past line by line.
+    source.addEventListener('backlog', (event) => {
+      const messages = parseBacklog((event as MessageEvent<string>).data)
+      if (messages.length === 0) return
+      const items: LiveItem[] = messages.map((message) => {
+        seq.current += 1
+        return { seq: seq.current, message, animate: false }
+      })
+      setState((prev) => ({
+        feed: [...items.reverse(), ...prev.feed].slice(0, max.current),
+        connected: true,
+        flowCount:
+          prev.flowCount + messages.filter((m) => m.type === 'flow').length,
+        alertCount:
+          prev.alertCount +
+          messages.reduce((total, m) => total + inlineAlertCount(m), 0),
+        rate: prev.rate,
+      }))
+    })
+
     source.onmessage = (event) => {
       const message = parseMessage(event.data)
       if (!message) return
       seq.current += 1
       if (message.type === 'flow') bucket.current += 1
-      const item: LiveItem = { seq: seq.current, message }
+      const item: LiveItem = { seq: seq.current, message, animate: true }
       setState((prev) => {
         const feed = [item, ...prev.feed].slice(0, max.current)
         const flowCount = prev.flowCount + (message.type === 'flow' ? 1 : 0)

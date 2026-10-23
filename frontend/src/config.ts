@@ -56,7 +56,7 @@ export const QUERY_CONFIG = {
 // How many live lines the stream view holds before the oldest scroll off, and
 // how many alerts the feed and export pull by default.
 export const LIVE = {
-  STREAM_BUFFER: 140,
+  STREAM_BUFFER: 500,
   ALERT_PAGE: 60,
   SEARCH_PAGE: 40,
   RATE_WINDOW: 60,

@@ -55,6 +55,11 @@ use crate::live::{LiveConfig, LiveSource, StopHandle};
 /// skips the gap rather than stalling every other client.
 const STREAM_BUFFER: usize = 1024;
 
+/// How many recent live lines the server remembers and hands to a dashboard
+/// the moment it connects, so a fresh page shows what already happened instead
+/// of replaying it one event at a time.
+const HISTORY_LINES: usize = 500;
+
 /// How often the keep-alive comment is sent on an idle stream, below the
 /// common sixty second proxy idle timeout so a quiet link stays open.
 const KEEPALIVE_SECS: u64 = 15;
@@ -110,12 +115,55 @@ pub struct ServeConfig {
     pub shared_networks: Vec<Network>,
 }
 
+/// The live channel plus a bounded memory of what has crossed it. Publishing
+/// and subscribing take the same lock, so a client that joins gets the backlog
+/// followed by exactly the lines published afterwards, with no gap or repeat.
+#[derive(Clone)]
+struct Feed {
+    tx: broadcast::Sender<Arc<str>>,
+    history: Arc<Mutex<std::collections::VecDeque<Arc<str>>>>,
+}
+
+impl Feed {
+    fn new() -> Self {
+        let (tx, _) = broadcast::channel::<Arc<str>>(STREAM_BUFFER);
+        Self {
+            tx,
+            history: Arc::new(Mutex::new(std::collections::VecDeque::with_capacity(
+                HISTORY_LINES,
+            ))),
+        }
+    }
+
+    fn publish(&self, line: String) {
+        let line: Arc<str> = Arc::from(line);
+        let mut history = self
+            .history
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if history.len() == HISTORY_LINES {
+            history.pop_front();
+        }
+        history.push_back(Arc::clone(&line));
+        let _ = self.tx.send(line);
+    }
+
+    /// The remembered lines, oldest first, and a receiver for everything after.
+    fn join(&self) -> (Vec<Arc<str>>, broadcast::Receiver<Arc<str>>) {
+        let history = self
+            .history
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        (history.iter().cloned().collect(), self.tx.subscribe())
+    }
+}
+
 /// Shared state every handler reads through. The store is the read side of the
 /// database behind a mutex; the sender is the live channel handlers subscribe
 /// to.
 struct AppState {
     store: Mutex<IntelStore>,
-    tx: broadcast::Sender<Arc<str>>,
+    feed: Feed,
     meta: Meta,
 }
 
@@ -230,7 +278,7 @@ async fn serve(config: ServeConfig) -> Result<()> {
         );
     }
 
-    let (tx, _) = broadcast::channel::<Arc<str>>(STREAM_BUFFER);
+    let feed = Feed::new();
     let started_unix_ms = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |elapsed| {
@@ -238,12 +286,12 @@ async fn serve(config: ServeConfig) -> Result<()> {
         });
     let state: Shared = Arc::new(AppState {
         store: Mutex::new(store),
-        tx: tx.clone(),
+        feed: feed.clone(),
         meta: Meta::new(&config, started_unix_ms),
     });
 
     let shutdown = Arc::new(AtomicBool::new(false));
-    let mut capture = spawn_source(&config, tx, Arc::clone(&shutdown), Arc::clone(&state))?;
+    let mut capture = spawn_source(&config, feed, Arc::clone(&shutdown), Arc::clone(&state))?;
 
     let app = router(&config.web, Arc::clone(&state));
     let listener = tokio::net::TcpListener::bind(&config.bind)
@@ -425,11 +473,27 @@ async fn health() -> impl IntoResponse {
 async fn stream(
     State(state): State<Shared>,
 ) -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
-    let receiver = state.tx.subscribe();
-    let events = BroadcastStream::new(receiver).filter_map(|item| match item {
+    let (backlog, receiver) = state.feed.join();
+    // One event carrying the whole backlog as a JSON array, so the page fills
+    // at once instead of rendering hundreds of single updates.
+    let first = if backlog.is_empty() {
+        None
+    } else {
+        let body = format!(
+            "[{}]",
+            backlog
+                .iter()
+                .map(AsRef::as_ref)
+                .collect::<Vec<&str>>()
+                .join(",")
+        );
+        Some(Ok(Event::default().event("backlog").data(body)))
+    };
+    let live = BroadcastStream::new(receiver).filter_map(|item| match item {
         Ok(line) => Some(Ok(Event::default().data(line.as_ref()))),
         Err(_lagged) => None,
     });
+    let events = tokio_stream::iter(first).chain(live);
     Sse::new(events).keep_alive(
         KeepAlive::new()
             .interval(Duration::from_secs(KEEPALIVE_SECS))
@@ -499,13 +563,13 @@ impl Capture {
 /// through its own connection; SQLite's write-ahead log lets the two coexist.
 fn spawn_source(
     config: &ServeConfig,
-    tx: broadcast::Sender<Arc<str>>,
+    feed: Feed,
     shutdown: Arc<AtomicBool>,
     state: Shared,
 ) -> Result<Capture> {
     match &config.source {
         Source::Tail => {
-            spawn_tail(state, tx, Arc::clone(&shutdown));
+            spawn_tail(state, feed, Arc::clone(&shutdown));
             Ok(Capture {
                 shutdown,
                 live_stop: None,
@@ -525,7 +589,7 @@ fn spawn_source(
             let detect = detect_config(config);
             let handle = std::thread::Builder::new()
                 .name("tlsfp-replay".to_owned())
-                .spawn(move || replay_loop(&path, &db, &tx, &stop, looping, interval, detect))
+                .spawn(move || replay_loop(&path, &db, &feed, &stop, looping, interval, detect))
                 .context("starting the replay thread")?;
             Ok(Capture {
                 shutdown,
@@ -552,7 +616,7 @@ fn spawn_source(
             tracing::info!(interface, filter = %live_config.filter, "serving live capture");
             let handle = std::thread::Builder::new()
                 .name("tlsfp-live".to_owned())
-                .spawn(move || live_loop(source, &db, &tx, &stop, detect))
+                .spawn(move || live_loop(source, &db, &feed, &stop, detect))
                 .context("starting the live capture thread")?;
             Ok(Capture {
                 shutdown,
@@ -577,7 +641,7 @@ fn detect_config(config: &ServeConfig) -> DetectConfig {
 fn replay_loop(
     path: &std::path::Path,
     db: &std::path::Path,
-    tx: &broadcast::Sender<Arc<str>>,
+    feed: &Feed,
     shutdown: &AtomicBool,
     looping: bool,
     interval: Duration,
@@ -592,6 +656,9 @@ fn replay_loop(
     };
     store.set_detect_config(detect);
     tracing::info!(path = %path.display(), looping, "serving replayed capture");
+    // The first pass runs at full speed so the dashboard opens already
+    // populated; later passes are paced to read like a live link.
+    let mut warm = true;
     loop {
         let mut source = match PcapFileSource::open(path) {
             Ok(source) => source,
@@ -605,11 +672,12 @@ fn replay_loop(
             if shutdown.load(Ordering::Relaxed) {
                 return;
             }
-            broadcast_flow(&mut store, tx, event);
-            if !interval.is_zero() {
+            broadcast_flow(&mut store, feed, event);
+            if !warm && !interval.is_zero() {
                 std::thread::sleep(interval);
             }
         });
+        warm = false;
         if let Err(error) = run {
             tracing::error!(%error, "replay: reading the capture failed");
             return;
@@ -626,7 +694,7 @@ fn replay_loop(
 fn live_loop(
     mut source: LiveSource,
     db: &std::path::Path,
-    tx: &broadcast::Sender<Arc<str>>,
+    feed: &Feed,
     shutdown: &AtomicBool,
     detect: DetectConfig,
 ) {
@@ -643,7 +711,7 @@ fn live_loop(
         if shutdown.load(Ordering::Relaxed) {
             return;
         }
-        broadcast_flow(&mut store, tx, event);
+        broadcast_flow(&mut store, feed, event);
     });
     if let Err(error) = run {
         tracing::warn!(%error, "live capture ended");
@@ -654,7 +722,7 @@ fn live_loop(
 /// each new one. Used when nothing is captured in process: a `tlsfp live
 /// --detect` writing to the same store shows up on the dashboard without the
 /// server holding a capture socket of its own.
-fn spawn_tail(state: Shared, tx: broadcast::Sender<Arc<str>>, shutdown: Arc<AtomicBool>) {
+fn spawn_tail(state: Shared, feed: Feed, shutdown: Arc<AtomicBool>) {
     tokio::spawn(async move {
         let start = Arc::clone(&state);
         let mut last_id =
@@ -681,7 +749,7 @@ fn spawn_tail(state: Shared, tx: broadcast::Sender<Arc<str>>, shutdown: Arc<Atom
                 last_id = last_id.max(id);
                 let message = LiveMessage::Alert { alert };
                 if let Ok(line) = serde_json::to_string(&message) {
-                    let _ = tx.send(Arc::from(line));
+                    feed.publish(line);
                 }
             }
         }
@@ -691,11 +759,7 @@ fn spawn_tail(state: Shared, tx: broadcast::Sender<Arc<str>>, shutdown: Arc<Atom
 /// Enriches one event, runs the detection rules over it, and broadcasts the
 /// result as a single line. A serialisation failure is dropped rather than
 /// allowed to end the capture, since one bad line is not worth a dark stream.
-fn broadcast_flow(
-    store: &mut IntelStore,
-    tx: &broadcast::Sender<Arc<str>>,
-    event: FingerprintEvent,
-) {
+fn broadcast_flow(store: &mut IntelStore, feed: &Feed, event: FingerprintEvent) {
     let intel = store.match_event(&event).unwrap_or_default();
     let alerts = store.detect(&event).unwrap_or_default();
     let message = LiveMessage::Flow {
@@ -704,7 +768,7 @@ fn broadcast_flow(
         alerts,
     };
     if let Ok(line) = serde_json::to_string(&message) {
-        let _ = tx.send(Arc::from(line));
+        feed.publish(line);
     }
 }
 
@@ -767,6 +831,20 @@ impl From<tokio::task::JoinError> for ApiError {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_joining_client_gets_the_backlog_then_only_newer_lines() {
+        let feed = super::Feed::new();
+        for n in 0..(super::HISTORY_LINES + 3) {
+            feed.publish(format!("{{\"n\":{n}}}"));
+        }
+        let (backlog, mut receiver) = feed.join();
+        assert_eq!(backlog.len(), super::HISTORY_LINES, "history is bounded");
+        assert_eq!(&*backlog[0], "{\"n\":3}", "the oldest lines were dropped");
+        assert!(receiver.try_recv().is_err(), "nothing is replayed live");
+        feed.publish("{\"n\":\"next\"}".to_string());
+        assert_eq!(&*receiver.try_recv().unwrap(), "{\"n\":\"next\"}");
+    }
+
     use super::*;
 
     fn config(source: Source, location: Option<&str>) -> ServeConfig {
