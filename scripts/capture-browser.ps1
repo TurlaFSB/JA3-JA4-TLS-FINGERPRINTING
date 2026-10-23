@@ -7,14 +7,14 @@
 #
 #   1. Open PowerShell as Administrator.
 #   2. cd to the repository folder.
-#   3. .\scripts\capture-browser.ps1 -Browser chrome      (also: edge, firefox)
+#   3. .\scripts\capture-browser.ps1 -Browser chrome      (also: edge, firefox, brave)
 #
 # The recording holds the addresses and server names of EVERYTHING this computer
 # connects to on port 443 while it runs. Close other programs first, keep the run
 # short, and look at the output before sharing it. See docs\BROWSER_CAPTURE.md.
 
 param(
-    [Parameter(Mandatory = $true)][ValidateSet('chrome', 'edge', 'firefox')][string]$Browser,
+    [Parameter(Mandatory = $true)][ValidateSet('chrome', 'edge', 'firefox', 'brave')][string]$Browser,
     [string]$OutDir = (Join-Path $env:USERPROFILE 'tlsfp-captures'),
     [int]$Seconds = 45,
     [string]$Image = 'tlsfp:local'
@@ -35,6 +35,9 @@ $candidates = @{
                 'C:\Program Files\Microsoft\Edge\Application\msedge.exe')
     firefox = @('C:\Program Files\Mozilla Firefox\firefox.exe',
                 'C:\Program Files (x86)\Mozilla Firefox\firefox.exe')
+    brave   = @('C:\Program Files\BraveSoftware\Brave-Browser\Application\brave.exe',
+                'C:\Program Files (x86)\BraveSoftware\Brave-Browser\Application\brave.exe',
+                (Join-Path $env:LOCALAPPDATA 'BraveSoftware\Brave-Browser\Application\brave.exe'))
 }
 $exe = $candidates[$Browser] | Where-Object { Test-Path $_ } | Select-Object -First 1
 if (-not $exe) { throw "Could not find $Browser. Edit the paths at the top of this script." }

@@ -15,11 +15,11 @@ docker build -f infra/docker/tlsfp.prod -t tlsfp:local .
 
 ## Capture
 
-For each browser you want to measure (Chrome, Edge, Firefox):
+For each browser you want to measure (Chrome, Edge, Firefox, Brave):
 
 1. Open **PowerShell as Administrator** and `cd` to the repository folder.
 2. Allow the script for this window only: `Set-ExecutionPolicy -Scope Process Bypass`
-3. Run `.\scripts\capture-browser.ps1 -Browser chrome` (or `edge`, `firefox`).
+3. Run `.\scripts\capture-browser.ps1 -Browser chrome` (or `edge`, `firefox`, `brave`).
 4. When it asks, close every window of that browser and any other program that uses the internet, then press Enter.
 5. The browser opens five public test sites. Leave it alone for 45 seconds.
 
