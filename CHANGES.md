@@ -27,6 +27,7 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 
 - CI: fixed `rustup --component` usage that failed every build, test and lint job on current runners.
 - Tests: satisfy the `assert_is_empty` lint added in Clippy 1.99 (assertions now carry failure messages).
+- README rewritten to a reference-style document: capabilities, install, usage, fingerprint reference, detection rules, output, architecture, validation, deployment and security, limitations.
 
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

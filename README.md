@@ -1,106 +1,269 @@
-# JA3/JA4 TLS Fingerprinting
+# tlsfp
+
+Passive TLS fingerprinting for JA3 and the JA4+ family. Reads packet captures or a live interface, fingerprints every TLS handshake (including TLS carried in QUIC), matches fingerprints against threat intelligence, and raises alerts when a client's fingerprint contradicts what it claims to be.
 
 [![CI](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/actions/workflows/ci.yml/badge.svg)](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/actions/workflows/ci.yml)
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-purple.svg)](LICENSE)
-[![Rust](https://img.shields.io/badge/Rust-edition%202024-CE412B?logo=rust&logoColor=white)](https://www.rust-lang.org)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
+[![Rust 1.85+](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
 
-A passive TLS fingerprinting sensor and research platform. It reads a packet capture or a live interface, computes JA3, JA4, JA4S, JA4H, JA4X and JA4T fingerprints for every handshake (including TLS inside QUIC), matches them against a local intelligence database, and flags clients whose fingerprint disagrees with what they claim to be. It never sends a packet.
+`tlsfp` never transmits. It reads the cleartext part of the handshake, computes hashes of the client's and server's TLS choices, and compares them with what it knows. No decryption, no keys, no active probing.
 
-It is a derivative of an open-source sensor (see [Credits and licensing](#credits-and-licensing)), extended with a labeled handshake dataset, a reproducible evaluation harness, and ongoing work on detection quality: measured rule accuracy, cross-layer impersonation detection, and fingerprint drift detection. See the [Roadmap](#roadmap).
+## Contents
 
-## Why fingerprint TLS
-
-A client's first message, the ClientHello, is sent in the clear and describes its TLS stack: versions, cipher suites, extensions, curves. Browsers, scripting libraries, and malware assemble it differently, so a hash of those choices identifies software without decrypting anything, and survives changes of IP, domain, and certificate. JA3 (2017) hashes the fields in wire order, which broke once Chrome began shuffling extensions. JA4 (2023) sorts them first and is stable under that shuffle.
+- [Capabilities](#capabilities)
+- [Install](#install)
+- [Usage](#usage)
+- [Fingerprints](#fingerprints)
+- [Detection](#detection)
+- [Intelligence](#intelligence)
+- [Output](#output)
+- [Architecture](#architecture)
+- [Validation](#validation)
+- [Deployment and security](#deployment-and-security)
+- [Limitations](#limitations)
+- [Documentation](#documentation)
+- [Roadmap](#roadmap)
+- [Contributing, security reports, citation](#contributing-security-reports-citation)
+- [License and acknowledgments](#license-and-acknowledgments)
 
 ## Capabilities
 
-**Fingerprints**
-- JA3 / JA3S, kept because public malware feeds are expressed in JA3
-- JA4 / JA4S, the primary fingerprint, with raw and hashed forms
-- JA4H (cleartext HTTP/1.x request), JA4X (X.509, TLS 1.2 and earlier), JA4T / JA4TS (TCP SYN / SYN-ACK)
-- GREASE values stripped from every list
+- **Fingerprints:** JA3, JA3S, JA4, JA4S, JA4H, JA4X, JA4T, JA4TS. GREASE values stripped; raw and hashed forms available.
+- **Transports:** TCP with full stream reassembly (reordering, retransmission, overlap); QUIC v1 and v2 Initial packet decryption and CRYPTO-frame reassembly.
+- **Inputs:** pcap and pcapng files; live capture through libpcap with only `CAP_NET_RAW` and `CAP_NET_ADMIN`.
+- **Matching:** exact lookup and JA4 prefix matching against a local SQLite database, scored into a verdict with confidence.
+- **Detection:** six stateful rules over fingerprint history (known-bad, User-Agent and OS mismatch, first-seen, rotation, monoculture).
+- **Interfaces:** CLI with text and JSON output, forensic report mode, HTTP API and web dashboard with a Server-Sent Events stream.
+- **Resource bounds:** capped flow table, idle timeouts, and per-stream byte limits. The engine crate forbids `unsafe`.
 
-**Capture**
-- pcap and pcapng files; live capture through libpcap
-- TCP reassembly tolerant of reordering, retransmission and overlap
-- QUIC v1 and v2 Initial decryption and CRYPTO-frame reassembly
-- Bounded memory: flow cap, idle timeout, per-stream byte limits
+## Install
 
-**Intelligence and detection**
-- Bundled SQLite database (271 fingerprints) from abuse.ch SSLBL, the Salesforce JA3 list, and a curated C2 set; optional ja4db.com import
-- Exact and JA4 prefix matching, scored into a verdict
-- Six rules: `known_bad`, `ua_mismatch`, `os_mismatch`, `first_seen`, `fp_rotation`, `monoculture`
-
-**Interfaces**
-- CLI (`pcap`, `live`, `intel`, `serve`, `--report`) with JSON output
-- Web dashboard streaming events and alerts over Server-Sent Events
-
-## Quick start
-
-Requirements: Rust (stable) and `libpcap-dev`.
+Requirements: Rust 1.85 or newer and libpcap development files (`apt-get install libpcap-dev`, `brew install libpcap`).
 
 ```bash
-./install.sh                                  # builds, installs, seeds the database
-# or manually:
-cargo build --release && export PATH="$PWD/target/release:$PATH" && tlsfp intel seed
-tlsfp pcap testdata/pcap/tls-handshake.pcapng # one line per handshake
-tlsfp pcap testdata/pcap/tls-handshake.pcapng --report
-
-# live capture needs raw-socket capabilities
-sudo setcap cap_net_raw,cap_net_admin=eip "$(command -v tlsfp)"
-tlsfp live eth0 --intel --detect
-
-tlsfp serve 127.0.0.1:8080                     # dashboard API (default db: ~/.local/share/tlsfp/intel.db)
+git clone https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING.git
+cd JA3-JA4-TLS-FINGERPRINTING
+./install.sh                 # builds, installs to ~/.cargo/bin, seeds the intelligence database
+./install.sh --live          # additionally grants cap_net_raw,cap_net_admin for live capture
 ```
 
-Docker: `docker compose --profile backend up` runs the dashboard with a replayed demo capture.
+To build without installing: `cargo build --release` (binary at `target/release/tlsfp`), then `tlsfp intel seed`.
+
+Container: `docker compose --profile backend up` serves the dashboard (host port 11790) with a replayed demo capture. See `compose.yml`.
+
+## Usage
+
+```bash
+tlsfp pcap capture.pcapng                    # one line per handshake
+tlsfp pcap capture.pcapng --json             # one JSON object per event
+tlsfp pcap capture.pcapng --intel --detect   # match and run detection rules
+tlsfp pcap capture.pcapng --report           # ranked forensic summary
+
+tlsfp live eth0 --intel --detect             # live capture
+tlsfp live eth0 --filter "tcp port 443"      # narrow the kernel BPF filter
+
+tlsfp intel seed                             # load bundled feeds
+tlsfp intel import ja4db.json                # import a ja4db.com export (validated per record)
+tlsfp intel lookup ja4 t13d1516h2_8daaf6152771_e5627efa2ab1
+tlsfp intel alerts                           # recent alerts
+
+tlsfp serve 127.0.0.1:8080                   # API and dashboard, tails the database
+tlsfp serve --replay capture.pcapng --loop   # dashboard fed from a replayed capture
+tlsfp serve --live eth0                      # dashboard fed from a live interface
+```
+
+Live capture needs raw-socket capabilities. Grant them to the binary instead of running as root:
+
+```bash
+sudo setcap cap_net_raw,cap_net_admin=eip "$(command -v tlsfp)"
+```
+
+The default database is `~/.local/share/tlsfp/intel.db`; override with `--db`.
+
+## Fingerprints
+
+| Fingerprint | Computed from | Notes |
+|---|---|---|
+| JA3 / JA3S | ClientHello / ServerHello fields in wire order, MD5 | Unstable for clients that randomize extension order. Kept because public malware feeds use it. |
+| JA4 | ClientHello: transport, version, SNI, ALPN, sorted cipher and extension lists, SHA-256 truncated | Stable under extension shuffling. Primary fingerprint. |
+| JA4S | ServerHello | Extensions in wire order. |
+| JA4H | Cleartext HTTP/1.x request: method, version, header order, cookies, language | HTTP/2 and HTTPS requests are not visible to a passive observer. |
+| JA4X | X.509 certificate issuer, subject and extension OIDs | Visible only where the certificate is in the clear (TLS 1.2 and earlier). |
+| JA4T / JA4TS | TCP SYN / SYN-ACK: window size, options, MSS, window scale | Identifies the OS network stack beneath the TLS client. |
+
+Anatomy of a JA4 value:
+
+```
+t13d1516h2_8daaf6152771_e5627efa2ab1
+│││ │ │  │  │            └─ SHA-256 (first 12 hex) of sorted extensions + signature algorithms
+│││ │ │  │  └────────────── SHA-256 (first 12 hex) of sorted cipher suites
+│││ │ │  └───────────────── first ALPN value (h2)
+│││ │ └──────────────────── extension count (16)
+│││ └────────────────────── cipher count (15)
+││└──────────────────────── SNI present (d = domain, i = IP / absent)
+│└───────────────────────── TLS version (13 = 1.3)
+└────────────────────────── transport (t = TCP, q = QUIC)
+```
+
+The exact published vector each fingerprint is tested against, and every deliberate scope boundary, is in [`learn/CONFORMANCE.md`](learn/CONFORMANCE.md).
+
+## Detection
+
+Rules read fingerprint history stored in the database, so they behave identically on a capture replayed at once and on a live link, and state survives restarts.
+
+| Rule | Fires when |
+|---|---|
+| `known_bad` | A fingerprint matches malicious or suspicious intelligence. Raised once per source address, so a beacon is one alert, not one per flow. |
+| `ua_mismatch` | A cleartext request presents a browser User-Agent while the same client's TLS fingerprint belongs to a script or tool. |
+| `os_mismatch` | The OS implied by the User-Agent disagrees with the OS implied by the client's TCP SYN fingerprint (JA4T). |
+| `first_seen` | The fingerprint has never been recorded before. Informational. |
+| `fp_rotation` | One address presents more than 5 distinct fingerprints within the window (default 1 hour). |
+| `monoculture` | One fingerprint appears from more than 10 distinct addresses within the window. |
+
+Thresholds and the window are configurable in `DetectConfig`. Defaults suit a quiet link; busy sensors should raise them.
+
+## Intelligence
+
+| Source | Records | Category | Licence |
+|---|---|---|---|
+| abuse.ch SSLBL | 97 | malware, C2 | CC0-1.0 |
+| Salesforce `osx-nix` JA3 list | 157 | benign applications | BSD-3-Clause |
+| Curated set | 17 | C2, tools | project |
+| ja4db.com (optional import) | variable | mixed | see ja4db.com terms |
+
+Feeds are vendored and compiled into the binary, so seeding needs no network. Benign and malicious sources are both loaded on purpose: some hashes appear in both, and the matcher scores the disagreement.
+
+## Output
+
+Text:
+
+```
+1675707151.805 192.168.1.168:50112 -> 142.251.16.94:443 client_hello ja4=t13d1516h2_8daaf6152771_e5627efa2ab1 ja3=1c258ebef8eee2dfa3df6d8d07285af9 sni=clientservices.googleapis.com alpn=h2
+    intel ja4=benign score=0.00 confidence=0.80 Google Chrome (tlsfp curated)
+```
+
+JSON (`--json`), one object per line:
+
+```json
+{"ts_nanos":1675707151805776000,"src":"192.168.1.168:50112","dst":"142.251.16.94:443","kind":"client_hello","ja3":"1c258ebef8eee2dfa3df6d8d07285af9","ja4":{"hash":"t13d1516h2_8daaf6152771_e5627efa2ab1","raw":"t13d1516h2_002f,0035,..."},"sni":"clientservices.googleapis.com","alpn":"h2"}
+```
+
+Forensic report (`--report`) summarizes a whole capture: frame and flow counts, fingerprints by kind, top client JA4 values, top server names, and per-endpoint fingerprints, verdicts and alerts.
 
 ## Architecture
 
-Three crates in a strict dependency line:
+```
+   pcap / pcapng          live interface (libpcap)          QUIC Initial
+          └──────────────────────┬──────────────────────────────┘
+                                 ▼  link-layer frames
+   ┌──────────────────────────────────────────────────────────────┐
+   │ tlsfp-core    decode → TCP reassembly → TLS / HTTP / QUIC     │
+   │               → JA3 · JA4 · JA4H · JA4X · JA4T                │
+   │               no I/O, no async, forbids unsafe                │
+   └─────────────────────────────┬────────────────────────────────┘
+                                 ▼  FingerprintEvent
+   ┌──────────────────────────────────────────────────────────────┐
+   │ tlsfp-intel   SQLite store · exact + JA4 prefix matching      │
+   │               → scored verdict → detection rules → alerts     │
+   └─────────────────────────────┬────────────────────────────────┘
+                                 ▼  MatchReport, Alert
+   ┌──────────────────────────────────────────────────────────────┐
+   │ tlsfp         CLI · live capture · report · axum API + SSE    │
+   └──────────────────────────────────────────────────────────────┘
+```
 
-| Crate | Role |
+Design decisions:
+
+- **Parsers treat input as hostile.** The engine forbids `unsafe`, readers are bounds-checked, and every malformed input is an error or a counted drop.
+- **Synchronous core, async only at the edge.** A lookup is one indexed query and a capture is a plain loop; the async runtime exists only in the web server.
+- **QUIC needs no secret.** Client Initial keys derive from the Destination Connection ID, which is sent in the clear (RFC 9001, RFC 9369).
+- **Detection state lives in the database,** not in memory, so a sensor keeps its history across restarts and external writers can share it.
+
+## Validation
+
+| Check | Scope |
 |---|---|
-| `tlsfp-core` | Engine. Decoding, reassembly, TLS/HTTP/QUIC parsing, fingerprint hashing. No I/O, forbids `unsafe`. |
-| `tlsfp-intel` | Judgement. SQLite store, matcher, detection rules. |
-| `tlsfp` | Binary. CLI, live capture, forensic report, axum web server. |
+| Known-answer tests | JA3 (Salesforce vectors), JA4 (FoxIO vectors), QUIC key schedule (RFC 9001 and RFC 9369 appendices) |
+| Integration tests | Vendored captures in `testdata/pcap/` (provenance in `testdata/pcap/PROVENANCE.md`) |
+| Property tests | Arbitrary and mutated bytes into the TLS, QUIC, HTTP, SSLv2, certificate and pipeline entry points; stream reassembly under arbitrary segmentation |
+| CI | `cargo test` on stable and Rust 1.85, `clippy -D warnings`, `rustfmt`, `cargo audit`, evaluation reproducibility |
+| Security review | [`AUDIT.md`](AUDIT.md) |
 
-`frontend/` is the React dashboard. `testdata/pcap/` holds the vendored captures used by the tests. Design notes are in [`learn/02-ARCHITECTURE.md`](learn/02-ARCHITECTURE.md); algorithm details and the published vector each fingerprint is pinned to are in [`learn/ALGORITHMS.md`](learn/ALGORITHMS.md) and [`learn/CONFORMANCE.md`](learn/CONFORMANCE.md).
-
-## Testing and quality
+Run locally:
 
 ```bash
-cargo test --workspace                      # 216 tests
+cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all --check
 cargo audit
+cargo bench -p tlsfp-core        # throughput benchmarks
 ```
 
-Fingerprints are checked against published known-answer vectors (Salesforce JA3, FoxIO JA4, RFC 9001 / 9369 for QUIC). Property tests feed arbitrary and mutated bytes to the TLS, QUIC, HTTP, SSLv2, certificate and pipeline entry points and assert they never panic. The security audit and its findings are in [`AUDIT.md`](AUDIT.md).
+### Fingerprint evaluation
 
-## Dataset and evaluation
+`dataset/` contains labeled handshakes from real clients and `eval/evaluate.py` measures how stable and discriminating JA3 and JA4 are on them; CI verifies the committed results reproduce. Dataset v0.1: 9 clients, 148 handshakes, loopback on one Linux host.
 
-`dataset/` holds labeled handshake captures from real clients (curl, wget, OpenSSL, Python, Go, Node, headless Chromium) generated by a scripted lab, and `eval/` measures fingerprint stability and discriminability on them, reproducibly and verified in CI. On dataset v0.1, Chromium's 8 handshakes yield 8 different JA3 values but only 2 JA4 values (the second is session resumption). See [`eval/README.md`](eval/README.md) for results and [`dataset/README.md`](dataset/README.md) for method and threats to validity.
+| | JA3 | JA4 |
+|---|---|---|
+| Clients with a unique dominant fingerprint | 7 / 9 | 9 / 9 |
+| Chromium, 8 handshakes: distinct fingerprints | 8 | 2 |
+
+JA3 changes on every Chromium connection because of extension shuffling; JA4 does not, and its second value is session resumption (`pre_shared_key`). JA3 also cannot separate curl over HTTP/1.1 from HTTP/2, which JA4 does through ALPN. Method, results and validity limits: [`eval/README.md`](eval/README.md), [`dataset/README.md`](dataset/README.md).
+
+## Deployment and security
+
+- Run live capture with `CAP_NET_RAW` and `CAP_NET_ADMIN` only, never as root.
+- The HTTP API and dashboard have **no authentication**. The default bind is `127.0.0.1`. If it must be reachable, put it behind a reverse proxy that provides authentication and TLS.
+- Capture files and database contents include IP addresses and SNI values, which can be personal data. Apply your retention and access controls.
+- A fingerprint identifies a TLS implementation and configuration, not a person. Treat `known_bad` as a lead, not proof.
+
+Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
+
+## Limitations
+
+- Fingerprints can be spoofed (uTLS, curl-impersonate, custom ClientHello). Cross-layer rules raise the cost but do not eliminate evasion.
+- Encrypted Client Hello hides the inner ClientHello; detection degrades to the outer one.
+- JA4X needs the certificate in the clear (TLS 1.2 and earlier). JA4H covers cleartext HTTP/1.x only.
+- QUIC support covers client Initial packets; no 0-RTT, Handshake packets, or connection migration.
+- The bundled intelligence (271 fingerprints) is a baseline, not coverage of current malware.
+- Detection accuracy has not been quantified on real-world traffic yet (see Roadmap).
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [`learn/02-ARCHITECTURE.md`](learn/02-ARCHITECTURE.md) | Crate structure, pipeline, intelligence store |
+| [`learn/03-IMPLEMENTATION.md`](learn/03-IMPLEMENTATION.md) | Code walkthrough from frame to alert |
+| [`learn/ALGORITHMS.md`](learn/ALGORITHMS.md) | Byte-level definition of each fingerprint and QUIC decryption |
+| [`learn/CONFORMANCE.md`](learn/CONFORMANCE.md) | Published vectors and scope boundaries |
+| [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Threat model and responsible use |
+| [`AUDIT.md`](AUDIT.md) | Security audit findings |
+| [`eval/README.md`](eval/README.md) | Evaluation method and results |
+| [`dataset/README.md`](dataset/README.md) | Dataset construction and validity |
+| [`RELEASING.md`](RELEASING.md) | Release and signed-tag procedure |
+| [`CHANGES.md`](CHANGES.md) | Changes relative to the upstream base |
 
 ## Roadmap
 
 | Status | Item |
 |---|---|
-| Done | Build, test and security audit; dependency fixes; CI audit job; fuzz coverage of all parsers |
-| Done | Security policy, threat model, contribution guide, citation metadata, source installer |
-| Done | Handshake dataset lab and reproducible fingerprint evaluation (v0.1, 9 clients) |
-| Next | Dataset v0.2: more clients and versions (Firefox, curl-impersonate, more Chromium builds), more handshakes per client |
-| Planned | Evaluation of the existing detection rules: precision, recall, false-positive rate |
-| Planned | Cross-layer impersonation classifier compared against the rule baseline |
+| Done | Security audit, CI, parser fuzz coverage, reproducible fingerprint evaluation |
+| Next | Dataset v0.2: Firefox, curl-impersonate, additional Chromium builds and versions |
+| Planned | Precision, recall and false-positive rate of the detection rules on labeled traffic |
+| Planned | Cross-layer impersonation classifier evaluated against the rule baseline |
 | Planned | Per-host fingerprint drift detection |
-| Planned | Robustness study: uTLS / curl-impersonate, Encrypted Client Hello |
+| Planned | Evasion study (uTLS, curl-impersonate) and Encrypted Client Hello impact |
 
-Progress is tracked in [`CHANGES.md`](CHANGES.md). Security reports: [`SECURITY.md`](SECURITY.md). Threat model and responsible use: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md). To cite: [`CITATION.cff`](CITATION.cff).
+## Contributing, security reports, citation
 
-## Credits and licensing
+- Contributions: [`CONTRIBUTING.md`](CONTRIBUTING.md)
+- Vulnerability reports: [`SECURITY.md`](SECURITY.md), via GitHub private vulnerability reporting
+- Citation: [`CITATION.cff`](CITATION.cff)
 
-This project is derived from [ja3-ja4-tls-fingerprinting](https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting) by CarterPerez-dev (AngelaMos), AGPL-3.0, upstream commit `bf9ac5d`. The sensor core, fingerprint implementations, intelligence store and dashboard originate there. Changes in this repository are listed in [`CHANGES.md`](CHANGES.md); full provenance is in [`NOTICE.md`](NOTICE.md).
+## License and acknowledgments
 
-- This project is licensed under **AGPL-3.0** ([`LICENSE`](LICENSE)). Anyone who runs a modified version as a network service must offer its source.
-- JA3 (Salesforce, BSD-3-Clause) and JA4 (FoxIO, BSD-3-Clause) are free to implement. JA4S, JA4H, JA4X and JA4T are under the FoxIO License 1.1 (non-commercial, academic use permitted, patent pending). See [`NOTICE.md`](NOTICE.md).
-- Threat feeds: abuse.ch SSLBL, Salesforce `osx-nix`, ja4db.com (see their respective terms).
+Licensed under the GNU Affero General Public License v3.0 ([`LICENSE`](LICENSE)). A modified version run as a network service must offer its source to its users.
+
+`tlsfp` is derived from [ja3-ja4-tls-fingerprinting](https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting) by CarterPerez-dev (AngelaMos), AGPL-3.0, upstream commit `bf9ac5d`. The sensor core, fingerprint implementations, intelligence store and dashboard originate there; copyright headers are retained. Changes are listed in [`CHANGES.md`](CHANGES.md); full provenance is in [`NOTICE.md`](NOTICE.md).
+
+Fingerprint specifications: JA3 and JA3S by John Althouse, Jeff Atkinson and Josh Atkins (Salesforce, BSD-3-Clause); JA4 by FoxIO (BSD-3-Clause). JA4S, JA4H, JA4X and JA4T are licensed by FoxIO under the FoxIO License 1.1 (non-commercial use, patent pending); see [`NOTICE.md`](NOTICE.md) before any commercial use. Threat feeds: abuse.ch SSLBL (CC0-1.0), Salesforce `osx-nix` (BSD-3-Clause), ja4db.com.
