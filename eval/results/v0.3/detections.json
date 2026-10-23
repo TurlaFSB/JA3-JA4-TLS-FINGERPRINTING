@@ -21,28 +21,37 @@
     },
     "benign_clients_with_any_suspicious_or_malicious_verdict": [],
     "impersonation_profiles_seen_by_feed": {
-      "benign": 9.1,
-      "clients": 11,
-      "handshakes": 220,
+      "benign": 70.5,
+      "clients": 21,
+      "handshakes": 420,
       "malicious": 0.0,
-      "none": 0.0,
-      "suspicious": 90.9,
-      "unknown": 0.0
+      "none": 19.0,
+      "suspicious": 0.0,
+      "unknown": 10.5
     },
     "impersonation_profiles_unseen_by_feed": {
-      "benign": 41.2,
-      "clients": 17,
-      "handshakes": 340,
+      "benign": 25.7,
+      "clients": 7,
+      "handshakes": 140,
       "malicious": 0.0,
-      "none": 0.0,
-      "suspicious": 58.8,
-      "unknown": 0.0
+      "none": 71.4,
+      "suspicious": 0.0,
+      "unknown": 2.9
     },
     "impersonation_profiles_vouched_benign": [
       "curl_cffi-chrome104",
       "curl_cffi-chrome107",
       "curl_cffi-chrome110",
       "curl_cffi-chrome116",
+      "curl_cffi-chrome120",
+      "curl_cffi-chrome124",
+      "curl_cffi-chrome131",
+      "curl_cffi-chrome131_android",
+      "curl_cffi-chrome133a",
+      "curl_cffi-chrome136",
+      "curl_cffi-chrome142",
+      "curl_cffi-chrome145",
+      "curl_cffi-chrome146",
       "curl_cffi-chrome99",
       "curl_cffi-chrome99_android",
       "curl_cffi-edge101",
@@ -50,7 +59,10 @@
     ]
   },
   "dataset_version": "v0.3",
-  "feed_dataset": "dataset/v0.2",
+  "feed_datasets": [
+    "dataset/v0.2",
+    "dataset/v0.4"
+  ],
   "per_client": {
     "chromium-headless": {
       "alerts": {
@@ -145,7 +157,7 @@
         "Google Chrome": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
         "benign": 20
       }
@@ -162,7 +174,7 @@
         "Google Chrome": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
         "benign": 20
       }
@@ -179,7 +191,7 @@
         "Google Chrome": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
         "benign": 20
       }
@@ -196,191 +208,181 @@
         "Google Chrome": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
         "benign": 20
       }
     },
     "curl_cffi-chrome120": {
       "alerts": {
-        "first_seen": 5,
-        "known_bad": 2
+        "first_seen": 5
       },
       "best_match": {
-        "exact": 20
+        "cipher_and_prefix": 4,
+        "exact": 16
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome120": 4,
-        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 16
+        "Chromium 131.0.1, 133.0.0 (headless shell)": 16
       },
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "benign": 16,
+        "unknown": 4
       }
     },
     "curl_cffi-chrome124": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
       "best_match": {
         "exact": 20
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 20
+        "Chromium 131.0.1, 133.0.0 (headless shell)": 20
       },
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "benign": 20
       }
     },
     "curl_cffi-chrome131": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
       "best_match": {
         "exact": 20
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 20
+        "Chromium 131.0.1, 133.0.0 (headless shell)": 20
       },
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "benign": 20
       }
     },
     "curl_cffi-chrome131_android": {
       "alerts": {
-        "first_seen": 5,
-        "known_bad": 2
+        "first_seen": 5
       },
       "best_match": {
-        "exact": 20
+        "cipher_and_prefix": 4,
+        "exact": 16
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome120": 4,
-        "curl_cffi impersonating chrome120 / curl_cffi impersonating chrome124 / curl_cffi impersonating chrome131": 16
+        "Chromium 131.0.1, 133.0.0 (headless shell)": 16
       },
       "handshakes": 20,
       "in_feed_source": false,
       "verdicts": {
-        "suspicious": 20
+        "benign": 16,
+        "unknown": 4
       }
     },
     "curl_cffi-chrome133a": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
       "best_match": {
         "exact": 20
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome142": 20
+        "Chromium 137.0.1, 138.0.2, 140.0.0, 141.0.0, 143.0.4 (headless shell)": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "benign": 20
       }
     },
     "curl_cffi-chrome136": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
       "best_match": {
         "exact": 20
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome142": 20
+        "Chromium 137.0.1, 138.0.2, 140.0.0, 141.0.0, 143.0.4 (headless shell)": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "benign": 20
       }
     },
     "curl_cffi-chrome142": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
       "best_match": {
         "exact": 20
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome142": 20
+        "Chromium 137.0.1, 138.0.2, 140.0.0, 141.0.0, 143.0.4 (headless shell)": 20
       },
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "benign": 20
       }
     },
     "curl_cffi-chrome145": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
       "best_match": {
         "exact": 20
       },
       "class": "tool",
       "exact_labels": {
-        "curl_cffi impersonating chrome142": 20
-      },
-      "handshakes": 20,
-      "in_feed_source": false,
-      "verdicts": {
-        "suspicious": 20
-      }
-    },
-    "curl_cffi-chrome146": {
-      "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
-      },
-      "best_match": {
-        "exact": 20
-      },
-      "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating chrome142": 20
-      },
-      "handshakes": 20,
-      "in_feed_source": false,
-      "verdicts": {
-        "suspicious": 20
-      }
-    },
-    "curl_cffi-chrome150": {
-      "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
-      },
-      "best_match": {
-        "exact": 20
-      },
-      "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating chrome150": 20
+        "Chromium 137.0.1, 138.0.2, 140.0.0, 141.0.0, 143.0.4 (headless shell)": 20
       },
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "benign": 20
+      }
+    },
+    "curl_cffi-chrome146": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "exact": 20
+      },
+      "class": "tool",
+      "exact_labels": {
+        "Chromium 137.0.1, 138.0.2, 140.0.0, 141.0.0, 143.0.4 (headless shell)": 20
+      },
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "benign": 20
+      }
+    },
+    "curl_cffi-chrome150": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {
+        "cipher_and_prefix": 20
+      },
+      "class": "tool",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": true,
+      "verdicts": {
+        "unknown": 20
       }
     },
     "curl_cffi-chrome99": {
@@ -395,7 +397,7 @@
         "Google Chrome": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
         "benign": 20
       }
@@ -446,185 +448,141 @@
         "Google Chrome": 20
       },
       "handshakes": 20,
-      "in_feed_source": false,
+      "in_feed_source": true,
       "verdicts": {
         "benign": 20
       }
     },
     "curl_cffi-firefox133": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "exact": 20
-      },
+      "best_match": {},
       "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating firefox133": 20
-      },
+      "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
       }
     },
     "curl_cffi-firefox135": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "exact": 20
-      },
+      "best_match": {},
       "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating firefox147": 20
-      },
+      "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": false,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
       }
     },
     "curl_cffi-firefox144": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "exact": 20
-      },
+      "best_match": {},
       "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating firefox147": 20
-      },
+      "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": false,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
       }
     },
     "curl_cffi-firefox147": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "exact": 20
-      },
+      "best_match": {},
       "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating firefox147": 20
-      },
+      "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
       }
     },
     "curl_cffi-safari170": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "cipher_and_prefix": 20
-      },
+      "best_match": {},
       "class": "tool",
       "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": false,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
       }
     },
     "curl_cffi-safari180_ios": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "exact": 20
-      },
+      "best_match": {},
       "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating safari180_ios": 20
-      },
+      "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
       }
     },
     "curl_cffi-safari184": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "exact": 20
-      },
-      "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating safari180_ios": 20
-      },
-      "handshakes": 20,
-      "in_feed_source": false,
-      "verdicts": {
-        "suspicious": 20
-      }
-    },
-    "curl_cffi-safari260": {
-      "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
-      },
-      "best_match": {
-        "cipher_and_prefix": 20
-      },
+      "best_match": {},
       "class": "tool",
       "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": false,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
+      }
+    },
+    "curl_cffi-safari260": {
+      "alerts": {
+        "first_seen": 4
+      },
+      "best_match": {},
+      "class": "tool",
+      "exact_labels": {},
+      "handshakes": 20,
+      "in_feed_source": false,
+      "verdicts": {
+        "none": 20
       }
     },
     "curl_cffi-safari2601": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
-      "best_match": {
-        "exact": 20
-      },
+      "best_match": {},
       "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating safari2601": 20
-      },
+      "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "none": 20
       }
     },
     "curl_cffi-tor145": {
       "alerts": {
-        "first_seen": 4,
-        "known_bad": 1
+        "first_seen": 4
       },
       "best_match": {
-        "exact": 20
+        "cipher_only": 20
       },
       "class": "tool",
-      "exact_labels": {
-        "curl_cffi impersonating tor145": 20
-      },
+      "exact_labels": {},
       "handshakes": 20,
       "in_feed_source": true,
       "verdicts": {
-        "suspicious": 20
+        "unknown": 20
       }
     },
     "go-http2": {
@@ -918,11 +876,6 @@
     {
       "alerts": 30,
       "rule": "fp_rotation",
-      "severity": "medium"
-    },
-    {
-      "alerts": 11,
-      "rule": "known_bad",
       "severity": "medium"
     }
   ],

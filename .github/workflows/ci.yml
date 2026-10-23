@@ -56,14 +56,16 @@ jobs:
         run: cargo build --release --bin tlsfp
       - name: Fingerprint evaluation reproduces committed results
         run: |
-          for v in v0.1 v0.2 v0.3; do
+          for v in v0.1 v0.2 v0.3 v0.4; do
             python3 eval/evaluate.py --dataset dataset/$v --out eval/results/$v --check
           done
+      - name: Impersonation fidelity reproduces committed results
+        run: python3 eval/fidelity.py --dataset dataset/v0.4 --out eval/results/v0.4 --check
       - name: Detection evaluation reproduces committed results
-        run: python3 eval/detections.py --dataset dataset/v0.3 --feed-dataset dataset/v0.2 --out eval/results/v0.3 --check
+        run: python3 eval/detections.py --dataset dataset/v0.3 --feed-dataset dataset/v0.2 dataset/v0.4 --out eval/results/v0.3 --check
       - name: Lab intelligence feed matches its generator
         run: |
-          python3 dataset/lab/make_intel_feed.py --dataset dataset/v0.2 --out "$RUNNER_TEMP/lab-clients.csv"
+          python3 dataset/lab/make_intel_feed.py --dataset dataset/v0.2 --real-dataset dataset/v0.4 --out "$RUNNER_TEMP/lab-clients.csv"
           diff "$RUNNER_TEMP/lab-clients.csv" crates/tlsfp-intel/seeds/lab-clients.csv
 
   frontend:

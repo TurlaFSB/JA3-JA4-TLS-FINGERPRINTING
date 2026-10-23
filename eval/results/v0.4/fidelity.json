@@ -1,0 +1,237 @@
+{
+  "dataset_version": "v0.4",
+  "ja4_groups": {
+    "t13d1516h2_8daaf6152771_02713d6af862": {
+      "profiles": [
+        "chrome120",
+        "chrome124",
+        "chrome131"
+      ],
+      "real": [
+        "131.0.1",
+        "133.0.0"
+      ]
+    },
+    "t13d1516h2_8daaf6152771_806a8c22fdea": {
+      "profiles": [
+        "chrome150"
+      ],
+      "real": []
+    },
+    "t13d1516h2_8daaf6152771_d8a2da3f94cd": {
+      "profiles": [
+        "chrome133a",
+        "chrome136",
+        "chrome142",
+        "chrome145",
+        "chrome146"
+      ],
+      "real": [
+        "137.0.1",
+        "138.0.2",
+        "140.0.0",
+        "141.0.0",
+        "143.0.4"
+      ]
+    },
+    "t13d1516h2_8daaf6152771_e5627efa2ab1": {
+      "profiles": [
+        "chrome104",
+        "chrome107",
+        "chrome110",
+        "chrome116",
+        "chrome99",
+        "edge101",
+        "edge99"
+      ],
+      "real": [
+        "107.0.0",
+        "110.0.1"
+      ]
+    },
+    "t13d1517h2_8daaf6152771_b1ff8ab2d16f": {
+      "profiles": [
+        "chrome120"
+      ],
+      "real": []
+    }
+  },
+  "per_real_build": {
+    "107.0.0": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ],
+      "nearest_profile": "chrome107",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome104",
+        "chrome107",
+        "chrome110",
+        "chrome116",
+        "chrome99",
+        "edge101",
+        "edge99"
+      ]
+    },
+    "110.0.1": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ],
+      "nearest_profile": "chrome110",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_e5627efa2ab1"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome104",
+        "chrome107",
+        "chrome110",
+        "chrome116",
+        "chrome99",
+        "edge101",
+        "edge99"
+      ]
+    },
+    "131.0.1": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ],
+      "nearest_profile": "chrome131",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome120",
+        "chrome124",
+        "chrome131"
+      ]
+    },
+    "133.0.0": {
+      "identical_to_nearest_profile": false,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_02713d6af862"
+      ],
+      "nearest_profile": "chrome133a",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome120",
+        "chrome124",
+        "chrome131"
+      ]
+    },
+    "137.0.1": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "nearest_profile": "chrome136",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome133a",
+        "chrome136",
+        "chrome142",
+        "chrome145",
+        "chrome146"
+      ]
+    },
+    "138.0.2": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "nearest_profile": "chrome136",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome133a",
+        "chrome136",
+        "chrome142",
+        "chrome145",
+        "chrome146"
+      ]
+    },
+    "140.0.0": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome133a",
+        "chrome136",
+        "chrome142",
+        "chrome145",
+        "chrome146"
+      ]
+    },
+    "141.0.0": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome133a",
+        "chrome136",
+        "chrome142",
+        "chrome145",
+        "chrome146"
+      ]
+    },
+    "143.0.4": {
+      "identical_to_nearest_profile": true,
+      "ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "nearest_profile": "chrome142",
+      "nearest_profile_ja4": [
+        "t13d1516h2_8daaf6152771_d8a2da3f94cd"
+      ],
+      "profiles_sharing_a_ja4": [
+        "chrome133a",
+        "chrome136",
+        "chrome142",
+        "chrome145",
+        "chrome146"
+      ]
+    }
+  },
+  "profiles": 16,
+  "profiles_with_ja4_identical_to_a_real_build": [
+    "chrome104",
+    "chrome107",
+    "chrome110",
+    "chrome116",
+    "chrome120",
+    "chrome124",
+    "chrome131",
+    "chrome133a",
+    "chrome136",
+    "chrome142",
+    "chrome145",
+    "chrome146",
+    "chrome99",
+    "edge101",
+    "edge99"
+  ],
+  "profiles_with_no_real_counterpart": [
+    "chrome150"
+  ],
+  "real_builds": 9,
+  "real_builds_identical_to_nearest_profile": 8
+}

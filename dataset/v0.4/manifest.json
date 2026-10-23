@@ -1,0 +1,173 @@
+{
+  "dataset_version": "v0.4",
+  "created_utc": "2026-10-23T11:47:45Z",
+  "environment": {
+    "os": "Linux-6.18.44-fc-v153-x86_64-with-glibc2.39",
+    "kernel": "6.18.44-fc-v153",
+    "machine": "x86_64",
+    "server_tls": "OpenSSL 3.0.13 30 Jan 2024",
+    "target_host": "localhost",
+    "transport": "loopback",
+    "server_alpn": [
+      "http/1.1"
+    ]
+  },
+  "labels": {
+    "curl_cffi-chrome150": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome150; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome150.pcap",
+      "sha256": "dd3e5ed58d2c833e74f746fda9337e8f24278c59a5ebc63d522f64c6ded523cb",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome142": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome142; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome142.pcap",
+      "sha256": "5a961a2d8e5977e433a93ce0599ee12b55651a3be6bdb2b96a139121b3d719db",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome131": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome131; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome131.pcap",
+      "sha256": "4cff267422838dfdd9e1fabbe7d63f52e920f59acd1dba10c2ed23c58e1ef60f",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome124": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome124; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome124.pcap",
+      "sha256": "b7639774443220261cc492c19cc42621b2d0366b9dcdcf8082de43a0b3b93e2e",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome120": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome120; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome120.pcap",
+      "sha256": "e9b9bc9495ec5e92226fea881d5101cdfce6e60d852b71f30aa7b773e9d200ff",
+      "requested_connections": 20
+    },
+    "curl_cffi-edge101": {
+      "client_version": "curl_cffi 0.16.3 impersonate=edge101; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-edge101.pcap",
+      "sha256": "61a419d8d5117c1e142e63c9c655206d5041d303cb73a2d0118809f8c58d88d6",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome104": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome104; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome104.pcap",
+      "sha256": "6ab323f650273355675ef9d610e0ec7edc81c92561391dbf679c919487f2e43a",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome107": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome107; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome107.pcap",
+      "sha256": "cfca1bde1ed7e4c44fa154b9344fda71104a4679225e06a84dbea1bba5def365",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome110": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome110; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome110.pcap",
+      "sha256": "44a786dba39445b387493f3ed1055cb236ac7c0a9b92448175b0fab6e3e360c7",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome116": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome116; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome116.pcap",
+      "sha256": "7e3ab885a689dd33a62c7408101f953dadf5028bb33d7d97dd4b44a6566889c5",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome99": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome99; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome99.pcap",
+      "sha256": "c0af4ca5d116f3994da3fa59ee049eef73ab61a04faa6a00dcf6aef862d2af91",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome133a": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome133a; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome133a.pcap",
+      "sha256": "e1f6591ce83d57930fcf8f6cb4521bff6dd993fbc26a9a1ef083bdb7652c6aad",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome136": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome136; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome136.pcap",
+      "sha256": "19cd80cb62e4d1d054b031a998f5a4ebd6d42438714da76907e3fe39cf1e9417",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome145": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome145; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome145.pcap",
+      "sha256": "d935fc3d5d25830d26bdbb7d24f0a50e12c6c43b68409b083c7ad6a8f5782e42",
+      "requested_connections": 20
+    },
+    "curl_cffi-chrome146": {
+      "client_version": "curl_cffi 0.16.3 impersonate=chrome146; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-chrome146.pcap",
+      "sha256": "a66bf37ce69aaddd9db222c9e2972058c8f4ce5264cd5d3765b01119427d7906",
+      "requested_connections": 20
+    },
+    "curl_cffi-edge99": {
+      "client_version": "curl_cffi 0.16.3 impersonate=edge99; libcurl/8.21.0-IMPERSONATE BoringSSL zlib/1.3 brotli/1.2.0 zstd/1.5.7 libidn2/2.3.7 nghttp2/1.63.0 ngtcp2/1.20.0 nghttp3/1.15.0",
+      "pcap": "pcap/curl_cffi-edge99.pcap",
+      "sha256": "6b548c3e131d634ecd12bd3b755330dae0791d33f1221b185b6956ea4c69e1e3",
+      "requested_connections": 20
+    },
+    "chromium-headless": {
+      "client_version": "Chromium 141.0.7390.37",
+      "pcap": "pcap/chromium-headless.pcap",
+      "sha256": "7ac5a15f9f2f04bd47ea28912af5592d138c83677ef7f73a15e9ad38efee0799",
+      "requested_connections": 20
+    },
+    "chromium-real-107.0.0": {
+      "client_version": "Chromium headless-shell 107.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-107.0.0.pcap",
+      "sha256": "2d7bb6e5a435cd13a4b13e4969eba469e1f9b4777e29cfbd06e0c6de22d86564",
+      "requested_connections": 20
+    },
+    "chromium-real-110.0.1": {
+      "client_version": "Chromium headless-shell 110.0.1 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-110.0.1.pcap",
+      "sha256": "def04ea235153b66e27e677dbeb37d6d983f19a1c4de98b6a0bc9768dee67c82",
+      "requested_connections": 20
+    },
+    "chromium-real-131.0.1": {
+      "client_version": "Chromium headless-shell 131.0.1 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-131.0.1.pcap",
+      "sha256": "73dd2d080a91d07193e91466887f76b58106d937c5af887c854c520e7195945b",
+      "requested_connections": 20
+    },
+    "chromium-real-133.0.0": {
+      "client_version": "Chromium headless-shell 133.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-133.0.0.pcap",
+      "sha256": "10ef6b511b53243b9b2caa59fd46e43706360581d5e44aa086e30525ae2d35fd",
+      "requested_connections": 20
+    },
+    "chromium-real-137.0.1": {
+      "client_version": "Chromium headless-shell 137.0.1 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-137.0.1.pcap",
+      "sha256": "b821a739b4685f6aca2b39c8435803eeed33c9ec349d4d18b78eb78438b06389",
+      "requested_connections": 20
+    },
+    "chromium-real-138.0.2": {
+      "client_version": "Chromium headless-shell 138.0.2 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-138.0.2.pcap",
+      "sha256": "7495e0e372f6c0773324c09cf354dc532e0204681c9b92488d33a1440f84d8e6",
+      "requested_connections": 20
+    },
+    "chromium-real-140.0.0": {
+      "client_version": "Chromium headless-shell 140.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-140.0.0.pcap",
+      "sha256": "5132a81b5b2a543221b1307ceaa274194de2f2bf6942de2a78bd0609be290234",
+      "requested_connections": 20
+    },
+    "chromium-real-141.0.0": {
+      "client_version": "Chromium headless-shell 141.0.0 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-141.0.0.pcap",
+      "sha256": "6eb75d7123b6dce011a7af487969eee02c618c869120feb00535d6511350298d",
+      "requested_connections": 20
+    },
+    "chromium-real-143.0.4": {
+      "client_version": "Chromium headless-shell 143.0.4 (npm @sparticuz/chromium)",
+      "pcap": "pcap/chromium-real-143.0.4.pcap",
+      "sha256": "523c5730192b476cfb1aa75738dccd36bc1a39b6fa2e8454dde5d9f73368c439",
+      "requested_connections": 20
+    }
+  }
+}

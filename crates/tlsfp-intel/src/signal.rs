@@ -146,6 +146,10 @@ pub enum Family {
     OkHttp,
     Java,
     Tor,
+    Node,
+    Ruby,
+    Php,
+    OpenSsl,
 }
 
 impl Family {
@@ -165,6 +169,10 @@ impl Family {
             Family::OkHttp => "okhttp",
             Family::Java => "java",
             Family::Tor => "tor",
+            Family::Node => "node",
+            Family::Ruby => "ruby",
+            Family::Php => "php",
+            Family::OpenSsl => "openssl",
         }
     }
 
@@ -229,6 +237,18 @@ pub fn ua_family(user_agent: &str) -> Option<Family> {
     if contains_word(&ua, "java") {
         return Some(Family::Java);
     }
+    if contains_word(&ua, "node") || ua.contains("node-fetch") || ua.contains("undici") {
+        return Some(Family::Node);
+    }
+    if contains_word(&ua, "ruby") {
+        return Some(Family::Ruby);
+    }
+    if contains_word(&ua, "php") {
+        return Some(Family::Php);
+    }
+    if contains_word(&ua, "openssl") {
+        return Some(Family::OpenSsl);
+    }
     None
 }
 
@@ -272,7 +292,7 @@ pub fn label_family(label: &str) -> Option<Family> {
     if label.contains("python") || label.contains("requests") || label.contains("urllib") {
         return Some(Family::Python);
     }
-    if label.contains("go-http") || label.contains("golang") {
+    if label.contains("go-http") || label.contains("golang") || label.contains("go net/http") {
         return Some(Family::Go);
     }
     if label.contains("okhttp") {
@@ -280,6 +300,18 @@ pub fn label_family(label: &str) -> Option<Family> {
     }
     if contains_word(&label, "java") {
         return Some(Family::Java);
+    }
+    if contains_word(&label, "node") || label.contains("node.js") {
+        return Some(Family::Node);
+    }
+    if contains_word(&label, "ruby") {
+        return Some(Family::Ruby);
+    }
+    if contains_word(&label, "php") {
+        return Some(Family::Php);
+    }
+    if contains_word(&label, "openssl") {
+        return Some(Family::OpenSsl);
     }
     if contains_word(&label, "tor") {
         return Some(Family::Tor);
@@ -329,6 +361,43 @@ mod tests {
             assert!(label_is_non_browser(label, Category::Tool), "{label}");
         }
         assert!(label_is_browser("Google Chrome"));
+    }
+
+    #[test]
+    fn common_library_labels_are_recognised_as_non_browsers() {
+        for label in [
+            "Go net/http",
+            "Go net/http (HTTP/2)",
+            "Node.js https",
+            "Ruby Net::HTTP",
+            "PHP streams",
+            "PHP cURL",
+            "OpenSSL s_client",
+            "OpenSSL s_client (TLS 1.2 only)",
+            "Java HttpClient",
+            "Python aiohttp / Python httpx",
+        ] {
+            assert!(
+                label_family(label).is_some_and(|f| !f.is_browser()),
+                "{label}"
+            );
+            assert!(label_is_non_browser(label, Category::Benign), "{label}");
+        }
+        // The browsers and the curl family must keep their classification.
+        assert!(label_is_browser("Chromium (headless, Playwright build)"));
+        assert_eq!(label_family("curl (OpenSSL, HTTP/1.1)"), Some(Family::Curl));
+        assert_eq!(label_family("wget (OpenSSL)"), Some(Family::Wget));
+    }
+
+    #[test]
+    fn library_user_agents_are_recognised() {
+        assert_eq!(ua_family("node"), Some(Family::Node));
+        assert_eq!(ua_family("Ruby"), Some(Family::Ruby));
+        assert_eq!(ua_family("PHP/8.3"), Some(Family::Php));
+        assert_eq!(
+            ua_family("Mozilla/5.0 (Windows NT 10.0) Chrome/131.0 Safari/537.36"),
+            Some(Family::Chrome)
+        );
     }
 
     #[test]

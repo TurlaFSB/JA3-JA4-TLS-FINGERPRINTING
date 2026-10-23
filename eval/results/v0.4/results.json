@@ -1,0 +1,638 @@
+{
+  "dataset_version": "v0.4",
+  "ja3": {
+    "clients": 26,
+    "clients_with_unique_dominant_fingerprint": 19,
+    "mean_distinct_per_client": 10.462,
+    "mean_dominant_share": 0.3481,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 10,
+        "dominant": "391066e46d543446702227e438f8eb10",
+        "dominant_share": 0.1,
+        "handshakes": 10,
+        "shared_with": []
+      },
+      "chromium-real-107.0.0": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "chromium-real-110.0.1": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "chromium-real-131.0.1": {
+        "distinct": 5,
+        "dominant": "4f8f9d83add0692e5e9cea8fc328396f",
+        "dominant_share": 0.2,
+        "handshakes": 5,
+        "shared_with": []
+      },
+      "chromium-real-133.0.0": {
+        "distinct": 5,
+        "dominant": "f8e03b8780d419a35a2609e73041358c",
+        "dominant_share": 0.2,
+        "handshakes": 5,
+        "shared_with": []
+      },
+      "chromium-real-137.0.1": {
+        "distinct": 5,
+        "dominant": "bf24cb9d604530e961996f392747ca4a",
+        "dominant_share": 0.2,
+        "handshakes": 5,
+        "shared_with": []
+      },
+      "chromium-real-138.0.2": {
+        "distinct": 5,
+        "dominant": "b6351620fd5ee85eb249adfd5600040e",
+        "dominant_share": 0.2,
+        "handshakes": 5,
+        "shared_with": []
+      },
+      "chromium-real-140.0.0": {
+        "distinct": 5,
+        "dominant": "c566520bc2295fb374e9faab5c42430e",
+        "dominant_share": 0.2,
+        "handshakes": 5,
+        "shared_with": []
+      },
+      "chromium-real-141.0.0": {
+        "distinct": 5,
+        "dominant": "8d2399c9369fa4c83cd0a1d7fe5603b1",
+        "dominant_share": 0.2,
+        "handshakes": 5,
+        "shared_with": []
+      },
+      "chromium-real-143.0.4": {
+        "distinct": 5,
+        "dominant": "1de67934230fb591bd6331022cd3dd5c",
+        "dominant_share": 0.2,
+        "handshakes": 5,
+        "shared_with": []
+      },
+      "curl_cffi-chrome104": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome107": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome110": {
+        "distinct": 20,
+        "dominant": "ba9adc2a431caa27ab40bb1fe6d9653d",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome116": {
+        "distinct": 20,
+        "dominant": "3331e11c01531223a3a7ef3dd2a49340",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome120": {
+        "distinct": 20,
+        "dominant": "3856fdcd274e6df45eb88d62c0163f77",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome124": {
+        "distinct": 20,
+        "dominant": "4f9cc395b20f0b53fe3de3750bb2b567",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome131": {
+        "distinct": 20,
+        "dominant": "a563424ad59f5a3d5f23ae558b5fcb3d",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome133a": {
+        "distinct": 20,
+        "dominant": "b10f7bbfd090213921ad2d54b63c0446",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome136": {
+        "distinct": 20,
+        "dominant": "2449cfd1c7b838aae12e8c018f86d486",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome142": {
+        "distinct": 20,
+        "dominant": "352053c52a063971588da14849fc9fa3",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome145": {
+        "distinct": 20,
+        "dominant": "a44a1be7ebd62d72c5a14d00c2c5f4d6",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome146": {
+        "distinct": 20,
+        "dominant": "37ea4242e49cd2824235003d5c0df06c",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome150": {
+        "distinct": 20,
+        "dominant": "4a4a687782f51487bbc111d371d07797",
+        "dominant_share": 0.05,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome99": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge101": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge99": {
+        "distinct": 1,
+        "dominant": "cd08e31494f9531f560d64c695473da9",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101"
+        ]
+      }
+    }
+  },
+  "ja4": {
+    "clients": 26,
+    "clients_with_unique_dominant_fingerprint": 2,
+    "mean_distinct_per_client": 1.077,
+    "mean_dominant_share": 0.9712,
+    "per_client": {
+      "chromium-headless": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_e15453cad77d",
+        "dominant_share": 0.5,
+        "handshakes": 10,
+        "shared_with": []
+      },
+      "chromium-real-107.0.0": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "chromium-real-110.0.1": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "chromium-real-131.0.1": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-133.0.0",
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome124",
+          "curl_cffi-chrome131"
+        ]
+      },
+      "chromium-real-133.0.0": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-131.0.1",
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome124",
+          "curl_cffi-chrome131"
+        ]
+      },
+      "chromium-real-137.0.1": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "chromium-real-138.0.2": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "chromium-real-140.0.0": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "chromium-real-141.0.0": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "chromium-real-143.0.4": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 5,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome104": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome107": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome110": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome116": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-chrome120": {
+        "distinct": 2,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 0.75,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-131.0.1",
+          "chromium-real-133.0.0",
+          "curl_cffi-chrome124",
+          "curl_cffi-chrome131"
+        ]
+      },
+      "curl_cffi-chrome124": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-131.0.1",
+          "chromium-real-133.0.0",
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome131"
+        ]
+      },
+      "curl_cffi-chrome131": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_02713d6af862",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-131.0.1",
+          "chromium-real-133.0.0",
+          "curl_cffi-chrome120",
+          "curl_cffi-chrome124"
+        ]
+      },
+      "curl_cffi-chrome133a": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome136": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome142": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome145",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome145": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome146"
+        ]
+      },
+      "curl_cffi-chrome146": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_d8a2da3f94cd",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-137.0.1",
+          "chromium-real-138.0.2",
+          "chromium-real-140.0.0",
+          "chromium-real-141.0.0",
+          "chromium-real-143.0.4",
+          "curl_cffi-chrome133a",
+          "curl_cffi-chrome136",
+          "curl_cffi-chrome142",
+          "curl_cffi-chrome145"
+        ]
+      },
+      "curl_cffi-chrome150": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_806a8c22fdea",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": []
+      },
+      "curl_cffi-chrome99": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-edge101",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge101": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge99"
+        ]
+      },
+      "curl_cffi-edge99": {
+        "distinct": 1,
+        "dominant": "t13d1516h2_8daaf6152771_e5627efa2ab1",
+        "dominant_share": 1.0,
+        "handshakes": 20,
+        "shared_with": [
+          "chromium-real-107.0.0",
+          "chromium-real-110.0.1",
+          "curl_cffi-chrome104",
+          "curl_cffi-chrome107",
+          "curl_cffi-chrome110",
+          "curl_cffi-chrome116",
+          "curl_cffi-chrome99",
+          "curl_cffi-edge101"
+        ]
+      }
+    }
+  }
+}

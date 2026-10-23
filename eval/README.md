@@ -39,34 +39,43 @@ Datasets: v0.1 = 9 clients, 168 handshakes; v0.2 = 28 clients, 549 handshakes; v
 - JA4 identifies an implementation or profile family, not a version. Chrome 120, 124 and 131 profiles share one JA4; Chrome 133 to 146 share another. Distinct software that shares a TLS library shares a fingerprint (curl with PHP cURL; httpx with aiohttp).
 - Across two separate lab runs, 28 of 28 clients present in both produced identical JA4 sets.
 
-### Detection (v0.3 against the feed built from v0.2)
+### Impersonation fidelity (dataset v0.4): real browsers against curl-impersonate
 
-Percent of client handshakes receiving each verdict:
+Nine real Chromium builds (107 to 143, from npm) were captured beside sixteen curl_cffi Chrome and Edge profiles. Full table: [`results/v0.4/fidelity.md`](results/v0.4/fidelity.md).
+
+- **8 of the 9 real builds have exactly the same JA4 as the nearest-version profile**; the exception is a one-version boundary (real 133 against the "133a" profile).
+- **15 of the 16 profiles have a JA4 identical to a real build's.** The one that does not (Chrome 150) has no real counterpart newer than 143 in the dataset.
+- The pattern is by era, not by version: real Chromium 107 and 110 share one JA4 with profiles 99 to 116 and Edge; 131 and 133 share one with profiles 120 to 131; 137 to 143 share one with profiles 133a to 146.
+
+**Conclusion: no JA3 or JA4 value can separate curl-impersonate Chrome from the real browser.** That is what impersonation is for, and the measurement confirms it holds at the ClientHello level across fourteen years of Chrome releases in the sample. Any feed entry that lists such a profile as a "tool" is really listing the real browser's fingerprint.
+
+### Detection (dataset v0.3 against the bundled feed)
+
+Percent of client handshakes receiving each verdict; each client is judged in isolation:
 
 | Group | Clients | Handshakes | Benign | Suspicious | Malicious | Unknown | No match |
 |---|---|---|---|---|---|---|---|
-| Known-good, in the feed's source run | 17 | 328 | 100.0 | 0 | 0 | 0 | 0 |
+| Known-good, in the feed's source runs | 17 | 328 | 100.0 | 0 | 0 | 0 | 0 |
 | Known-good, **unseen** by the feed | 5 | 100 | 0 | 0 | 0 | 80.0 | 20.0 |
-| Impersonation profiles, in the feed's source run | 11 | 220 | 9.1 | 90.9 | 0 | 0 | 0 |
-| Impersonation profiles, **unseen** by the feed | 17 | 340 | 41.2 | 58.8 | 0 | 0 | 0 |
+| Impersonation profiles | 28 | 560 | 59.3 | 0.0 | 0.0 | 8.6 | 32.1 |
 
-- **No false positives.** No known-good client, seen or unseen, received a suspicious or malicious verdict or any alert other than the informational `first_seen`. Unseen benign clients are not vouched for either: they come back unknown (a similar-looking fingerprint exists, nothing exact).
-- **Modern impersonation is caught, and generalizes.** Unseen Chrome 133, 136, 145 and 146, Firefox 135 and 144, Safari 184 and an Android Chrome profile were all flagged suspicious through an exact match to a sibling profile's fingerprint; Safari 170 and 260 through a partial match.
-- **Old Chrome-based impersonation is not caught.** Profiles for Chrome 99 to 116, Edge 99 and 101 and Chrome Android 99 reproduce a real Chrome ClientHello exactly (their JA4 equals the known-good Chrome reference, and so would their JA3). They are received as "benign Chrome". No hash of the ClientHello can separate them from the genuine browser, so they are deliberately kept out of the feed: listing them would flag every real Chrome user. Telling them apart needs signals outside the ClientHello (TCP stack, HTTP behaviour, timing), which is what the cross-layer rules and the planned classifier address.
-- **NAT is a false-positive mode.** With all 50 clients behind one address, `fp_rotation` raised 30 medium alerts (more than 5 distinct JA4 values per address in an hour). That is correct behaviour for the rule and a known false-positive source for shared egress addresses; thresholds are configurable.
+- **No false positives.** No known-good client, seen or unseen, received a suspicious or malicious verdict or any alert other than the informational `first_seen`. Unseen known-good clients are not vouched for either: they come back unknown (a similar fingerprint exists, nothing exact) or no match.
+- **Impersonation is not detected at the TLS layer.** Profiles of Chrome and Edge are received as benign Chromium because their fingerprint is the real browser's. Firefox, Safari and Tor profiles have no real counterpart in the lab, so they are not in the feed and come back with no verdict. Detecting impersonation needs another layer; see the cross-layer results below.
+- **NAT is a false-positive mode, and now configurable.** With all 50 clients behind one address `fp_rotation` raised dozens of alerts (more than 5 distinct JA4 values per address in an hour): correct for the rule, wrong for a gateway. `--shared-network <CIDR>` (or `TLSFP_SHARED_NETWORKS`) declares addresses that front many clients, and rotation and monoculture are skipped there.
 
 ### What the evaluation changed in the code
 
-1. **Partial matches no longer vouch.** A partial match (same sorted cipher list) to a benign entry used to produce a *benign* verdict. Against curl-impersonate profiles this labelled unrelated clients, including a Tor-profile client, as Google Chrome. A benign verdict now requires an exact match; partial matches stay on the report as similarity hints and the verdict is unknown. Partial matches to malicious intelligence still count.
-2. **An exact match is no longer outvoted by neighbours.** Cataloguing the lookalike tool profiles made the exact Chrome fingerprint "suspicious", because near neighbours with the same cipher list voted alongside it. Only the strongest tier of matches now votes.
-3. **Impersonation labels read as non-browsers.** A label such as "curl_cffi impersonating Chrome" was classified as Chrome because it contains the word, which would have suppressed `ua_mismatch`. Labels naming an impersonation framework are now classified as the tool.
-4. **Browser-identical tool profiles are excluded from the feed** by the generator, with the reason recorded in the feed file.
+1. **Partial matches no longer vouch.** A partial match (same sorted cipher list) to a benign entry used to produce a *benign* verdict, labelling unrelated clients, including a Tor-profile client, as Google Chrome. A benign verdict now requires an exact match; partial matches stay on the report as similarity hints.
+2. **An exact match is no longer outvoted by neighbours.** Only the strongest tier of matches votes.
+3. **Impersonation entries were removed from the feed.** An earlier version of the feed listed curl-impersonate profiles as tools, and an earlier version of this document reported that modern impersonation was therefore flagged. That result was wrong: those fingerprints are real Chrome's, so the feed would have flagged genuine Chrome users, and the test set had no real browsers to show it. Adding real Chromium builds to the lab exposed it; the generator now refuses to list any impersonation profile, and CI checks the committed feed against it.
+4. **More client families recognised.** Node.js, Ruby, PHP, OpenSSL and Go labels are now classified as non-browsers, so `ua_mismatch` can use them.
+5. **Shared networks and popular fingerprints.** `--shared-network` suppresses rotation and monoculture on declared addresses, and a fingerprint with an exact benign match is never a monoculture.
 
 ## Limits
 
 Read the numbers with these in mind; the full list is in [`dataset/README.md`](../dataset/README.md).
 
 - One host, one OS, one TLS server over loopback. Server-side fingerprints and TCP-stack fingerprints carry no information here.
-- Real Firefox, Safari and Edge were not available. `curl_cffi` impersonation profiles stand in for them; they are labelled as impersonation and never presented as the browsers.
+- Real Firefox, Safari and Edge were not available. `curl_cffi` impersonation profiles stand in for them. Real Chromium is available (headless-shell builds from npm), which is what made the fidelity comparison possible; it is not desktop Chrome, and builds 116 to 123 did not run in the lab.
 - "Known-good" means software run in the lab. Nothing here measures detection of real malware or real network traffic, and the `ua_mismatch` and `os_mismatch` rules, which need cleartext HTTP, are not exercised because the lab clients speak HTTPS.
 - Small samples: 20 handshakes per client, 50 clients. Percentages are indicative, not tight estimates.

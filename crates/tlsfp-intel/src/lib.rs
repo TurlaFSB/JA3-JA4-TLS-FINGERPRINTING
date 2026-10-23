@@ -18,6 +18,7 @@ mod detect;
 mod import;
 mod matcher;
 mod model;
+mod net;
 mod schema;
 mod seed;
 mod signal;
@@ -33,11 +34,13 @@ use tlsfp_core::FingerprintEvent;
 pub use detect::{Alert, AlertSeverity, DetectConfig, Rule};
 pub use import::ImportSummary;
 pub use model::{CatalogEntry, Category, FpKind, IntelHit, MatchReport, MatchStrength, Verdict};
+pub use net::Network;
 pub use seed::{FeedLoad, SeedSummary};
 
 /// A handle to the open intelligence database.
 pub struct IntelStore {
     conn: Connection,
+    detect_config: DetectConfig,
 }
 
 impl IntelStore {
@@ -69,7 +72,10 @@ impl IntelStore {
 
     fn migrate(mut conn: Connection) -> Result<Self> {
         schema::apply_migrations(&mut conn).context("applying schema migrations")?;
-        Ok(Self { conn })
+        Ok(Self {
+            conn,
+            detect_config: DetectConfig::default(),
+        })
     }
 
     /// Loads the three vendored feeds, skipping rows already present so a second
@@ -102,10 +108,17 @@ impl IntelStore {
         Ok(reports)
     }
 
+    /// Sets the thresholds and shared networks [`IntelStore::detect`] runs with.
+    pub fn set_detect_config(&mut self, config: DetectConfig) {
+        self.detect_config = config;
+    }
+
     /// Records one capture event and returns every alert its detection rules
-    /// raised, using the default thresholds.
+    /// raised, using this store's configuration (the defaults unless
+    /// [`IntelStore::set_detect_config`] changed them).
     pub fn detect(&mut self, event: &FingerprintEvent) -> Result<Vec<Alert>> {
-        self.detect_with(event, &DetectConfig::default())
+        let config = self.detect_config.clone();
+        self.detect_with(event, &config)
     }
 
     /// Records one capture event under explicit thresholds. The observation and

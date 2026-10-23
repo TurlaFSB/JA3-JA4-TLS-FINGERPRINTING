@@ -44,7 +44,9 @@ use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 
 use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, PipelineConfig};
-use tlsfp_intel::{Alert, CatalogEntry, FpKind, IntelStore, MatchReport, Rule, Stats};
+use tlsfp_intel::{
+    Alert, CatalogEntry, DetectConfig, FpKind, IntelStore, MatchReport, Network, Rule, Stats,
+};
 
 use crate::live::{LiveConfig, LiveSource, StopHandle};
 
@@ -104,6 +106,8 @@ pub struct ServeConfig {
     /// dashboard header. Never derived from the network; absent unless the
     /// operator sets it.
     pub location: Option<String>,
+    /// Addresses fronting many clients; the rotation and monoculture rules skip them.
+    pub shared_networks: Vec<Network>,
 }
 
 /// Shared state every handler reads through. The store is the read side of the
@@ -518,9 +522,10 @@ fn spawn_source(
             let looping = *looping;
             let interval = *interval;
             let stop = Arc::clone(&shutdown);
+            let detect = detect_config(config);
             let handle = std::thread::Builder::new()
                 .name("tlsfp-replay".to_owned())
-                .spawn(move || replay_loop(&path, &db, &tx, &stop, looping, interval))
+                .spawn(move || replay_loop(&path, &db, &tx, &stop, looping, interval, detect))
                 .context("starting the replay thread")?;
             Ok(Capture {
                 shutdown,
@@ -543,10 +548,11 @@ fn spawn_source(
             let db = config.db.clone();
             let stop = Arc::clone(&shutdown);
             let interface = interface.clone();
+            let detect = detect_config(config);
             tracing::info!(interface, filter = %live_config.filter, "serving live capture");
             let handle = std::thread::Builder::new()
                 .name("tlsfp-live".to_owned())
-                .spawn(move || live_loop(source, &db, &tx, &stop))
+                .spawn(move || live_loop(source, &db, &tx, &stop, detect))
                 .context("starting the live capture thread")?;
             Ok(Capture {
                 shutdown,
@@ -554,6 +560,15 @@ fn spawn_source(
                 handle: Some(handle),
             })
         }
+    }
+}
+
+/// The detection settings for a producer thread: the defaults plus the
+/// operator's shared networks.
+fn detect_config(config: &ServeConfig) -> DetectConfig {
+    DetectConfig {
+        shared_networks: config.shared_networks.clone(),
+        ..DetectConfig::default()
     }
 }
 
@@ -566,6 +581,7 @@ fn replay_loop(
     shutdown: &AtomicBool,
     looping: bool,
     interval: Duration,
+    detect: DetectConfig,
 ) {
     let mut store = match IntelStore::open(db) {
         Ok(store) => store,
@@ -574,6 +590,7 @@ fn replay_loop(
             return;
         }
     };
+    store.set_detect_config(detect);
     tracing::info!(path = %path.display(), looping, "serving replayed capture");
     loop {
         let mut source = match PcapFileSource::open(path) {
@@ -611,6 +628,7 @@ fn live_loop(
     db: &std::path::Path,
     tx: &broadcast::Sender<Arc<str>>,
     shutdown: &AtomicBool,
+    detect: DetectConfig,
 ) {
     let mut store = match IntelStore::open(db) {
         Ok(store) => store,
@@ -619,6 +637,7 @@ fn live_loop(
             return;
         }
     };
+    store.set_detect_config(detect);
     let mut pipeline = Pipeline::new(PipelineConfig::default());
     let run = pipeline.run(&mut source, |event| {
         if shutdown.load(Ordering::Relaxed) {
@@ -757,6 +776,7 @@ mod tests {
             web: PathBuf::from("frontend/dist"),
             source,
             location: location.map(str::to_owned),
+            shared_networks: Vec::new(),
         }
     }
 

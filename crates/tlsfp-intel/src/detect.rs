@@ -29,6 +29,8 @@
 //! recorded for the same address, so a pair of flows raises one alert when the
 //! second of the pair completes the picture, not two.
 
+use std::net::IpAddr;
+
 use anyhow::Result;
 use rusqlite::{Connection, params};
 use serde::Serialize;
@@ -36,6 +38,7 @@ use tlsfp_core::{FingerprintEvent, StreamEvent};
 
 use crate::matcher::{event_fingerprints, match_one};
 use crate::model::{Category, FpKind, MatchReport, Severity, Verdict};
+use crate::net::Network;
 use crate::signal::{
     OsClass, ja4t_os_class, label_is_browser, label_is_non_browser, ua_family, ua_os_class,
 };
@@ -56,11 +59,25 @@ const NANOS_PER_SEC: i64 = 1_000_000_000;
 /// The thresholds and window the engine runs with. The defaults suit a quiet
 /// link; a busy sensor would raise them, and the tests lower them to trip a
 /// rule with a handful of events.
-#[derive(Debug, Clone, Copy)]
+///
+/// `shared_networks` lists addresses the operator knows front many clients (a
+/// NAT gateway, a proxy, a jump host). Rotation and monoculture are correlation
+/// rules that read "many fingerprints from one address" as evasion; on a shared
+/// address that is just several people, so both are skipped there.
+#[derive(Debug, Clone)]
 pub struct DetectConfig {
     pub window_secs: i64,
     pub rotation_threshold: i64,
     pub monoculture_threshold: i64,
+    pub shared_networks: Vec<Network>,
+}
+
+impl DetectConfig {
+    fn is_shared(&self, ip: IpAddr) -> bool {
+        self.shared_networks
+            .iter()
+            .any(|network| network.contains(ip))
+    }
 }
 
 impl Default for DetectConfig {
@@ -69,6 +86,7 @@ impl Default for DetectConfig {
             window_secs: DEFAULT_WINDOW_SECS,
             rotation_threshold: DEFAULT_ROTATION_THRESHOLD,
             monoculture_threshold: DEFAULT_MONOCULTURE_THRESHOLD,
+            shared_networks: Vec::new(),
         }
     }
 }
@@ -268,14 +286,19 @@ pub(crate) fn run(
         alerts.push(first_seen(ts, &ip_text, kind, &value, &summary));
     }
 
-    if !ip_fp_known {
+    if !ip_fp_known && !config.is_shared(event.src.ip()) {
         let distinct = distinct_fp_for_ip(conn, &ip_text, kind, since)?;
         if distinct > config.rotation_threshold {
             alerts.push(rotation(ts, &ip_text, kind, distinct, config.window_secs));
         }
-        let addresses = distinct_ip_for_fp(conn, kind, &value, since)?;
-        if addresses > config.monoculture_threshold {
-            alerts.push(monoculture(ts, kind, &value, addresses, config.window_secs));
+        // A fingerprint with an exact benign match is a popular client by
+        // definition, and many addresses presenting it is the normal case, not a
+        // shared botnet toolkit.
+        if summary.verdict != Some(Verdict::Benign) {
+            let addresses = distinct_ip_for_fp(conn, kind, &value, since)?;
+            if addresses > config.monoculture_threshold {
+                alerts.push(monoculture(ts, kind, &value, addresses, config.window_secs));
+            }
         }
     }
 

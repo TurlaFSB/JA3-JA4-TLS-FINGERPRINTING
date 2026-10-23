@@ -7,7 +7,7 @@ Scope: the Rust workspace (`tlsfp-core`, `tlsfp-intel`, `tlsfp`), container and 
 | Check | Result |
 |---|---|
 | `cargo build --workspace --all-targets` | passes (needs `libpcap-dev`) |
-| `cargo test --workspace` | 204 tests passed before this audit, 225 after |
+| `cargo test --workspace` | 204 tests passed before this audit, 234 after |
 | `cargo fmt --all --check` | clean |
 | `cargo clippy --workspace --all-targets -- -D warnings` | clean |
 | `cargo audit` | 2 warnings before, 0 after (see F1) |
@@ -28,6 +28,8 @@ Scope: the Rust workspace (`tlsfp-core`, `tlsfp-intel`, `tlsfp`), container and 
 | F11 | Medium | A partial intelligence match (same sorted cipher list) to a benign entry produced a *benign* verdict, so a client sharing a known-good cipher list was vouched for. Measured on curl-impersonate profiles: unrelated clients, including a Tor-profile client, were labelled Google Chrome. | Fixed: a benign verdict requires an exact match; partial matches remain hints (verdict unknown). Tests added. |
 | F12 | Medium | Scoring let near neighbours outvote an exact match; adding lookalike tool entries turned the exact, most common Chrome fingerprint suspicious. | Fixed: only the strongest match tier votes. Tests added. |
 | F13 | Low | Intel labels naming an impersonation framework (`curl_cffi impersonating Chrome`) were classified as the browser they mention, which would have suppressed `ua_mismatch`. | Fixed in `signal.rs`; test added. |
+| F14 | High | The bundled lab feed listed curl-impersonate browser profiles as tools. Compared with real Chromium builds of the same era (dataset v0.4) they have the identical JA4, so the entries were real Chrome's fingerprint and would have flagged genuine Chrome users. An earlier evaluation reported these profiles as flagged; that result was an artifact (the test set contained no real browsers) and is retracted. | Fixed: the generator never lists impersonation profiles and adds real builds as benign; fidelity analysis (`eval/fidelity.py`) and CI guard it. |
+| F15 | Medium | `fp_rotation` and `monoculture` raised alerts on shared addresses (NAT gateways, proxies) and on popular benign fingerprints, where many fingerprints or many addresses are normal. | Fixed: `--shared-network` skips both rules for declared networks; a fingerprint with an exact benign match is never a monoculture. Tests added. |
 | F9 | Low | `tlsfp pcap` reported `Broken pipe` with a backtrace when piped to `head`; the `live` path already handled it. | Fixed with a regression test (verified failing before the fix). |
 
 ## Not covered

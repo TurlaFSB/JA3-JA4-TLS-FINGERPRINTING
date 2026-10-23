@@ -81,9 +81,9 @@ def evaluate(tlsfp, dataset, feed_dataset):
     with open(os.path.join(dataset, "manifest.json")) as f:
         manifest = json.load(f)
     known = set()
-    if feed_dataset:
-        with open(os.path.join(feed_dataset, "manifest.json")) as f:
-            known = set(json.load(f)["labels"])
+    for source in feed_dataset or []:
+        with open(os.path.join(source, "manifest.json")) as f:
+            known |= set(json.load(f)["labels"])
 
     per_client, events_by_client = {}, {}
     with tempfile.TemporaryDirectory() as tmp:
@@ -148,10 +148,11 @@ def aggregate(per_client):
     }
 
 
-def stability(dataset, other, events_by_client, tlsfp):
+def stability(dataset, others, events_by_client, tlsfp):
     """JA4 sets of clients captured in both datasets: do they reproduce?"""
-    if not other:
+    if not others:
         return None
+    other = others[0]
     with open(os.path.join(other, "manifest.json")) as f:
         other_manifest = json.load(f)
     same, differ = [], []
@@ -169,7 +170,7 @@ def stability(dataset, other, events_by_client, tlsfp):
 def markdown(manifest, per_client, agg, nat, stab, feed_dataset):
     version = manifest["dataset_version"]
     lines = [f"# Detection evaluation: dataset {version}", "",
-             f"Intelligence feed built from: {feed_dataset or 'n/a'} (held out from this dataset's captures).", "",
+             f"Intelligence feed built from: {', '.join(feed_dataset) if feed_dataset else 'n/a'}.", "",
              "Each client is judged in isolation against a freshly seeded database.", ""]
     if stab:
         lines += ["## Reproducibility of fingerprints across lab runs", "",
@@ -208,7 +209,7 @@ def markdown(manifest, per_client, agg, nat, stab, feed_dataset):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dataset", required=True)
-    ap.add_argument("--feed-dataset", help="dataset the bundled lab feed was generated from")
+    ap.add_argument("--feed-dataset", nargs="+", help="dataset(s) the bundled lab feed was generated from; the first is also the reproducibility reference")
     ap.add_argument("--out", required=True)
     ap.add_argument("--tlsfp", default=os.environ.get("TLSFP", "target/release/tlsfp"))
     ap.add_argument("--check", action="store_true")
@@ -218,7 +219,7 @@ def main():
     agg = aggregate(per_client)
     stab = stability(args.dataset, args.feed_dataset, events, args.tlsfp)
     nat_json = [{"rule": r, "severity": s, "alerts": n} for (r, s), n in sorted(nat.items())]
-    result = {"dataset_version": manifest["dataset_version"], "feed_dataset": args.feed_dataset,
+    result = {"dataset_version": manifest["dataset_version"], "feed_datasets": args.feed_dataset,
               "aggregate": agg, "stability": stab, "per_client": per_client, "single_address": nat_json}
     rendered = {"detections.json": json.dumps(result, indent=2, sort_keys=True) + "\n",
                 "detections.md": markdown(manifest, per_client, agg, nat, stab, args.feed_dataset)}

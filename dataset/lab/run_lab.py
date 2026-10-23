@@ -79,6 +79,40 @@ def chromium_path():
     return shutil.which("chromium") or shutil.which("google-chrome")
 
 
+def real_chromium_clients(chromium_dir, url, n, tmp):
+    """label -> (version, run) for real Chromium builds fetched by fetch_chromium.sh.
+
+    The headless-shell builds from 116 on do not return from --dump-dom, so each
+    launch loads the page for a few seconds and is then killed; the capture only
+    needs the connection the browser opens.
+    """
+    clients = {}
+    if not chromium_dir or not os.path.isdir(chromium_dir):
+        return clients
+    for entry in sorted(os.listdir(chromium_dir)):
+        folder = os.path.join(chromium_dir, entry)
+        binary = os.path.join(folder, "chromium")
+        if not (entry.startswith("chromium-") and os.access(binary, os.X_OK)):
+            continue
+        version = entry.removeprefix("chromium-")
+
+        def run(binary=binary, folder=folder):
+            env = dict(os.environ, LD_LIBRARY_PATH=folder)
+            for _ in range(max(3, n // 4)):
+                profile = tempfile.mkdtemp(dir=tmp)
+                proc = subprocess.Popen(
+                    [binary, "--headless", "--no-sandbox", "--disable-gpu", "--disable-quic",
+                     "--ignore-certificate-errors", f"--user-data-dir={profile}", url],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, env=env, start_new_session=True)
+                time.sleep(5)
+                try:
+                    os.killpg(proc.pid, 9)
+                except ProcessLookupError:
+                    pass
+        clients[f"chromium-real-{version}"] = (f"Chromium headless-shell {version} (npm @sparticuz/chromium)", run)
+    return clients
+
+
 def build_clients(port, n, tmp):
     url = f"https://{HOST}:{port}/"
     clients = {}
@@ -202,9 +236,11 @@ def build_clients(port, n, tmp):
     return clients
 
 
-def capture(pcap, port, run):
+def capture(pcap, ports, run):
+    ports = [ports] if isinstance(ports, int) else list(ports)
+    bpf = " or ".join(f"tcp port {p}" for p in ports)
     proc = subprocess.Popen(["tcpdump", "-n", "-Z", "root", "-i", "lo", "-U", "-s", "0", "-w", pcap,
-                             f"tcp port {port}"], stderr=subprocess.PIPE, text=True)
+                             bpf], stderr=subprocess.PIPE, text=True)
     # tcpdump prints "listening on" once the capture socket is open; clients
     # started earlier than that would be missed.
     deadline = time.time() + 10
@@ -241,6 +277,7 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--repeat", type=int, default=20)
     ap.add_argument("--extra-impersonate", default="", help="comma-separated extra curl_cffi profiles to capture")
+    ap.add_argument("--chromium-dir", help="directory of chromium-<version>/chromium builds (see fetch_chromium.sh)")
     ap.add_argument("--only", help="comma-separated client labels to run (default: all available)")
     args = ap.parse_args()
     IMPERSONATE.extend(p for p in args.extra_impersonate.split(",") if p and p not in IMPERSONATE)
@@ -251,6 +288,7 @@ def main():
         crt, key = make_cert(tmp)
         srv, port = start_server(crt, key)
         clients = build_clients(port, args.repeat, tmp)
+        clients.update(real_chromium_clients(args.chromium_dir, f"https://{HOST}:{port}/", args.repeat, tmp))
         if args.only:
             wanted = set(args.only.split(","))
             clients = {k: v for k, v in clients.items() if k in wanted}

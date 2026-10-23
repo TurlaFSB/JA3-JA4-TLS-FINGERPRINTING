@@ -21,7 +21,11 @@ func main() {
 			TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 			ForceAttemptHTTP2: h2,
 		}}
-		resp, err := client.Get(url)
+		req, _ := http.NewRequest("GET", url, nil)
+		if ua := os.Getenv("LAB_UA"); ua != "" {
+			req.Header.Set("User-Agent", ua)
+		}
+		resp, err := client.Do(req)
 		if err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			continue

@@ -14,7 +14,9 @@ use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, PipelineConfig, Sou
 use crate::live::{DEFAULT_BPF_FILTER, LiveConfig, LiveSource};
 use crate::report::ReportBuilder;
 use crate::serve::{self, ServeConfig, Source};
-use tlsfp_intel::{Alert, FpKind, IntelStore, MatchReport, MatchStrength, default_db_path};
+use tlsfp_intel::{
+    Alert, DetectConfig, FpKind, IntelStore, MatchReport, MatchStrength, Network, default_db_path,
+};
 
 /// How many alerts `intel alerts` shows when no count is given, and the floor a
 /// zero or negative count is raised to.
@@ -54,6 +56,18 @@ pub enum Command {
         /// Run the detection rules, recording observations and raising alerts.
         #[arg(long)]
         detect: bool,
+
+        /// Addresses or CIDR networks that front many clients (a NAT gateway,
+        /// proxy or jump host), for example 10.0.0.0/8. The rotation and
+        /// monoculture rules are skipped for them, since many fingerprints from
+        /// one such address is ordinary, not evasion.
+        #[arg(
+            long = "shared-network",
+            value_name = "CIDR",
+            env = "TLSFP_SHARED_NETWORKS",
+            value_delimiter = ','
+        )]
+        shared_network: Vec<Network>,
 
         /// Print a single forensic summary of the whole capture instead of one
         /// line per handshake. When an intelligence database is present it also
@@ -118,6 +132,18 @@ pub enum Command {
         #[arg(long)]
         detect: bool,
 
+        /// Addresses or CIDR networks that front many clients (a NAT gateway,
+        /// proxy or jump host), for example 10.0.0.0/8. The rotation and
+        /// monoculture rules are skipped for them, since many fingerprints from
+        /// one such address is ordinary, not evasion.
+        #[arg(
+            long = "shared-network",
+            value_name = "CIDR",
+            env = "TLSFP_SHARED_NETWORKS",
+            value_delimiter = ','
+        )]
+        shared_network: Vec<Network>,
+
         /// Path to the intelligence database, defaulting to the data directory.
         #[arg(long)]
         db: Option<PathBuf>,
@@ -149,6 +175,18 @@ pub enum Command {
         /// header. Free text; never guessed from the network.
         #[arg(long, env = "TLSFP_SENSOR_LOCATION", value_name = "TEXT")]
         location: Option<String>,
+
+        /// Addresses or CIDR networks that front many clients (a NAT gateway,
+        /// proxy or jump host), for example 10.0.0.0/8. The rotation and
+        /// monoculture rules are skipped for them, since many fingerprints from
+        /// one such address is ordinary, not evasion.
+        #[arg(
+            long = "shared-network",
+            value_name = "CIDR",
+            env = "TLSFP_SHARED_NETWORKS",
+            value_delimiter = ','
+        )]
+        shared_network: Vec<Network>,
 
         /// Replay this capture file as the live feed.
         #[arg(long, value_name = "PCAP")]
@@ -267,10 +305,20 @@ impl Cli {
                 json,
                 intel,
                 detect,
+                shared_network,
                 report,
                 top,
                 db,
-            } => run_pcap(&path, json, intel, detect, report, top, db.as_deref()),
+            } => run_pcap(
+                &path,
+                json,
+                intel,
+                detect,
+                &shared_network,
+                report,
+                top,
+                db.as_deref(),
+            ),
             Command::Live {
                 interface,
                 json,
@@ -278,6 +326,7 @@ impl Cli {
                 no_promisc,
                 intel,
                 detect,
+                shared_network,
                 db,
             } => run_live(
                 &interface,
@@ -286,6 +335,7 @@ impl Cli {
                 !no_promisc,
                 intel,
                 detect,
+                &shared_network,
                 db.as_deref(),
             ),
             Command::Serve {
@@ -293,6 +343,7 @@ impl Cli {
                 db,
                 web,
                 location,
+                shared_network,
                 replay,
                 repeat,
                 interval_ms,
@@ -304,6 +355,7 @@ impl Cli {
                 db,
                 web,
                 location,
+                shared_network,
                 replay,
                 repeat,
                 interval_ms,
@@ -338,22 +390,23 @@ impl IntelCommand {
 /// The summary goes to the log rather than stdout so that piping the output
 /// into a tool sees only events, while a human still learns how much of the
 /// capture was readable and whether the file was cut short mid packet.
-#[allow(clippy::fn_params_excessive_bools)]
+#[allow(clippy::too_many_arguments, clippy::fn_params_excessive_bools)]
 fn run_pcap(
     path: &Path,
     json: bool,
     intel: bool,
     detect: bool,
+    shared: &[Network],
     report: bool,
     top: usize,
     db: Option<&Path>,
 ) -> Result<()> {
     if report {
-        return run_pcap_report(path, json, top, db);
+        return run_pcap_report(path, json, top, db, shared);
     }
     let mut source = PcapFileSource::open(path)
         .with_context(|| format!("cannot open capture {}", path.display()))?;
-    let mut store = open_for_run(intel, detect, db)?;
+    let mut store = open_for_run(intel, detect, db, shared)?;
     let mut pipeline = Pipeline::new(PipelineConfig::default());
 
     let stdout = std::io::stdout().lock();
@@ -414,10 +467,16 @@ fn run_pcap(
 /// inventory. The intel lookups and detection writes are the same calls the
 /// streaming path makes, so the report can never disagree with a live sensor
 /// pointed at the same store.
-fn run_pcap_report(path: &Path, json: bool, top: usize, db: Option<&Path>) -> Result<()> {
+fn run_pcap_report(
+    path: &Path,
+    json: bool,
+    top: usize,
+    db: Option<&Path>,
+    shared: &[Network],
+) -> Result<()> {
     let mut source = PcapFileSource::open(path)
         .with_context(|| format!("cannot open capture {}", path.display()))?;
-    let mut store = open_for_report(db)?;
+    let mut store = open_for_report(db, shared)?;
     let enabled = store.is_some();
     let mut pipeline = Pipeline::new(PipelineConfig::default());
     let mut builder = ReportBuilder::new(&path.display().to_string());
@@ -452,14 +511,14 @@ fn run_pcap_report(path: &Path, json: bool, top: usize, db: Option<&Path>) -> Re
 /// database but never creates one: a forensic read of a capture should not
 /// quietly leave a new database behind, and with none present the report is
 /// still a complete fingerprint inventory.
-fn open_for_report(db: Option<&Path>) -> Result<Option<IntelStore>> {
+fn open_for_report(db: Option<&Path>, shared: &[Network]) -> Result<Option<IntelStore>> {
     let path = db.map_or_else(default_db_path, Path::to_path_buf);
     if path.exists() {
         tracing::info!(
             path = %path.display(),
             "matching and recording detections against the intelligence database"
         );
-        return Ok(Some(open_or_create(&path)?));
+        return Ok(Some(with_detect_config(open_or_create(&path)?, shared)));
     }
     tracing::info!(
         path = %path.display(),
@@ -477,6 +536,7 @@ fn run_serve(
     db: Option<PathBuf>,
     web: PathBuf,
     location: Option<String>,
+    shared_networks: Vec<Network>,
     replay: Option<PathBuf>,
     repeat: bool,
     interval_ms: u64,
@@ -512,6 +572,7 @@ fn run_serve(
         web,
         source,
         location,
+        shared_networks,
     })
 }
 
@@ -529,13 +590,14 @@ fn run_live(
     promiscuous: bool,
     intel: bool,
     detect: bool,
+    shared: &[Network],
     db: Option<&Path>,
 ) -> Result<()> {
     let config = LiveConfig {
         filter,
         promiscuous,
     };
-    let store = open_for_run(intel, detect, db)?;
+    let store = open_for_run(intel, detect, db, shared)?;
     let source = LiveSource::open(interface, &config)?;
     tracing::info!(interface, filter = %config.filter, "live capture started");
 
@@ -793,7 +855,12 @@ fn write_intel_lines(
 /// without annotation rather than failing. Detection needs somewhere to record
 /// observations, so it creates the database, warning that known-bad matching
 /// stays dark until the feeds are seeded.
-fn open_for_run(intel: bool, detect: bool, db: Option<&Path>) -> Result<Option<IntelStore>> {
+fn open_for_run(
+    intel: bool,
+    detect: bool,
+    db: Option<&Path>,
+    shared: &[Network],
+) -> Result<Option<IntelStore>> {
     if !intel && !detect {
         return Ok(None);
     }
@@ -804,7 +871,7 @@ fn open_for_run(intel: bool, detect: bool, db: Option<&Path>) -> Result<Option<I
                 path = %path.display(),
                 "no intelligence database found; creating one to record detections, run 'tlsfp intel seed' to enable known-bad matching"
             );
-            return Ok(Some(open_or_create(&path)?));
+            return Ok(Some(with_detect_config(open_or_create(&path)?, shared)));
         }
         tracing::warn!(
             path = %path.display(),
@@ -812,7 +879,16 @@ fn open_for_run(intel: bool, detect: bool, db: Option<&Path>) -> Result<Option<I
         );
         return Ok(None);
     }
-    Ok(Some(open_or_create(&path)?))
+    Ok(Some(with_detect_config(open_or_create(&path)?, shared)))
+}
+
+/// Applies the operator's shared networks to a store's detection rules.
+fn with_detect_config(mut store: IntelStore, shared: &[Network]) -> IntelStore {
+    store.set_detect_config(DetectConfig {
+        shared_networks: shared.to_vec(),
+        ..DetectConfig::default()
+    });
+    store
 }
 
 /// Resolves the database path from the flag or the default data directory.

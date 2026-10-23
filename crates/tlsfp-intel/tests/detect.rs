@@ -38,6 +38,7 @@ fn cfg() -> DetectConfig {
         window_secs: 86_400,
         rotation_threshold: 2,
         monoculture_threshold: 2,
+        ..DetectConfig::default()
     }
 }
 
@@ -324,6 +325,63 @@ fn monoculture_fires_when_one_fingerprint_spans_addresses() {
 }
 
 #[test]
+fn rotation_is_skipped_for_a_declared_shared_network() {
+    let mut store = store();
+    let config = DetectConfig {
+        shared_networks: vec!["10.20.0.0/24".parse().unwrap()],
+        ..cfg()
+    };
+    let fingerprints = [
+        "t13d1516h2_111111111111_222222222222",
+        "t13d1516h2_333333333333_444444444444",
+        "t13d1516h2_555555555555_666666666666",
+        "t13d1516h2_777777777777_888888888888",
+    ];
+    // Several unrelated clients behind a NAT gateway: no rotation alert.
+    for (i, ja4) in fingerprints.iter().enumerate() {
+        let ts = 1_000_000_000 * (i as u64 + 1);
+        let alerts = store
+            .detect_with(&client_hello("10.20.0.5", ts, ja4), &config)
+            .unwrap();
+        assert!(
+            !fires(&alerts, Rule::FpRotation),
+            "shared address, event {i}"
+        );
+    }
+    // The same behaviour from an address outside the declared network still alerts.
+    let mut fired = false;
+    for (i, ja4) in fingerprints.iter().enumerate() {
+        let ts = 1_000_000_000 * (i as u64 + 1);
+        let alerts = store
+            .detect_with(&client_hello("10.99.0.5", ts, ja4), &config)
+            .unwrap();
+        fired |= fires(&alerts, Rule::FpRotation);
+    }
+    assert!(fired, "an undeclared address must still raise rotation");
+}
+
+#[test]
+fn a_popular_benign_fingerprint_is_not_a_monoculture() {
+    let mut store = store();
+    let config = cfg();
+    // Eleven different addresses presenting an exact-match benign browser
+    // fingerprint is ordinary traffic, not a botnet toolkit.
+    for i in 0..11u64 {
+        let alerts = store
+            .detect_with(
+                &client_hello(
+                    &format!("10.30.0.{}", i + 1),
+                    1_000_000_000 * (i + 1),
+                    CHROME_JA4,
+                ),
+                &config,
+            )
+            .unwrap();
+        assert!(!fires(&alerts, Rule::Monoculture), "address {i}");
+    }
+}
+
+#[test]
 fn alerts_persist_and_round_trip_through_the_store() {
     let mut store = store();
     store
@@ -353,6 +411,7 @@ fn correlation_respects_the_time_window() {
         window_secs: 1,
         rotation_threshold: 2,
         monoculture_threshold: 2,
+        ..DetectConfig::default()
     };
     store
         .detect_with(&client_hello("10.3.0.1", 0, CURL_JA4), &config)

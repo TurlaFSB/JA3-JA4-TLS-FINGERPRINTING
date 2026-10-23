@@ -44,5 +44,12 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - Label classification: impersonation-framework labels are non-browsers.
 - Corrected the v0.1 handshake count in the docs (168, not 148).
 
+## Correction: impersonation is not detectable by TLS fingerprint
+- Retracted an earlier result claiming curl-impersonate profiles were flagged. Real Chromium builds (107 to 143, `dataset/lab/fetch_chromium.sh`, dataset v0.4) have the identical JA4 to the same-era profiles (`eval/fidelity.py`), so those feed entries were real Chrome's fingerprint.
+- `make_intel_feed.py` no longer lists impersonation profiles; it lists real Chromium builds and libraries as benign (34 rows). Total bundled fingerprints: 305.
+- `--shared-network <CIDR>` (and `TLSFP_SHARED_NETWORKS`) for `pcap`, `live` and `serve`; rotation and monoculture skip those addresses. A fingerprint with an exact benign match is never a monoculture.
+- Recognises Node.js, Ruby, PHP, OpenSSL and Go labels as non-browser families.
+- New scenario lab (`dataset/lab/run_scenarios.py`) and evaluators (`eval/scenarios.py`, `eval/crosslayer.py`) for the cleartext-HTTP rules; results to follow.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.
