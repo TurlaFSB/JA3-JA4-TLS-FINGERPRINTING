@@ -43,7 +43,7 @@ RUN apt-get update \
 COPY --from=builder /usr/local/bin/tlsfp /usr/local/bin/tlsfp
 
 # A vendored capture the demo command replays so the dashboard is alive on boot.
-COPY testdata/pcap/tls-alpn-h2.pcap /demo/demo.pcap
+COPY testdata/pcap/tls-handshake.pcapng /demo/demo.pcap
 
 USER tlsfp
 WORKDIR /data
