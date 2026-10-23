@@ -72,5 +72,8 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - Page title and share metadata in `index.html` were leftovers from upstream (an unrelated title, description and image domain) and are replaced. Workspace metadata declared MIT and the upstream repository; it now declares AGPL-3.0-only and this repository.
 - `compose.yml` can replay a user-supplied capture (`CAPTURE_DIR`, `REPLAY_PCAP`).
 
+## Performance
+- The store opens SQLite with `synchronous = NORMAL` under WAL (previously the default, an fsync per event): the detection run over 31,200 handshakes drops from 24.6 s to 10.3 s. `docs/PERFORMANCE.md` and `eval/throughput.py` record the measurements and their limits; criterion numbers added. No speed figure was published before this.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

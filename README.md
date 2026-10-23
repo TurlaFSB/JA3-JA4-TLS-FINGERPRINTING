@@ -18,6 +18,7 @@ Passive TLS fingerprinting for JA3 and the JA4+ family. Reads packet captures or
 - [Intelligence](#intelligence)
 - [Output](#output)
 - [Architecture](#architecture)
+- [Performance](#performance)
 - [Validation](#validation)
 - [Deployment and security](#deployment-and-security)
 - [Limitations](#limitations)
@@ -160,6 +161,9 @@ Forensic report (`--report`) summarizes a whole capture: frame and flow counts, 
 
 `tlsfp serve` serves a web dashboard and a JSON API from one process. The dashboard shows a live stream of fingerprinted handshakes with intelligence verdicts and alerts, a throughput trace, rule and category distributions, and a searchable, exportable view of the intelligence catalogue.
 
+- **Opens populated:** the server keeps the last 500 events and sends them in one piece on connect, so a new page shows what has already happened; new events then stream in. A replayed capture is loaded at full speed on its first pass.
+- **Profiles:** the live window grouped by client fingerprint or by destination. Each fingerprint expands to its decoded JA4, connections over time, JA3 variants, destinations and exact intelligence matches, and can be sent to the stream filter. Tick two fingerprints to compare them side by side: decoded fields, and the cipher suites, extensions and signature algorithms present in only one. Both tables export to CSV.
+- **Themes:** dark and light, remembered per browser. `/` focuses the stream filter.
 - **Live stream:** filter by event type (client, server, certificate, HTTP, TCP) or free text (IP, SNI, fingerprint); pause and resume; click any row for the full detail: every fingerprint in raw and hashed form, a field-by-field JA4 breakdown, matching intelligence and any alerts, with copy buttons.
 - **Header:** backend reachability, the active feed (live interface, replayed capture, or database tail), uptime, and the operator-set `--location` label. Nothing in it is estimated from the network.
 - **API:** `/api/stats`, `/api/alerts`, `/api/search`, `/api/export?format=json|csv`, `/api/meta` (sensor state, no filesystem paths), `/api/health`, and `/api/stream` (Server-Sent Events).
@@ -194,6 +198,10 @@ Design decisions:
 - **Synchronous core, async only at the edge.** A lookup is one indexed query and a capture is a plain loop; the async runtime exists only in the web server.
 - **QUIC needs no secret.** Client Initial keys derive from the Destination Connection ID, which is sent in the clear (RFC 9001, RFC 9369).
 - **Detection state lives in the database,** not in memory, so a sensor keeps its history across restarts and external writers can share it.
+
+## Performance
+
+Single core: fingerprinting alone runs at about 90,000 TLS handshakes per second; with intelligence matching and detection (SQLite) about 3,000 per second. Methodology, caveats and what has not been measured: [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
 ## Validation
 
@@ -265,6 +273,9 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Threat model and responsible use |
 | [`AUDIT.md`](AUDIT.md) | Security audit findings |
 | [`eval/README.md`](eval/README.md) | Evaluation method and results |
+| [`docs/FIELD_OBSERVATIONS.md`](docs/FIELD_OBSERVATIONS.md) | Fingerprints of real Brave, Edge and Firefox on Windows |
+| [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md) | Capture a real desktop browser and replay it in the dashboard |
+| [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured throughput and its limits |
 | [`dataset/README.md`](dataset/README.md) | Dataset construction and validity |
 | [`RELEASING.md`](RELEASING.md) | Release and signed-tag procedure |
 | [`CHANGES.md`](CHANGES.md) | Changes relative to the upstream base |

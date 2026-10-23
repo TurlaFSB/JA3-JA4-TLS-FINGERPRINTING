@@ -55,7 +55,14 @@ impl IntelStore {
         }
         let conn = Connection::open(path)
             .with_context(|| format!("opening database {}", path.display()))?;
-        conn.execute_batch("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;")?;
+        // WAL with synchronous=NORMAL is SQLite's documented pairing for a
+        // write-heavy sensor: a crash of this process loses nothing, and a power
+        // cut can lose only the last few commits, never corrupt the file. The
+        // default (FULL) fsyncs every event and capped throughput near a
+        // thousand handshakes a second.
+        conn.execute_batch(
+            "PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL; PRAGMA synchronous = NORMAL;",
+        )?;
         // The dashboard runs a read connection alongside a capture writer on this
         // same file, so wait on a contended lock rather than failing the query.
         conn.busy_timeout(std::time::Duration::from_secs(5))?;
