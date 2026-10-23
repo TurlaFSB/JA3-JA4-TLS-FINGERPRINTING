@@ -291,6 +291,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 | Done | Cleartext-HTTP rules (`ua_mismatch`, `os_mismatch`, `header_anomaly`) evaluated on labeled scenarios, including adaptive attackers |
 | Next | Real desktop Chrome, Firefox and Safari on more than one operating system; with only one browser family a learned classifier would learn the browser, not the impersonation |
 | Planned | Per-host fingerprint drift detection |
+| Planned | A TLS-to-TCP consistency rule: a browser ClientHello arriving from a TCP SYN fingerprint of the wrong operating system. Needs real captures of the same browsers on several systems; one Windows machine is not enough to set a threshold |
 | Planned | Evasion study (uTLS, curl-impersonate) and Encrypted Client Hello impact |
 
 ## Contributing, security reports, citation
