@@ -2,10 +2,12 @@
 // separate file, not inline, so the Content-Security-Policy can forbid inline
 // script.
 try {
-  var t = JSON.parse(localStorage.getItem('ui-storage') || '{}').state
-  var theme = (t && t.theme) || 'dark'
+  const saved = JSON.parse(localStorage.getItem('ui-storage') || '{}').state
+  let theme = saved?.theme || 'dark'
   if (theme === 'system') {
     theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
   }
   document.documentElement.dataset.theme = theme
-} catch (e) {}
+} catch {
+  // Storage can be blocked; the stylesheet's default theme applies.
+}
