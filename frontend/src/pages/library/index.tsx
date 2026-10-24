@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom'
 import { useLibrary } from '@/api/hooks'
 import type { Capture, LibraryClient } from '@/api/types'
 import { CropFrame, VerdictBadge } from '@/components'
-import { ROUTES } from '@/config'
+import { API_BASE, ROUTES } from '@/config'
 import styles from './library.module.scss'
 import {
   CONFIDENCE_NOTE,
@@ -80,6 +80,15 @@ function Detail({ capture }: { capture: Capture }): React.ReactElement {
             ))}
           </tbody>
         </table>
+      )}
+      {capture.status === 'ready' && (
+        <a
+          className={styles.report}
+          href={`${API_BASE}/library/${encodeURIComponent(capture.id)}/report`}
+          download="tlsfp-report.html"
+        >
+          Download report (HTML)
+        </a>
       )}
       <p className={styles.muted}>
         {capture.frames.toLocaleString()} frames,{' '}

@@ -177,6 +177,7 @@ struct AppState {
     store: Mutex<IntelStore>,
     feed: Feed,
     library: Library,
+    db: PathBuf,
     /// What the intelligence feed and the family rules say about each client
     /// fingerprint seen in a conversation, looked up once per fingerprint.
     client_cache: Mutex<HashMap<String, ClientInfo>>,
@@ -304,6 +305,7 @@ async fn serve(config: ServeConfig) -> Result<()> {
         store: Mutex::new(store),
         feed: feed.clone(),
         library: Library::default(),
+        db: config.db.clone(),
         client_cache: Mutex::new(HashMap::new()),
         meta: Meta::new(&config, started_unix_ms),
     });
@@ -354,6 +356,7 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .route("/health", get(health))
         .route("/meta", get(meta))
         .route("/library", get(library))
+        .route("/library/{id}/report", get(library_report))
         .route("/traffic", get(traffic))
         .route("/hosts", get(hosts))
         .route("/hosts/{ip}", get(host_profile))
@@ -803,6 +806,45 @@ async fn host_profile(
 
 async fn library(State(state): State<Shared>) -> impl IntoResponse {
     Json(state.library.view())
+}
+
+/// A downloadable HTML report for one library file, found by the id the
+/// listing gave it. An id that is not in the listing is a 404, so a request
+/// can never name a path.
+async fn library_report(
+    State(state): State<Shared>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Result<impl IntoResponse, ApiError> {
+    let view = state.library.view();
+    let (Some(path), Some(summary)) = (
+        view.paths.get(&id).cloned(),
+        view.files.iter().find(|f| f.id == id),
+    ) else {
+        return Err(ApiError::not_found());
+    };
+    let name = summary.name.clone();
+    let db = state.db.clone();
+    let html = tokio::task::spawn_blocking(move || -> anyhow::Result<String> {
+        let case = crate::case_report::build(&path, name, &db, &std::env::temp_dir())?;
+        let total = IntelStore::open(&db)?.stats()?.total;
+        Ok(crate::case_report::render(&[case], total))
+    })
+    .await?
+    .map_err(|error| {
+        tracing::warn!(%error, "building a report failed");
+        ApiError::not_found()
+    })?;
+    Ok((
+        [
+            (axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8"),
+            (
+                axum::http::header::CONTENT_DISPOSITION,
+                "attachment; filename=\"tlsfp-report.html\"",
+            ),
+            (axum::http::header::X_CONTENT_TYPE_OPTIONS, "nosniff"),
+        ],
+        html,
+    ))
 }
 
 async fn health() -> impl IntoResponse {

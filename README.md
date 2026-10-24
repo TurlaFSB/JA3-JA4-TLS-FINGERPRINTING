@@ -63,6 +63,7 @@ tlsfp pcap capture.pcapng --report           # ranked forensic summary
 tlsfp live eth0 --intel --detect             # live capture
 tlsfp live eth0 --filter "tcp port 443"      # narrow the kernel BPF filter
 
+tlsfp html capture.pcapng -o report.html     # one self-contained HTML report with the file's SHA-256
 tlsfp rules check my-rules.toml              # validate your detection rules (--rules FILE to use them)
 tlsfp live eth0 --detect --alert-file alerts.jsonl --alert-syslog udp://siem:514   # forward alerts
 tlsfp interfaces                             # what live capture can use

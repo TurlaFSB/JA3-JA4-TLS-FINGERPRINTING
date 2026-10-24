@@ -98,5 +98,8 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Alert delivery
 - `--alert-file`, `--alert-syslog` (RFC 5424 over UDP or TCP) and `--alert-webhook` (http or https; generic, Slack or Discord body) forward each stored alert, with `--alert-min-severity` as a floor. A bounded queue and one worker thread keep a slow destination from stalling capture; drops and failures are counted on `/metrics`. One-shot commands wait for the queue at exit. Adds the `ureq` HTTP client with rustls (`ring`); `cargo deny check licenses` passes. `docs/ALERTS.md`, tests through the real binary.
 
+## One-click report
+- `tlsfp html FILE... -o report.html` writes a single self-contained page per run: file name, SHA-256, size, first and last packet time, handshake counts, the most likely client and its confidence, every client with its servers, the detection rules that fired with a plain-language reason, and the limits of those claims. No script and no network request; every value from a capture is HTML-escaped (tested with a hostile server name). Detection runs on a private copy of the intelligence database, so your own is untouched. The Library page has a "Download report" link per capture (`/api/library/{id}/report`; an id not in the listing is a 404, so a request cannot name a path).
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

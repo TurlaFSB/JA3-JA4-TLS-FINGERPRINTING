@@ -338,6 +338,9 @@ pub struct LibraryView {
     pub scanning: bool,
     pub scanned_unix: Option<u64>,
     pub files: Vec<CaptureSummary>,
+    /// Where each listed file is on disk, by id. Never sent to a browser.
+    #[serde(skip)]
+    pub paths: HashMap<String, PathBuf>,
 }
 
 /// The shared, always-current result of scanning the library directories.
@@ -385,6 +388,7 @@ impl Library {
         while !stop.load(std::sync::atomic::Ordering::Relaxed) {
             self.update(|v| v.scanning = true);
             let mut files = Vec::new();
+            let mut paths = HashMap::new();
             let mut present = std::collections::HashSet::new();
             for (index, dir) in dirs.iter().enumerate() {
                 for (path, name) in discover(dir) {
@@ -413,6 +417,7 @@ impl Library {
                         cache.insert(key.clone(), result);
                     }
                     if let Some(result) = cache.get(&key) {
+                        paths.insert(result.id.clone(), path.clone());
                         files.push(result.clone());
                     }
                 }
@@ -429,6 +434,7 @@ impl Library {
                 .map_or(0, |d| d.as_secs());
             self.update(|v| {
                 v.files = files;
+                v.paths = paths;
                 v.scanning = false;
                 v.scanned_unix = Some(now);
             });

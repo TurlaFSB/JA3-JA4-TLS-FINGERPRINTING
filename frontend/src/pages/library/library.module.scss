@@ -275,3 +275,18 @@
     color: $volt-soft;
   }
 }
+
+.report {
+  display: inline-block;
+  margin-top: $space-3;
+  padding: $space-1 $space-3;
+  font-size: $font-size-xs;
+  color: $paper;
+  text-decoration: none;
+  border: 1px solid $ash;
+
+  &:hover,
+  &:focus-visible {
+    border-color: $paper;
+  }
+}

@@ -266,6 +266,23 @@ pub enum Command {
     /// List the network interfaces that `live` and `serve --live` can capture on.
     Interfaces,
 
+    /// Write a self-contained HTML report for one or more captures: what is in
+    /// them, the clients named, the detection rules that fired, the SHA-256 of
+    /// each file, and the limits of the findings. No script, no network.
+    Html {
+        /// Capture files (.pcap, .pcapng).
+        #[arg(required = true)]
+        files: Vec<PathBuf>,
+
+        /// Where to write the report.
+        #[arg(long, short, default_value = "tlsfp-report.html")]
+        out: PathBuf,
+
+        /// Path to the intelligence database, defaulting to the data directory.
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
+
     /// Say which client made each handshake in one or more capture files.
     ///
     /// Reads every file once and names the clients in it: from an exact
@@ -465,6 +482,7 @@ impl Cli {
             },
             Command::Interfaces => run_interfaces(),
             Command::Identify { paths, json, db } => run_identify(&paths, json, db),
+            Command::Html { files, out, db } => run_html(&files, &out, db),
             Command::Intel { action } => action.run(),
         }
     }
@@ -1199,6 +1217,28 @@ fn read_input(path: &Path) -> Result<String> {
 
 /// Reads capture files (or every capture under a directory) and prints which
 /// client each handshake came from.
+fn run_html(files: &[PathBuf], out: &Path, db: Option<PathBuf>) -> Result<()> {
+    let db = resolve_db(db);
+    if !db.exists() {
+        // Same first-run convenience as the dashboard: build the bundled feed.
+        open_or_create(&db)?.seed_bundled()?;
+    }
+    let scratch = std::env::temp_dir();
+    let mut cases = Vec::new();
+    for path in files {
+        let name = path.file_name().map_or_else(
+            || path.display().to_string(),
+            |n| n.to_string_lossy().into_owned(),
+        );
+        cases.push(crate::case_report::build(path, name, &db, &scratch)?);
+    }
+    let total = open_or_create(&db)?.stats()?.total;
+    std::fs::write(out, crate::case_report::render(&cases, total))
+        .with_context(|| format!("writing {}", out.display()))?;
+    println!("wrote {} ({} capture(s))", out.display(), cases.len());
+    Ok(())
+}
+
 fn run_identify(paths: &[PathBuf], json: bool, db: Option<PathBuf>) -> Result<()> {
     let store = IntelStore::open(&resolve_db(db)).context("opening the intelligence database")?;
     let mut files = Vec::new();

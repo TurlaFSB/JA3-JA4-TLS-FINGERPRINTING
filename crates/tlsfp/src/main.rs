@@ -1,6 +1,7 @@
 // ©AngelaMos | 2026
 // main.rs
 
+mod case_report;
 mod cli;
 mod deliver;
 mod extras;
