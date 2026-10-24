@@ -35,9 +35,9 @@ git config --global gpg.ssh.allowedSignersFile ~/.ssh/allowed_signers
 3. Commit, then tag and push:
 
 ```bash
-git tag -s v0.1.0 -m "v0.1.0"
-git verify-tag v0.1.0
-git push origin main v0.1.0
+git tag -s v0.2.0 -m "v0.2.0"
+git verify-tag v0.2.0
+git push origin main v0.2.0
 ```
 
 GitHub shows a "Verified" badge on the tag when the signing key is registered.
@@ -46,8 +46,12 @@ GitHub shows a "Verified" badge on the tag when the signing key is registered.
 
 ```bash
 git fetch --tags
-git verify-tag v0.1.0
+git verify-tag v0.2.0
 ```
+
+## Dry run
+
+Before tagging, run the workflow by hand (Actions, release, Run workflow). It does everything a tag does except publish: both archives are built, checked (checksum, the program starts, the dashboard and start script are inside) and kept as artifacts for a week, and the container images are built but not pushed.
 
 ## What pushing a tag does
 
@@ -68,3 +72,5 @@ CI cannot install Npcap unattended, so this one is done by hand on a Windows mac
 3. `tlsfp.exe interfaces` lists your adapters with descriptions; `.\start-windows.ps1 -Interface "Wi-Fi"` (or your adapter's name) captures on it.
 4. With Npcap uninstalled, `tlsfp.exe serve --live auto` prints the "needs Npcap" message and exits; `tlsfp.exe pcap FILE` still works.
 5. Record the Windows version, Npcap version and result in the release notes.
+
+Already observed: live capture worked on one Windows machine on 2026-10-24 (see `docs/LIVE_CAPTURE.md`); steps 3 and 4 and the versions are still to be recorded for this release.

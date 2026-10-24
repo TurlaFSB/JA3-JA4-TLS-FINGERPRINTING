@@ -26,7 +26,7 @@ Docker on Windows or macOS cannot see the host's network card, so the Docker sta
 
 Without Npcap everything except live capture still works: `tlsfp pcap`, `identify`, `html`, the Library page and a replay. Live capture without Npcap stops with a message saying so.
 
-How it was checked: CI builds the Windows binary on a Windows runner, starts it, reads a capture file and runs `interfaces` with no Npcap present, and runs the engine and store tests. **Live capture on Windows itself has not been exercised by an automated test**, because the free Npcap installer cannot run unattended; it is verified by hand on a real machine (see the checklist in `RELEASING.md`). `auto` skips loopback and virtual adapters (VMware, Hyper-V, VPN taps) by their description.
+How it was checked: CI builds the Windows binary on a Windows runner, starts it, reads a capture file and runs `interfaces` with no Npcap present, and runs the engine and store tests. **Live capture on Windows itself has not been exercised by an automated test**, because the free Npcap installer cannot run unattended; it is verified by hand on a real machine (see the checklist in `RELEASING.md`). It has been observed working on one Windows machine, on 2026-10-24: `--live auto` chose the interface, real browser conversations appeared on Scope and Traffic, and the direction bug that machine exposed (a public IPv6 address counted as remote) is fixed. The Windows and Npcap versions were not recorded; treat that as one data point, not a compatibility matrix. `auto` skips loopback and virtual adapters (VMware, Hyper-V, VPN taps) by their description.
 
 ## What counts as "inside"
 

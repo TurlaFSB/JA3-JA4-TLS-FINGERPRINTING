@@ -2,10 +2,14 @@
 # release.yml
 #
 # Runs when a version tag is pushed. Builds the Linux x86_64 and Windows
-# x86_64 binaries with the
-# dashboard assets, attaches it to a GitHub release with a SHA-256 file and a
-# build provenance attestation, and publishes the two container images to the
-# GitHub Container Registry. See RELEASING.md for the tagging procedure.
+# x86_64 binaries with the dashboard assets, attaches them to a GitHub release
+# with SHA-256 files and build provenance attestations, and publishes the two
+# container images to the GitHub Container Registry. See RELEASING.md for the
+# tagging procedure.
+#
+# Run by hand (Actions > release > Run workflow) it is a dry run: the same
+# builds and packaging, with the archives and image builds checked and kept as
+# downloadable artifacts, but nothing published, attested or pushed.
 
 name: release
 
@@ -13,6 +17,7 @@ on:
   push:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+"
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -30,8 +35,13 @@ jobs:
       - name: Tag must match the workspace version
         id: v
         run: |
-          tag="${GITHUB_REF_NAME#v}"
           crate="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          if [ "$GITHUB_REF_TYPE" != "tag" ]; then
+            echo "dry run: using the workspace version $crate"
+            echo "version=$crate" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          tag="${GITHUB_REF_NAME#v}"
           if [ "$tag" != "$crate" ]; then
             echo "tag $GITHUB_REF_NAME does not match Cargo.toml version $crate" >&2
             exit 1
@@ -67,10 +77,25 @@ jobs:
           cp LICENSE NOTICE.md README.md CHANGES.md "dist/$name/"
           tar -C dist -czf "$name.tar.gz" "$name"
           sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-archive
+          path: |
+            tlsfp-*.tar.gz
+            tlsfp-*.tar.gz.sha256
+          retention-days: 7
+      - name: The archive can be read back and starts
+        run: |
+          sha256sum -c tlsfp-*.tar.gz.sha256
+          mkdir check && tar -C check -xzf tlsfp-*.tar.gz
+          check/tlsfp-*/tlsfp --version
+          test -f check/tlsfp-*/web/index.html
       - uses: actions/attest-build-provenance@v2
+        if: github.ref_type == 'tag'
         with:
           subject-path: tlsfp-*.tar.gz
       - name: Publish the release
+        if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -113,10 +138,28 @@ jobs:
           Copy-Item LICENSE, NOTICE.md, README.md, CHANGES.md "dist\$name\"
           Compress-Archive -Path "dist\$name" -DestinationPath "$name.zip"
           (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower() + "  $name.zip" | Out-File -Encoding ascii "$name.zip.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-archive
+          path: |
+            tlsfp-*.zip
+            tlsfp-*.zip.sha256
+          retention-days: 7
+      - name: The archive can be read back and starts without Npcap
+        shell: pwsh
+        run: |
+          Expand-Archive tlsfp-*.zip check
+          $dir = (Get-ChildItem check | Select-Object -First 1).FullName
+          & "$dir\tlsfp.exe" --version
+          if ($LASTEXITCODE -ne 0) { throw "tlsfp.exe --version exited $LASTEXITCODE" }
+          if (-not (Test-Path "$dir\web\index.html")) { throw "the dashboard is missing from the archive" }
+          if (-not (Test-Path "$dir\start-windows.ps1")) { throw "the start script is missing" }
       - uses: actions/attest-build-provenance@v2
+        if: github.ref_type == 'tag'
         with:
           subject-path: tlsfp-*.zip
       - name: Add to the release
+        if: github.ref_type == 'tag'
         shell: pwsh
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -135,6 +178,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
+        if: github.ref_type == 'tag'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -150,6 +194,6 @@ jobs:
         with:
           context: .
           file: ${{ matrix.dockerfile }}
-          push: true
+          push: ${{ github.ref_type == 'tag' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

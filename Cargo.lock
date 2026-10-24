@@ -1917,7 +1917,7 @@ dependencies = [
 
 [[package]]
 name = "tlsfp"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "axum",
@@ -1946,7 +1946,7 @@ dependencies = [
 
 [[package]]
 name = "tlsfp-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "aes",
  "aes-gcm",
@@ -1966,7 +1966,7 @@ dependencies = [
 
 [[package]]
 name = "tlsfp-intel"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "csv",

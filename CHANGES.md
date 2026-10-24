@@ -1,5 +1,8 @@
 # Changes from upstream
 
+## Release 0.2.0 (2026-10-24)
+The first tagged release. Since the audited import it adds: capture library and `tlsfp identify`; live capture with `--live auto` and the Traffic page; custom detection rules; per-host history; alert delivery (file, syslog, webhook); HTML reports; Windows live capture (Npcap) with a Windows archive; site and client attribution, a By site view and a detail drawer on Scope; an Intel page built on what the sensor has seen, with operator labels; retention; and the hardening in `AUDIT.md` F18 to F31. Every section below describes one of these in detail.
+
 Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. See `NOTICE.md`.
 
 ## Import
