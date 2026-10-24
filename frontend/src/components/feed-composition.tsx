@@ -31,22 +31,22 @@ function Bar({
   )
 }
 
-export function Distribution({
+export function FeedComposition({
   className,
 }: {
   className?: string
 }): React.ReactElement {
   const { data } = useStats()
   const categories = data?.intel.by_category ?? []
-  const rules = data?.alerts_by_rule ?? []
   const catMax = Math.max(1, ...categories.map((row) => row.records))
-  const ruleMax = Math.max(1, ...rules.map((row) => row.count))
 
   return (
-    <CropFrame label="distribution" className={cx(styles.frame, className)}>
+    <CropFrame label="feed composition" className={cx(styles.frame, className)}>
       <div className={styles.body}>
         <div className={styles.group}>
-          <div className={styles.groupHead}>intel corpus / category</div>
+          <div className={styles.groupHead}>
+            fingerprints in the feed, by category
+          </div>
           {categories.map((row) => (
             <Bar
               key={row.category}
@@ -56,23 +56,6 @@ export function Distribution({
               attr={{ 'data-cat': row.category }}
             />
           ))}
-        </div>
-
-        <div className={styles.group}>
-          <div className={styles.groupHead}>alerts raised / rule</div>
-          {rules.length === 0 ? (
-            <div className={styles.empty}>no rules have fired on this link</div>
-          ) : (
-            rules.map((row) => (
-              <Bar
-                key={row.rule}
-                label={row.rule}
-                value={row.count}
-                max={ruleMax}
-                attr={{ 'data-rule': row.rule }}
-              />
-            ))
-          )}
         </div>
       </div>
     </CropFrame>

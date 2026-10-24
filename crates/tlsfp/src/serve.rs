@@ -20,6 +20,7 @@
 //! runs worth packing, and buffering is the one thing a live event stream
 //! cannot tolerate.
 
+use std::collections::HashMap;
 use std::convert::Infallible;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -43,9 +44,11 @@ use tower_http::compression::CompressionLayer;
 use tower_http::services::{ServeDir, ServeFile};
 use tower_http::trace::TraceLayer;
 
+use tlsfp_core::pipeline::traffic::{Direction, FlowRow, Totals, TrafficHandle};
 use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, PipelineConfig};
 use tlsfp_intel::{
-    Alert, CatalogEntry, DetectConfig, FpKind, IntelStore, MatchReport, Network, Rule, Stats,
+    Alert, CatalogEntry, DetectConfig, FpKind, IntelStore, MatchReport, MatchStrength, Network,
+    Rule, Stats, infer_client,
 };
 
 use crate::library::Library;
@@ -128,6 +131,8 @@ pub struct ServeConfig {
 struct Feed {
     tx: broadcast::Sender<Arc<str>>,
     history: Arc<Mutex<std::collections::VecDeque<Arc<str>>>>,
+    /// The conversation table the capture thread fills and `/api/traffic` reads.
+    traffic: TrafficHandle,
 }
 
 impl Feed {
@@ -138,6 +143,7 @@ impl Feed {
             history: Arc::new(Mutex::new(std::collections::VecDeque::with_capacity(
                 HISTORY_LINES,
             ))),
+            traffic: TrafficHandle::default(),
         }
     }
 
@@ -171,6 +177,9 @@ struct AppState {
     store: Mutex<IntelStore>,
     feed: Feed,
     library: Library,
+    /// What the intelligence feed and the family rules say about each client
+    /// fingerprint seen in a conversation, looked up once per fingerprint.
+    client_cache: Mutex<HashMap<String, ClientInfo>>,
     meta: Meta,
 }
 
@@ -295,6 +304,7 @@ async fn serve(config: ServeConfig) -> Result<()> {
         store: Mutex::new(store),
         feed: feed.clone(),
         library: Library::default(),
+        client_cache: Mutex::new(HashMap::new()),
         meta: Meta::new(&config, started_unix_ms),
     });
 
@@ -344,10 +354,12 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .route("/health", get(health))
         .route("/meta", get(meta))
         .route("/library", get(library))
+        .route("/traffic", get(traffic))
         .layer(CompressionLayer::new());
 
     let stream_api = Router::new().route("/stream", get(stream));
 
+    let state_for_metrics = Arc::clone(&state);
     let api = data_api.merge(stream_api).with_state(state);
 
     let index = web.join("index.html");
@@ -355,8 +367,13 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .append_index_html_on_directories(true)
         .fallback(ServeFile::new(index));
 
+    let ops = Router::new()
+        .route("/metrics", get(metrics))
+        .with_state(Arc::clone(&state_for_metrics));
+
     Router::new()
         .nest("/api", api)
+        .merge(ops)
         .fallback_service(static_files)
         .layer(TraceLayer::new_for_http())
 }
@@ -377,6 +394,58 @@ struct StatsResponse {
     intel: Stats,
     alerts_by_rule: Vec<RuleCount>,
     alert_total: i64,
+}
+
+/// Prometheus text exposition: totals a monitoring system can scrape and
+/// graph. Only what the server itself holds is reported (conversation byte and
+/// packet counts, alerts per rule, the size of the intelligence feed); capture
+/// drops are printed in the log when a capture ends and are not exported here.
+async fn metrics(State(state): State<Shared>) -> Result<impl IntoResponse, ApiError> {
+    let body = tokio::task::spawn_blocking(move || -> Result<String> {
+        use std::fmt::Write as _;
+        let (totals, active) = state.feed.traffic.with(|t| (t.totals(), t.len()));
+        let (intel, counts) = {
+            let store = state.store();
+            (store.stats()?, store.alert_counts()?)
+        };
+        let mut out = String::new();
+        let _ = writeln!(out, "# HELP tlsfp_info Build information.\n# TYPE tlsfp_info gauge");
+        let _ = writeln!(out, "tlsfp_info{{version=\"{}\"}} 1", state.meta.version);
+        let _ = writeln!(out, "# HELP tlsfp_traffic_bytes_total Bytes seen on the wire by direction across the local network boundary.\n# TYPE tlsfp_traffic_bytes_total counter");
+        for (direction, value) in [
+            ("out", totals.out_bytes),
+            ("in", totals.in_bytes),
+            ("internal", totals.internal_bytes),
+            ("transit", totals.transit_bytes),
+        ] {
+            let _ = writeln!(out, "tlsfp_traffic_bytes_total{{direction=\"{direction}\"}} {value}");
+        }
+        let _ = writeln!(out, "# HELP tlsfp_traffic_packets_total Packets seen by direction.\n# TYPE tlsfp_traffic_packets_total counter");
+        for (direction, value) in [
+            ("out", totals.out_packets),
+            ("in", totals.in_packets),
+            ("internal", totals.internal_packets),
+            ("transit", totals.transit_packets),
+        ] {
+            let _ = writeln!(out, "tlsfp_traffic_packets_total{{direction=\"{direction}\"}} {value}");
+        }
+        let _ = writeln!(out, "# HELP tlsfp_conversations Conversations currently tracked.\n# TYPE tlsfp_conversations gauge\ntlsfp_conversations {active}");
+        let _ = writeln!(out, "# HELP tlsfp_conversations_shed_total Conversations dropped because the table was full.\n# TYPE tlsfp_conversations_shed_total counter\ntlsfp_conversations_shed_total {}", totals.flows_shed);
+        let _ = writeln!(out, "# HELP tlsfp_alerts_total Alerts recorded, by rule.\n# TYPE tlsfp_alerts_total counter");
+        for (rule, count) in counts {
+            let _ = writeln!(out, "tlsfp_alerts_total{{rule=\"{}\"}} {count}", rule.as_str());
+        }
+        let _ = writeln!(out, "# HELP tlsfp_intel_fingerprints Fingerprints in the intelligence feed.\n# TYPE tlsfp_intel_fingerprints gauge\ntlsfp_intel_fingerprints {}", intel.total);
+        Ok(out)
+    })
+    .await??;
+    Ok((
+        [(
+            axum::http::header::CONTENT_TYPE,
+            "text/plain; version=0.0.4; charset=utf-8",
+        )],
+        body,
+    ))
 }
 
 async fn stats(State(state): State<Shared>) -> Result<Json<StatsResponse>, ApiError> {
@@ -484,6 +553,210 @@ async fn export(
 
 async fn meta(State(state): State<Shared>) -> Json<Meta> {
     Json(state.meta.clone())
+}
+
+/// What is known about a client fingerprint seen in a conversation.
+#[derive(Clone, Serialize)]
+struct ClientInfo {
+    /// The label of an exact intelligence match, if any.
+    known_as: Option<String>,
+    /// The family read from the ClientHello's shape.
+    family: &'static str,
+}
+
+#[derive(Serialize)]
+struct TrafficFlow {
+    #[serde(flatten)]
+    flow: FlowRow,
+    client_info: Option<ClientInfo>,
+}
+
+#[derive(Serialize)]
+struct Talker {
+    host: String,
+    flows: usize,
+    bytes_up: u64,
+    bytes_down: u64,
+    names: Vec<String>,
+}
+
+#[derive(Serialize)]
+struct ServiceShare {
+    service: String,
+    flows: usize,
+    bytes: u64,
+}
+
+#[derive(Serialize)]
+struct TrafficView {
+    /// False when the server has no packet source of its own (database tail).
+    enabled: bool,
+    totals: Totals,
+    active_flows: usize,
+    /// Capture time of the newest packet, so a reader can age conversations
+    /// relative to the capture, which for a replay is not the wall clock.
+    latest_ns: u64,
+    talkers: Vec<Talker>,
+    services: Vec<ServiceShare>,
+    flows: Vec<TrafficFlow>,
+}
+
+/// How many conversations one response carries at most.
+const MAX_TRAFFIC_FLOWS: usize = 1000;
+const DEFAULT_TRAFFIC_FLOWS: usize = 300;
+
+#[derive(Deserialize)]
+struct TrafficQuery {
+    limit: Option<usize>,
+}
+
+async fn traffic(
+    State(state): State<Shared>,
+    Query(query): Query<TrafficQuery>,
+) -> Result<Json<TrafficView>, ApiError> {
+    let limit = query
+        .limit
+        .unwrap_or(DEFAULT_TRAFFIC_FLOWS)
+        .clamp(1, MAX_TRAFFIC_FLOWS);
+    let view = tokio::task::spawn_blocking(move || build_traffic_view(&state, limit)).await?;
+    Ok(Json(view))
+}
+
+fn build_traffic_view(state: &Shared, limit: usize) -> TrafficView {
+    let (totals, active, rows) = state
+        .feed
+        .traffic
+        .with(|t| (t.totals(), t.len(), t.all_rows()));
+    let latest_ns = rows.iter().map(|r| r.last_ns).max().unwrap_or(0);
+
+    let mut hosts: HashMap<String, Talker> = HashMap::new();
+    let mut services: HashMap<String, ServiceShare> = HashMap::new();
+    for row in &rows {
+        let remote = match row.direction {
+            Direction::Inbound => row.client,
+            _ => row.server,
+        };
+        let talker = hosts
+            .entry(remote.ip().to_string())
+            .or_insert_with(|| Talker {
+                host: remote.ip().to_string(),
+                flows: 0,
+                bytes_up: 0,
+                bytes_down: 0,
+                names: Vec::new(),
+            });
+        talker.flows += 1;
+        talker.bytes_up += row.bytes_up;
+        talker.bytes_down += row.bytes_down;
+        if let Some(name) = &row.sni {
+            if talker.names.len() < 3 && !talker.names.contains(name) {
+                talker.names.push(name.clone());
+            }
+        }
+        let label = row.service.map_or_else(
+            || format!("{:?}/{}", row.proto, row.server.port()).to_lowercase(),
+            str::to_owned,
+        );
+        let share = services
+            .entry(label.clone())
+            .or_insert_with(|| ServiceShare {
+                service: label,
+                flows: 0,
+                bytes: 0,
+            });
+        share.flows += 1;
+        share.bytes += row.bytes_up + row.bytes_down;
+    }
+    let mut talkers: Vec<Talker> = hosts.into_values().collect();
+    talkers.sort_by(|a, b| {
+        (b.bytes_up + b.bytes_down)
+            .cmp(&(a.bytes_up + a.bytes_down))
+            .then_with(|| a.host.cmp(&b.host))
+    });
+    talkers.truncate(15);
+    let mut services: Vec<ServiceShare> = services.into_values().collect();
+    services.sort_by(|a, b| {
+        b.bytes
+            .cmp(&a.bytes)
+            .then_with(|| a.service.cmp(&b.service))
+    });
+    services.truncate(10);
+
+    let mut recent = rows;
+    recent.sort_by(|a, b| {
+        b.last_ns
+            .cmp(&a.last_ns)
+            .then_with(|| a.client.cmp(&b.client))
+    });
+    recent.truncate(limit);
+    let flows = recent
+        .into_iter()
+        .map(|flow| {
+            let client_info = flow
+                .ja4
+                .as_deref()
+                .zip(flow.ja4_raw.as_deref())
+                .map(|(hash, raw)| client_info(state, hash, raw));
+            TrafficFlow { flow, client_info }
+        })
+        .collect();
+
+    TrafficView {
+        enabled: !matches!(state.meta.source.kind, "tail"),
+        totals,
+        active_flows: active,
+        latest_ns,
+        talkers,
+        services,
+        flows,
+    }
+}
+
+/// Looks a client fingerprint up once and remembers the answer.
+fn client_info(state: &Shared, hash: &str, raw: &str) -> ClientInfo {
+    if let Some(found) = state
+        .client_cache
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .get(hash)
+    {
+        return found.clone();
+    }
+    let known_as = state
+        .store()
+        .match_fingerprint(FpKind::Ja4, hash)
+        .ok()
+        .and_then(|report| {
+            report
+                .hits
+                .into_iter()
+                .find(|hit| hit.strength == MatchStrength::Exact)
+                .map(|hit| hit.label)
+        });
+    let info = ClientInfo {
+        known_as,
+        family: family_token(infer_client(raw).family),
+    };
+    let mut cache = state
+        .client_cache
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    if cache.len() < 4096 {
+        cache.insert(hash.to_owned(), info.clone());
+    }
+    info
+}
+
+fn family_token(family: tlsfp_intel::ClientFamily) -> &'static str {
+    use tlsfp_intel::ClientFamily as F;
+    match family {
+        F::Chromium => "chromium",
+        F::Firefox => "firefox",
+        F::SafariLike => "safari-like",
+        F::OpenSsl => "openssl",
+        F::Library => "library",
+        F::Unknown => "unknown",
+    }
 }
 
 async fn library(State(state): State<Shared>) -> impl IntoResponse {
@@ -616,7 +889,9 @@ fn spawn_source(
             let detect = detect_config(config);
             let handle = std::thread::Builder::new()
                 .name("tlsfp-replay".to_owned())
-                .spawn(move || replay_loop(&path, &db, &feed, &stop, looping, interval, detect))
+                .spawn(move || {
+                    replay_loop(&path, &db, &feed, &stop, looping, interval, detect);
+                })
                 .context("starting the replay thread")?;
             Ok(Capture {
                 shutdown,
@@ -695,6 +970,11 @@ fn replay_loop(
             }
         };
         let mut pipeline = Pipeline::new(PipelineConfig::default());
+        // Each pass starts with an empty conversation table; the byte totals
+        // keep counting so rates never run backwards.
+        feed.traffic
+            .with(tlsfp_core::pipeline::traffic::TrafficTable::clear_flows);
+        pipeline.track_traffic(feed.traffic.clone());
         let run = pipeline.run(&mut source, |event| {
             if shutdown.load(Ordering::Relaxed) {
                 return;
@@ -734,6 +1014,7 @@ fn live_loop(
     };
     store.set_detect_config(detect);
     let mut pipeline = Pipeline::new(PipelineConfig::default());
+    pipeline.track_traffic(feed.traffic.clone());
     let run = pipeline.run(&mut source, |event| {
         if shutdown.load(Ordering::Relaxed) {
             return;

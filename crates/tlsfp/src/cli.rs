@@ -224,6 +224,9 @@ pub enum Command {
         no_promisc: bool,
     },
 
+    /// List the network interfaces that `live` and `serve --live` can capture on.
+    Interfaces,
+
     /// Say which client made each handshake in one or more capture files.
     ///
     /// Reads every file once and names the clients in it: from an exact
@@ -395,6 +398,7 @@ impl Cli {
                 filter,
                 no_promisc,
             ),
+            Command::Interfaces => run_interfaces(),
             Command::Identify { paths, json, db } => run_identify(&paths, json, db),
             Command::Intel { action } => action.run(),
         }
@@ -1185,6 +1189,29 @@ fn run_identify(paths: &[PathBuf], json: bool, db: Option<PathBuf>) -> Result<()
                 "    {:>5} x {} {}  {}",
                 client.connections, client.transport, client.ja4, who
             )?;
+        }
+    }
+    Ok(())
+}
+
+/// Prints the interfaces libpcap can open, with their addresses and state, so
+/// a person knows what to pass to `live` or `serve --live`.
+fn run_interfaces() -> Result<()> {
+    let devices = pcap::Device::list().context("listing network interfaces")?;
+    let mut out = std::io::stdout().lock();
+    for device in devices {
+        let state = if device.flags.is_up() { "up" } else { "down" };
+        let kind = if device.flags.is_loopback() {
+            " loopback"
+        } else {
+            ""
+        };
+        writeln!(out, "{}  [{state}{kind}]", device.name)?;
+        if let Some(description) = &device.desc {
+            writeln!(out, "    {description}")?;
+        }
+        for address in &device.addresses {
+            writeln!(out, "    {}", address.addr)?;
         }
     }
     Ok(())

@@ -15,6 +15,7 @@ import styles from './shell.module.scss'
 
 const NAV = [
   { to: ROUTES.SCOPE, label: 'scope' },
+  { to: ROUTES.TRAFFIC, label: 'traffic' },
   { to: ROUTES.ALERTS, label: 'alerts' },
   { to: ROUTES.LIBRARY, label: 'library' },
   { to: ROUTES.INTEL, label: 'intel' },
@@ -111,6 +112,7 @@ function ShellLoading(): React.ReactElement {
 
 const TITLES: Record<string, string> = {
   [ROUTES.SCOPE]: 'Live scope',
+  [ROUTES.TRAFFIC]: 'Traffic',
   [ROUTES.ALERTS]: 'Alerts',
   [ROUTES.LIBRARY]: 'Capture library',
   [ROUTES.INTEL]: 'Intelligence',

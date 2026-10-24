@@ -63,6 +63,7 @@ tlsfp pcap capture.pcapng --report           # ranked forensic summary
 tlsfp live eth0 --intel --detect             # live capture
 tlsfp live eth0 --filter "tcp port 443"      # narrow the kernel BPF filter
 
+tlsfp interfaces                             # what live capture can use
 tlsfp identify captures/                     # which client is in each capture file
 tlsfp intel seed                             # load bundled feeds
 tlsfp intel import ja4db.json                # import a ja4db.com export (validated per record)
@@ -165,6 +166,7 @@ Forensic report (`--report`) summarizes a whole capture: frame and flow counts, 
 
 - **Opens populated:** the server keeps the last 500 events and sends them in one piece on connect, so a new page shows what has already happened; new events then stream in. A replayed capture is loaded at full speed on its first pass.
 - **Profiles:** the live window grouped by client fingerprint or by destination. Each fingerprint expands to its decoded JA4, connections over time, JA3 variants, destinations and exact intelligence matches, and can be sent to the stream filter. Tick two fingerprints to compare them side by side: decoded fields, and the cipher suites, extensions and signature algorithms present in only one. Both tables export to CSV.
+- **Traffic page:** every conversation with bytes and packets each way, direction, server name, client identity and a throughput chart; with `--live` it is the network seen in real time ([`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md)). `/metrics` exposes Prometheus counters.
 - **Library page:** capture files found in a watched folder (`--library DIR`, or `~/tlsfp-captures` under Docker), each read once and matched to its client, with the evidence and the impersonation caveat. [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md).
 - **Alerts page:** every alert with severity and rule filters, search, a plain explanation of each rule and what to verify before acting, and export.
 - **Themes:** dark and light, remembered per browser. `/` focuses the stream filter.
@@ -279,6 +281,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 | [`eval/README.md`](eval/README.md) | Evaluation method and results |
 | [`docs/FIELD_OBSERVATIONS.md`](docs/FIELD_OBSERVATIONS.md) | Fingerprints of real Brave, Edge and Firefox on Windows |
 | [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md) | Capture a real desktop browser and replay it in the dashboard |
+| [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md) | Live capture, the Traffic page and their limits |
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured throughput and its limits |
 | [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) | Extending the intelligence feed; licensing |
 | [`dataset/README.md`](dataset/README.md) | Dataset construction and validity |

@@ -44,7 +44,7 @@
   font-size: $font-size-3xs;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent, #{$paper});
 }
 
 .track {
@@ -86,4 +86,40 @@
   font-size: $font-size-3xs;
   letter-spacing: 0.08em;
   color: $soot;
+}
+
+.note {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $ash;
+}
+
+.bar[data-verdict='benign'] .fill {
+  background: $thermal;
+}
+
+.bar[data-verdict='suspicious'] .fill {
+  background: $fire;
+}
+
+.bar[data-verdict='malicious'] .fill {
+  background: $blood;
+}
+
+.bar[data-verdict='unknown'] .fill {
+  background: $ash;
+}
+
+.bar[data-plain] {
+  grid-template-columns: 140px 1fr 42px;
+
+  .barLabel {
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: $paper;
+  }
+}
+
+.bar[data-plain]:not([data-verdict]) .fill {
+  background: $volt;
 }

@@ -4,7 +4,7 @@
  */
 
 import { exportHref, useStats } from '@/api/hooks'
-import { CropFrame, SearchPanel } from '@/components'
+import { CropFrame, FeedComposition, SearchPanel } from '@/components'
 import styles from './intel.module.scss'
 
 export function Component(): React.ReactElement {
@@ -48,6 +48,7 @@ export function Component(): React.ReactElement {
             </ul>
           </CropFrame>
 
+          <FeedComposition />
           <CropFrame label="export alerts" className={styles.export}>
             <div className={styles.exportBody}>
               <p className={styles.exportNote}>

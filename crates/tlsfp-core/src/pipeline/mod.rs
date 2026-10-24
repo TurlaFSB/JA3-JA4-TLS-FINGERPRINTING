@@ -17,6 +17,7 @@ pub mod event;
 pub mod flow;
 pub mod source;
 pub mod tls;
+pub mod traffic;
 
 use std::collections::HashMap;
 
@@ -31,6 +32,7 @@ use crate::pipeline::event::{FingerprintEvent, StreamEvent};
 use crate::pipeline::flow::{FlowKey, PushOutcome, ReassemblyLimits, StreamReassembler};
 use crate::pipeline::source::{PacketSource, RawFrame, SourceError};
 use crate::pipeline::tls::StreamProtocol;
+use crate::pipeline::traffic::{HelloNote, Proto, TcpBits, TrafficHandle};
 use crate::quic::{
     ClientHelloState, CryptoAssembler, InitialKeys, InitialPacket, walk_crypto_frames,
 };
@@ -222,6 +224,7 @@ pub struct Pipeline {
     flows: HashMap<FlowKey, FlowState>,
     quic_flows: HashMap<FlowKey, QuicFlow>,
     counters: Counters,
+    traffic: Option<TrafficHandle>,
 }
 
 impl Pipeline {
@@ -232,7 +235,15 @@ impl Pipeline {
             flows: HashMap::new(),
             quic_flows: HashMap::new(),
             counters: Counters::default(),
+            traffic: None,
         }
+    }
+
+    /// Records every conversation the pipeline sees into `handle`, so another
+    /// thread can show who is talking to whom. Off by default: it costs a
+    /// lock per packet, which a file analysis does not need.
+    pub fn track_traffic(&mut self, handle: TrafficHandle) {
+        self.traffic = Some(handle);
     }
 
     #[must_use]
@@ -258,14 +269,69 @@ impl Pipeline {
         self.counters.frames += 1;
         self.counters.bytes += frame.data.len() as u64;
 
+        // What a client hello reveals is attached to its conversation after the
+        // packet is handled, so the traffic table is locked once per frame.
+        let mut note: Option<HelloNote> = None;
+        let tracking = self.traffic.is_some();
+        let mut tap = |event: FingerprintEvent| {
+            if tracking {
+                if let StreamEvent::ClientHello { ja4, sni, alpn, .. } = &event.event {
+                    let proto = if ja4.hash.starts_with('q') {
+                        Proto::Udp
+                    } else {
+                        Proto::Tcp
+                    };
+                    note = Some(HelloNote {
+                        proto,
+                        src: event.src,
+                        dst: event.dst,
+                        sni: sni.clone(),
+                        alpn: alpn.clone(),
+                        ja4: ja4.hash.clone(),
+                        ja4_raw: ja4.raw.clone(),
+                    });
+                }
+            }
+            sink(event);
+        };
+
         match decode_frame(frame.link_type, frame.data) {
             Ok(Decoded::Tcp(segment)) => {
                 self.counters.tcp_segments += 1;
-                self.feed_tcp(&segment, frame, sink);
+                if let Some(handle) = &self.traffic {
+                    let flags = segment.tcp.flags;
+                    handle.with(|t| {
+                        t.record(
+                            Proto::Tcp,
+                            segment.src,
+                            segment.dst,
+                            frame.data.len(),
+                            frame.ts_nanos,
+                            Some(TcpBits {
+                                opens: flags.syn() && !flags.ack(),
+                                fin: flags.fin(),
+                                rst: flags.rst(),
+                            }),
+                        );
+                    });
+                }
+                self.feed_tcp(&segment, frame, &mut tap);
             }
             Ok(Decoded::Udp(datagram)) => {
                 self.counters.udp_datagrams += 1;
-                self.feed_quic(&datagram, frame, sink);
+                if let Some(handle) = &self.traffic {
+                    handle.with(|t| {
+                        t.record(
+                            Proto::Udp,
+                            datagram.src,
+                            datagram.dst,
+                            frame.data.len(),
+                            frame.ts_nanos,
+                            None,
+                        );
+                    });
+                }
+                self.feed_quic(&datagram, frame, &mut tap);
             }
             Err(skip) => match skip {
                 Skip::UnsupportedLinkType => self.counters.skipped_unsupported_link_type += 1,
@@ -273,6 +339,10 @@ impl Pipeline {
                 Skip::NotTransport => self.counters.skipped_not_transport += 1,
                 Skip::Malformed => self.counters.skipped_malformed += 1,
             },
+        }
+
+        if let (Some(handle), Some(note)) = (&self.traffic, note) {
+            handle.with(|t| t.annotate(&note));
         }
     }
 

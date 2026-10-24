@@ -8,10 +8,10 @@ import { useSearchParams } from 'react-router-dom'
 import { useLiveStream } from '@/api/hooks'
 import {
   AnomalyHighlights,
-  Distribution,
   LiveStream,
   Profiles,
   StatCluster,
+  TrafficMix,
 } from '@/components'
 import styles from './scope.module.scss'
 
@@ -61,7 +61,7 @@ export function Component(): React.ReactElement {
           className={styles.live}
         />
         <AnomalyHighlights className={styles.anomaly} />
-        <Distribution className={styles.dist} />
+        <TrafficMix feed={live.feed} className={styles.dist} />
         <Profiles
           feed={live.feed}
           onShowInStream={showInStream}

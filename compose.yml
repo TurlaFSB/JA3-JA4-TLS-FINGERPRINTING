@@ -22,7 +22,10 @@ services:
         - VITE_APP_TITLE=${VITE_APP_TITLE:-JA3/JA4 TLS Fingerprinting}
     container_name: ${APP_NAME:-tlsfp}-nginx
     ports:
-      - "${NGINX_HOST_PORT:-11790}:80"
+      # Loopback only by default: the dashboard shows who your machine talks to
+      # and has no login. Set NGINX_BIND=0.0.0.0 to share it, behind your own
+      # authentication.
+      - "${NGINX_BIND:-127.0.0.1}:${NGINX_HOST_PORT:-11790}:80"
     networks:
       - app
     deploy:

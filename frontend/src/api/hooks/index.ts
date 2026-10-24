@@ -28,6 +28,9 @@ import {
   metaSchema,
   type StatsResponse,
   statsResponseSchema,
+  type Totals,
+  type TrafficView,
+  trafficViewSchema,
 } from '../types'
 
 async function getStats(): Promise<StatsResponse> {
@@ -248,4 +251,68 @@ export function useLiveStream(maxItems: number = LIVE.STREAM_BUFFER): LiveState 
   }, [])
 
   return state
+}
+
+async function getTraffic(): Promise<TrafficView> {
+  const { data } = await apiClient.get(API_ENDPOINTS.TRAFFIC, {
+    params: { limit: 500 },
+  })
+  return trafficViewSchema.parse(data)
+}
+
+export interface RateSample {
+  at: number
+  inBps: number
+  outBps: number
+  internalBps: number
+  packetsPerSecond: number
+}
+
+const RATE_HISTORY = 90
+
+// Polls the conversation table and turns the monotonic byte totals into rates
+// by differencing successive polls on the wall clock. A total that goes down
+// (the server restarted) is treated as a reset, not a negative rate.
+export function useTraffic(): {
+  view: TrafficView | undefined
+  samples: RateSample[]
+  error: boolean
+} {
+  const query = useQuery({
+    queryKey: QUERY_KEYS.TRAFFIC,
+    queryFn: getTraffic,
+    refetchInterval: 2000,
+    retry: QUERY_CONFIG.RETRY.NONE,
+  })
+  const [samples, setSamples] = useState<RateSample[]>([])
+  const last = useRef<{ at: number; totals: Totals } | null>(null)
+
+  useEffect(() => {
+    const view = query.data
+    if (!view) return
+    const now = Date.now()
+    const previous = last.current
+    last.current = { at: now, totals: view.totals }
+    if (!previous || now <= previous.at) return
+    const seconds = (now - previous.at) / 1000
+    const delta = (a: number, b: number): number => (a >= b ? a - b : 0)
+    const sample: RateSample = {
+      at: now,
+      inBps: delta(view.totals.in_bytes, previous.totals.in_bytes) / seconds,
+      outBps: delta(view.totals.out_bytes, previous.totals.out_bytes) / seconds,
+      internalBps:
+        (delta(view.totals.internal_bytes, previous.totals.internal_bytes) +
+          delta(view.totals.transit_bytes, previous.totals.transit_bytes)) /
+        seconds,
+      packetsPerSecond:
+        (delta(view.totals.in_packets, previous.totals.in_packets) +
+          delta(view.totals.out_packets, previous.totals.out_packets) +
+          delta(view.totals.internal_packets, previous.totals.internal_packets) +
+          delta(view.totals.transit_packets, previous.totals.transit_packets)) /
+        seconds,
+    }
+    setSamples((prev) => [...prev, sample].slice(-RATE_HISTORY))
+  }, [query.data])
+
+  return { view: query.data, samples, error: query.isError }
 }
