@@ -387,3 +387,18 @@
     width: 100vw;
   }
 }
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  padding: 1px 6px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $paper;
+  background: $ink-800;
+  border: 1px solid $line-faint;
+}

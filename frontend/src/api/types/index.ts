@@ -4,6 +4,7 @@
 // ===================
 
 export * from './alert.types'
+export * from './capture.types'
 export * from './common.types'
 export * from './events'
 export * from './hosts.types'

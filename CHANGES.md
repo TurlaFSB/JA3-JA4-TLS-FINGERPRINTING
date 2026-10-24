@@ -5,6 +5,12 @@ The first tagged release. Since the audited import it adds: capture library and 
 
 Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. See `NOTICE.md`.
 
+## Capture tuning, health and detail (after 0.2.0)
+- Engine limits as flags (`--max-flows`, `--idle-timeout`, `--stream-limit-kib`, environment variables too) for every command, and `--buffer-mib` for the kernel capture buffer on `live` and `serve`.
+- Capture health: the engine publishes its counters while it runs and the live reader refreshes the kernel's drop counts each second. `GET /api/capture`, Prometheus metrics and a panel on the Traffic page say what may have been missed and which flag fixes it.
+- Every ClientHello and ServerHello event carries a readable `detail` (versions, ciphers, extensions, groups, signature algorithms, ALPN, features, GREASE), shown in the Scope drawer and in `--json` output.
+- `docs/CAPTURE_TUNING.md`.
+
 ## Import
 - CI: removed monorepo path filter and working directory.
 - Removed upstream demo links and the upstream `curl | bash` installer instructions from the README.

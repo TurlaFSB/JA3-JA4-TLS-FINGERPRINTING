@@ -17,7 +17,9 @@ import { apiClient } from '@/core/api'
 import {
   type Alert,
   alertSchema,
+  type CaptureView,
   type CatalogEntry,
+  captureViewSchema,
   catalogEntrySchema,
   type FpKind,
   type HostProfile,
@@ -301,6 +303,22 @@ export function useTraffic(): {
 }
 
 export type HostRole = 'clients' | 'servers' | 'all'
+
+async function getCapture(): Promise<CaptureView> {
+  const { data } = await apiClient.get(API_ENDPOINTS.CAPTURE)
+  return captureViewSchema.parse(data)
+}
+
+// How the capture is set up and how well it is reading: drops, shed
+// conversations and the share of handshakes that ended unread.
+export function useCapture(): UseQueryResult<CaptureView> {
+  return useQuery({
+    queryKey: QUERY_KEYS.CAPTURE,
+    queryFn: getCapture,
+    refetchInterval: 3000,
+    retry: QUERY_CONFIG.RETRY.NONE,
+  })
+}
 
 async function getObserved(): Promise<Observed> {
   const { data } = await apiClient.get(API_ENDPOINTS.OBSERVED)

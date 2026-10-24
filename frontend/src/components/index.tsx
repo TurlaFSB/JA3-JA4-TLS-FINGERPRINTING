@@ -12,6 +12,7 @@ export {
   SeverityTag,
   VerdictBadge,
 } from './atoms'
+export { CaptureHealth } from './capture-health'
 export { cx } from './cx'
 export { FeedComposition } from './feed-composition'
 export { LiveStream } from './live-stream'

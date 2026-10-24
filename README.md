@@ -73,6 +73,7 @@ tlsfp pcap capture.pcapng --report           # ranked forensic summary
 
 tlsfp live auto --intel --detect             # live capture on the interface you use (or name one: eth0, "Wi-Fi")
 tlsfp live eth0 --filter "tcp port 443"      # narrow the kernel BPF filter
+tlsfp live eth0 --buffer-mib 128 --max-flows 500000   # size the kernel buffer and the conversation table for a busy link
 
 tlsfp html capture.pcapng -o report.html     # one self-contained HTML report with the file's SHA-256
 tlsfp rules check my-rules.toml              # validate your detection rules (--rules FILE to use them)
@@ -379,6 +380,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 | [`docs/RULES.md`](docs/RULES.md) | Writing your own detection rules |
 | [`docs/ALERTS.md`](docs/ALERTS.md) | Sending alerts to a file, syslog or a webhook |
 | [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md) | Live capture, the Traffic page and their limits |
+| [`docs/CAPTURE_TUNING.md`](docs/CAPTURE_TUNING.md) | Every capture and engine setting, capture health, output detail and accuracy limits |
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured throughput and its limits |
 | [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) | Extending the intelligence feed; licensing |
 | [`dataset/README.md`](dataset/README.md) | Dataset construction and validity |

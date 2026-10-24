@@ -171,6 +171,114 @@ function ClientBlock({ client }: { client: ClientRead }): React.ReactElement {
   )
 }
 
+function NamedList({
+  items,
+  limit = 12,
+}: {
+  items: { id: number; name: string }[]
+  limit?: number
+}): React.ReactElement {
+  const shown = items.slice(0, limit)
+  return (
+    <span className={styles.chips}>
+      {shown.map((item, index) => (
+        <span
+          // The same value can appear twice in a hello, so position is part of the key.
+          key={`${item.id}-${index}`}
+          className={styles.chip}
+          title={`0x${item.id.toString(16).padStart(4, '0')}`}
+        >
+          {item.name}
+        </span>
+      ))}
+      {items.length > limit && (
+        <span className={styles.chip}>+{items.length - limit} more</span>
+      )}
+    </span>
+  )
+}
+
+// What the hello offered or chose, in wire order, with registry names.
+function HelloContents({
+  event,
+}: {
+  event: StreamEvent
+}): React.ReactElement | null {
+  if (event.kind === 'server_hello' && event.detail) {
+    const d = event.detail
+    return (
+      <section className={styles.block}>
+        <h3 className={styles.title}>server chose</h3>
+        <dl className={styles.facts}>
+          <div className={styles.fact}>
+            <dt>version</dt>
+            <dd>{d.version}</dd>
+          </div>
+          <div className={styles.fact}>
+            <dt>cipher</dt>
+            <dd>{d.cipher.name}</dd>
+          </div>
+          {d.alpn && (
+            <div className={styles.fact}>
+              <dt>alpn</dt>
+              <dd>{d.alpn}</dd>
+            </div>
+          )}
+          <div className={styles.fact}>
+            <dt>extensions</dt>
+            <dd>
+              <NamedList items={d.extensions} />
+            </dd>
+          </div>
+        </dl>
+      </section>
+    )
+  }
+  if (event.kind !== 'client_hello' || !event.detail) return null
+  const d = event.detail
+  const rows: { label: string; body: React.ReactNode }[] = [
+    {
+      label: 'versions',
+      body: d.versions.length > 0 ? d.versions.join(', ') : d.legacy_version,
+    },
+    { label: 'alpn', body: d.alpn.length > 0 ? d.alpn.join(', ') : 'none' },
+    {
+      label: 'features',
+      body: d.features.length > 0 ? d.features.join(', ') : 'none signalled',
+    },
+    {
+      label: 'grease',
+      body: d.grease ? 'yes (random placeholder values, as browsers send)' : 'no',
+    },
+    {
+      label: `ciphers ${d.ciphers.length}`,
+      body: <NamedList items={d.ciphers} />,
+    },
+    {
+      label: `extensions ${d.extensions.length}`,
+      body: <NamedList items={d.extensions} limit={24} />,
+    },
+    { label: 'groups', body: <NamedList items={d.groups} /> },
+    {
+      label: 'sig algs',
+      body: <NamedList items={d.signature_algorithms} />,
+    },
+  ]
+  return (
+    <section className={styles.block}>
+      <h3 className={styles.title}>client offered</h3>
+      <dl className={styles.facts}>
+        {rows.map((row) => (
+          <div key={row.label} className={styles.fact}>
+            <dt>{row.label}</dt>
+            <dd>{row.body}</dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  )
+}
+
 export function EventDetail({
   event,
   intel,
@@ -339,6 +447,8 @@ export function EventDetail({
           ))}
         </dl>
       </section>
+
+      <HelloContents event={event} />
 
       {anatomy && (
         <section className={styles.block}>

@@ -8,6 +8,32 @@ import { alertSchema } from './alert.types'
 import { type FpKind, ja4FamilySchema } from './common.types'
 import { matchReportSchema } from './intel.types'
 
+const namedSchema = z.object({ id: z.number(), name: z.string() })
+
+// What a ClientHello offered, in words, in wire order.
+export const clientDetailSchema = z.object({
+  legacy_version: z.string(),
+  versions: z.array(z.string()),
+  ciphers: z.array(namedSchema),
+  extensions: z.array(namedSchema),
+  groups: z.array(namedSchema),
+  signature_algorithms: z.array(namedSchema),
+  ec_point_formats: z.array(z.number()),
+  alpn: z.array(z.string()),
+  features: z.array(z.string()),
+  grease: z.boolean(),
+})
+
+export const serverDetailSchema = z.object({
+  version: z.string(),
+  cipher: namedSchema,
+  extensions: z.array(namedSchema),
+  alpn: z.string().nullable(),
+})
+
+export type ClientDetail = z.infer<typeof clientDetailSchema>
+export type ServerDetail = z.infer<typeof serverDetailSchema>
+
 const baseEventSchema = z.object({
   ts_nanos: z.number(),
   src: z.string(),
@@ -22,12 +48,14 @@ export const streamEventSchema = z.discriminatedUnion('kind', [
     ja4: ja4FamilySchema,
     sni: z.string().optional(),
     alpn: z.string().optional(),
+    detail: clientDetailSchema.optional(),
   }),
   baseEventSchema.extend({
     kind: z.literal('server_hello'),
     ja3s: z.string(),
     ja3s_raw: z.string(),
     ja4s: ja4FamilySchema,
+    detail: serverDetailSchema.optional(),
   }),
   baseEventSchema.extend({
     kind: z.literal('certificate'),

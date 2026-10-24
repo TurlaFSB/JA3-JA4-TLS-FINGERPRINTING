@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { type RateSample, useTraffic } from '@/api/hooks'
 import type { Talker, TrafficFlow } from '@/api/types'
-import { CropFrame, cx } from '@/components'
+import { CaptureHealth, CropFrame, cx } from '@/components'
 import { ROUTES } from '@/config'
 import { formatBitRate, formatBytes, formatDuration } from '@/core/lib/format'
 import styles from './traffic.module.scss'
@@ -268,6 +268,8 @@ export function Component(): React.ReactElement {
           <code>--replay FILE</code>.
         </p>
       )}
+
+      <CaptureHealth />
 
       <section className={styles.stats} aria-label="Traffic totals">
         <div className={styles.stat}>

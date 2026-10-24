@@ -1,0 +1,114 @@
+// ===================
+// © Pranav Verma | 2026
+// capture-health.module.scss
+// ===================
+
+@use 'index' as *;
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  padding: $space-3;
+  background: $ink-800;
+  border-left: 2px solid $line-faint;
+  font-size: $font-size-xs;
+
+  &[data-status='degraded'] {
+    border-left-color: $fire-soft;
+  }
+
+  &[data-status='lossy'] {
+    border-left-color: $magma;
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $space-3;
+}
+
+.badge {
+  font-size: $font-size-3xs;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: $fire-soft;
+
+  [data-status='lossy'] & {
+    color: $magma;
+  }
+}
+
+.setup {
+  color: $dust;
+}
+
+.cells {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: $space-2;
+  margin: 0;
+
+  @include breakpoint-down('md') {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.cell {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 2px;
+
+  dd {
+    margin: 0;
+    font-family: $font-mono;
+    font-size: $font-size-sm;
+    color: $bone;
+  }
+
+  dt {
+    font-size: $font-size-3xs;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $dust;
+  }
+}
+
+.line {
+  margin: 0;
+  color: $dust;
+
+  span {
+    margin-right: $space-2;
+    font-size: $font-size-3xs;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  code {
+    font-family: $font-mono;
+    color: $bone;
+  }
+}
+
+.notes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  color: $paper;
+
+  li {
+    padding-left: $space-2;
+    border-left: 2px solid $line-faint;
+  }
+
+  li[data-level='warn'] {
+    border-left-color: $magma;
+  }
+}
