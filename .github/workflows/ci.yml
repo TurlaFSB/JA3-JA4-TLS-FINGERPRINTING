@@ -59,6 +59,8 @@ jobs:
           Write-Host "exit $LASTEXITCODE"; Write-Host $msg
           if ($LASTEXITCODE -ne 0 -and $msg -notmatch "Npcap") { throw "no helpful message" }
           if ($LASTEXITCODE -lt 0 -or $LASTEXITCODE -gt 1) { throw "crashed with $LASTEXITCODE" }
+          # Exit code 1 is the expected, clean refusal; do not let it fail the step.
+          exit 0
       - name: Test the engine and the intelligence store
         run: cargo test --locked -p tlsfp-core -p tlsfp-intel
 
