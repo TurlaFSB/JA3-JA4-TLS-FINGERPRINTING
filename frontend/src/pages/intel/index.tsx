@@ -6,6 +6,7 @@
 import { exportHref, useStats } from '@/api/hooks'
 import { CropFrame, FeedComposition, SearchPanel } from '@/components'
 import styles from './intel.module.scss'
+import { Observed } from './observed'
 
 export function Component(): React.ReactElement {
   const { data } = useStats()
@@ -19,12 +20,15 @@ export function Component(): React.ReactElement {
           <span className={styles.over}>intelligence</span>
           <h1 className={styles.title}>Intelligence feed</h1>
           <p className={styles.sub}>
-            {(data?.intel.total ?? 0).toLocaleString()} fingerprints from{' '}
-            {sources.length} sources. Search the catalogue by label or
-            fingerprint, check where each feed comes from, or export the alerts.
+            What this sensor has seen, measured against what the feed knows. The
+            catalogue ({(data?.intel.total ?? 0).toLocaleString()} fingerprints
+            from {sources.length} sources) is reference material for naming them;
+            name the unknown ones yourself and the dashboard remembers.
           </p>
         </div>
       </section>
+
+      <Observed />
 
       <section className={styles.grid}>
         <SearchPanel className={styles.search} />

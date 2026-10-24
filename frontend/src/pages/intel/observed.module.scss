@@ -1,0 +1,336 @@
+// ===================
+// © Pranav Verma | 2026
+// observed.module.scss
+// ===================
+
+@use 'index' as *;
+
+.frame {
+  min-height: 240px;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.idle {
+  margin: 0;
+  padding: $space-8 $space-4;
+  text-align: center;
+  font-family: $font-mono;
+  font-size: $font-size-xs;
+  color: $dust;
+}
+
+.coverage {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-5;
+  padding: $space-4;
+  border-bottom: 1px solid $line;
+}
+
+.big {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  max-width: 460px;
+}
+
+.bigNumber {
+  font-family: $font-display;
+  font-size: $font-size-4xl;
+  line-height: 1;
+  color: $bone;
+}
+
+.bigLabel {
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  line-height: 1.5;
+  color: $ash;
+}
+
+.counts {
+  display: flex;
+  gap: $space-6;
+  margin: 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  dt {
+    font-family: $font-mono;
+    font-size: $font-size-3xs;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $dust;
+  }
+
+  dd {
+    margin: 0;
+    font-family: $font-display;
+    font-size: $font-size-xl;
+    color: $bone;
+  }
+}
+
+.known {
+  color: $thermal;
+}
+
+.unknown {
+  color: $fire;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  border-bottom: 1px solid $line-faint;
+}
+
+.chips {
+  display: flex;
+  gap: $space-1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chip {
+  padding: 2px 8px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $chalk;
+    border-color: $line-strong;
+    outline: none;
+  }
+}
+
+.chipOn {
+  color: $ink-1000;
+  background: $fire;
+  border-color: $fire;
+}
+
+.search {
+  flex: 1;
+  height: 26px;
+  padding: 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $bone;
+  background: $ink-1000;
+  border: 1px solid $line;
+
+  &:focus-visible {
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 70px minmax(150px, 1.4fr) minmax(110px, 1fr) minmax(100px, 1fr) 56px 44px 64px;
+  align-items: center;
+  gap: $space-3;
+  width: 100%;
+  padding: 6px $space-4;
+  margin: 0;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid $line-faint;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: $ink-800;
+    outline: none;
+  }
+}
+
+.head {
+  cursor: default;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $dust;
+
+  &:hover {
+    background: transparent;
+  }
+}
+
+.badge {
+  justify-self: start;
+  padding: 0 5px;
+  font-size: $font-size-3xs;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid $line-strong;
+  color: $ash;
+
+  &[data-knowledge='exact'] {
+    color: $thermal;
+    border-color: $thermal;
+  }
+
+  &[data-knowledge='unknown'] {
+    color: $fire;
+    border-color: $fire;
+  }
+}
+
+.ja4,
+.sites,
+.name {
+  @include truncate;
+}
+
+.ja4 {
+  color: $volt-soft;
+}
+
+.name {
+  color: $bone;
+}
+
+.guessed {
+  color: $dust;
+  font-style: italic;
+}
+
+.sites {
+  color: $ash;
+}
+
+.num {
+  text-align: right;
+  color: $ash;
+}
+
+.when {
+  color: $dust;
+}
+
+.detail {
+  padding: $space-3 $space-4 $space-4;
+  background: $ink-900;
+  border-bottom: 1px solid $line-faint;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: $space-1 $space-3;
+  margin: 0 0 $space-3;
+
+  dt {
+    color: $dust;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: $bone;
+  }
+}
+
+.mono {
+  color: $volt-soft;
+}
+
+.caveat {
+  color: $dust;
+}
+
+.help {
+  margin: 0 0 $space-2;
+  color: $ash;
+  line-height: 1.5;
+}
+
+.command {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-2 $space-3;
+  background: $ink-1000;
+  border: 1px solid $line;
+
+  code {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: $paper;
+  }
+}
+
+.copy {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $chalk;
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+@media (width <= 900px) {
+  .row {
+    grid-template-columns: 64px minmax(0, 1fr) 56px;
+  }
+
+  .name,
+  .sites,
+  .when,
+  .num:last-of-type {
+    display: none;
+  }
+}

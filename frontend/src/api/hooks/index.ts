@@ -4,7 +4,7 @@
 // ===================
 
 import { type UseQueryResult, useQuery } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   API_BASE,
   API_ENDPOINTS,
@@ -30,9 +30,10 @@ import {
   libraryViewSchema,
   type MetaResponse,
   metaSchema,
+  type Observed,
+  observedSchema,
   type StatsResponse,
   statsResponseSchema,
-  type Totals,
   type TrafficView,
   trafficViewSchema,
 } from '../types'
@@ -268,15 +269,12 @@ export interface RateSample {
   at: number
   inBps: number
   outBps: number
-  internalBps: number
+  otherBps: number
   packetsPerSecond: number
 }
 
-const RATE_HISTORY = 90
-
-// Polls the conversation table and turns the monotonic byte totals into rates
-// by differencing successive polls on the wall clock. A total that goes down
-// (the server restarted) is treated as a reset, not a negative rate.
+// The server keeps the last fifteen minutes of per-second throughput, so the
+// chart is full the moment a page opens and survives navigating away.
 export function useTraffic(): {
   view: TrafficView | undefined
   samples: RateSample[]
@@ -288,42 +286,39 @@ export function useTraffic(): {
     refetchInterval: 2000,
     retry: QUERY_CONFIG.RETRY.NONE,
   })
-  const [samples, setSamples] = useState<RateSample[]>([])
-  const last = useRef<{ at: number; totals: Totals } | null>(null)
-
-  useEffect(() => {
-    const view = query.data
-    if (!view) return
-    const now = Date.now()
-    const previous = last.current
-    last.current = { at: now, totals: view.totals }
-    if (!previous || now <= previous.at) return
-    const seconds = (now - previous.at) / 1000
-    const delta = (a: number, b: number): number => (a >= b ? a - b : 0)
-    const sample: RateSample = {
-      at: now,
-      inBps: delta(view.totals.in_bytes, previous.totals.in_bytes) / seconds,
-      outBps: delta(view.totals.out_bytes, previous.totals.out_bytes) / seconds,
-      internalBps:
-        (delta(view.totals.internal_bytes, previous.totals.internal_bytes) +
-          delta(view.totals.transit_bytes, previous.totals.transit_bytes)) /
-        seconds,
-      packetsPerSecond:
-        (delta(view.totals.in_packets, previous.totals.in_packets) +
-          delta(view.totals.out_packets, previous.totals.out_packets) +
-          delta(view.totals.internal_packets, previous.totals.internal_packets) +
-          delta(view.totals.transit_packets, previous.totals.transit_packets)) /
-        seconds,
-    }
-    setSamples((prev) => [...prev, sample].slice(-RATE_HISTORY))
-  }, [query.data])
-
+  const samples = useMemo(
+    () =>
+      (query.data?.history ?? []).map((point) => ({
+        at: point.t_ms,
+        inBps: point.in_bytes * 8,
+        outBps: point.out_bytes * 8,
+        otherBps: point.other_bytes * 8,
+        packetsPerSecond: point.packets,
+      })),
+    [query.data]
+  )
   return { view: query.data, samples, error: query.isError }
 }
 
-async function getHosts(): Promise<HostSummary[]> {
+export type HostRole = 'clients' | 'servers' | 'all'
+
+async function getObserved(): Promise<Observed> {
+  const { data } = await apiClient.get(API_ENDPOINTS.OBSERVED)
+  return observedSchema.parse(data)
+}
+
+// The client fingerprints this sensor has seen, and how much the feed can name.
+export function useObserved(): UseQueryResult<Observed> {
+  return useQuery({
+    queryKey: QUERY_KEYS.OBSERVED,
+    queryFn: getObserved,
+    refetchInterval: 15_000,
+  })
+}
+
+async function getHosts(role: HostRole): Promise<HostSummary[]> {
   const { data } = await apiClient.get(API_ENDPOINTS.HOSTS, {
-    params: { limit: 500 },
+    params: { limit: 500, role },
   })
   return hostSummarySchema.array().parse(data)
 }
@@ -335,11 +330,15 @@ async function getHost(ip: string): Promise<HostProfile> {
   return hostProfileSchema.parse(data)
 }
 
-// Every source address detection has observed, most recently active first.
-export function useHosts(): UseQueryResult<HostSummary[]> {
+// The addresses detection has observed, most recently active first. By default
+// only machines that originated traffic: a server answering a ClientHello is
+// seen too, but is not a host being watched.
+export function useHosts(
+  role: HostRole = 'clients'
+): UseQueryResult<HostSummary[]> {
   return useQuery({
-    queryKey: QUERY_KEYS.HOSTS,
-    queryFn: getHosts,
+    queryKey: [...QUERY_KEYS.HOSTS, role],
+    queryFn: () => getHosts(role),
     refetchInterval: QUERY_CONFIG.STALE_TIME.FREQUENT,
   })
 }

@@ -94,14 +94,48 @@ fn verdict_of(token: Option<&str>) -> Option<Verdict> {
     }
 }
 
+/// Which addresses a host list covers.
+///
+/// A ServerHello is observed from the server's address, so without this every
+/// site a client talked to would appear as a "host" with no clients of its own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum HostRole {
+    /// Addresses that originated handshakes or requests: the machines whose
+    /// behaviour is being watched. The default.
+    #[default]
+    Clients,
+    /// Addresses seen only answering.
+    Servers,
+    All,
+}
+
+impl HostRole {
+    /// Parses `clients`, `servers` or `all`; anything else is the default.
+    #[must_use]
+    pub fn from_token(token: &str) -> Self {
+        match token {
+            "servers" => Self::Servers,
+            "all" => Self::All,
+            _ => Self::Clients,
+        }
+    }
+}
+
 /// The hosts seen, most recently active first, at most `limit`.
-pub(crate) fn list(conn: &Connection, limit: i64) -> Result<Vec<HostSummary>> {
-    let mut statement = conn.prepare(
+pub(crate) fn list(conn: &Connection, limit: i64, role: HostRole) -> Result<Vec<HostSummary>> {
+    // Client-side fingerprints are made by the sender of a request; server-side
+    // ones by the sender of an answer.
+    let filter = match role {
+        HostRole::All => "",
+        HostRole::Clients => "HAVING sum(fp_kind IN ('ja4', 'ja3', 'ja4h', 'ja4t')) > 0",
+        HostRole::Servers => "HAVING sum(fp_kind IN ('ja4', 'ja3', 'ja4h', 'ja4t')) = 0",
+    };
+    let mut statement = conn.prepare(&format!(
         "SELECT ip, min(ts), max(ts), count(*),
                 count(DISTINCT CASE WHEN fp_kind = 'ja4' THEN fp_value END),
                 count(DISTINCT sni)
-         FROM observation GROUP BY ip ORDER BY max(ts) DESC LIMIT ?1",
-    )?;
+         FROM observation GROUP BY ip {filter} ORDER BY max(ts) DESC LIMIT ?1"
+    ))?;
     let base = statement
         .query_map(params![limit], |row| {
             Ok(HostSummary {
@@ -273,6 +307,7 @@ fn list_one(conn: &Connection, ip: &str) -> Result<Option<HostSummary>> {
 
 #[cfg(test)]
 mod tests {
+    use super::HostRole;
     use crate::IntelStore;
     use std::net::SocketAddr;
     use tlsfp_core::pipeline::event::StreamEvent;
@@ -310,7 +345,7 @@ mod tests {
             .detect(&hello(3_000_000_000, "10.0.0.6:5000", a, "other.test"))
             .unwrap();
 
-        let hosts = store.hosts(10).unwrap();
+        let hosts = store.hosts(10, HostRole::Clients).unwrap();
         assert_eq!(hosts.len(), 2);
         assert_eq!(hosts[0].ip, "10.0.0.5", "most recent first");
         assert_eq!(hosts[0].clients, 2);
@@ -336,9 +371,43 @@ mod tests {
     }
 
     #[test]
+    fn a_server_that_only_answered_is_not_listed_as_a_client_host() {
+        let mut store = IntelStore::open_in_memory().unwrap();
+        store
+            .detect(&hello(
+                1_000_000_000,
+                "10.0.0.5:5000",
+                "t13d1516h2_aaaaaaaaaaaa_111111111111",
+                "a.test",
+            ))
+            .unwrap();
+        // The same connection's ServerHello is observed from the server.
+        store
+            .detect(&FingerprintEvent {
+                ts_nanos: 1_000_000_500,
+                src: "1.2.3.4:443".parse::<SocketAddr>().unwrap(),
+                dst: "10.0.0.5:5000".parse::<SocketAddr>().unwrap(),
+                event: StreamEvent::ServerHello {
+                    ja3s: Ja3::from_digest([2; 16]),
+                    ja3s_raw: String::new(),
+                    ja4s: Ja4Family::new("t130200_1301_aaaaaaaaaaaa".to_owned(), "r".to_owned()),
+                },
+            })
+            .unwrap();
+
+        let clients = store.hosts(10, HostRole::Clients).unwrap();
+        assert_eq!(clients.len(), 1);
+        assert_eq!(clients[0].ip, "10.0.0.5");
+        let servers = store.hosts(10, HostRole::Servers).unwrap();
+        assert_eq!(servers.len(), 1);
+        assert_eq!(servers[0].ip, "1.2.3.4");
+        assert_eq!(store.hosts(10, HostRole::All).unwrap().len(), 2);
+    }
+
+    #[test]
     fn an_unknown_address_has_no_profile() {
         let store = IntelStore::open_in_memory().unwrap();
         assert!(store.host_profile("192.0.2.1").unwrap().is_none());
-        assert!(store.hosts(10).unwrap().is_empty());
+        assert!(store.hosts(10, HostRole::Clients).unwrap().is_empty());
     }
 }

@@ -157,11 +157,66 @@
   color: $ash;
 }
 
+.plot {
+  position: relative;
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: $space-2;
+}
+
+.yAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 130px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $dust;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.xAxis {
+  display: flex;
+  justify-content: space-between;
+  margin: 2px 0 0 86px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $dust;
+}
+
+.quiet {
+  position: absolute;
+  inset: 0 0 0 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $dust;
+  pointer-events: none;
+}
+
 .chart {
   display: block;
   width: 100%;
   height: 130px;
   border-bottom: 1px solid $line;
+}
+
+.areaIn,
+.areaOut {
+  stroke: none;
+}
+
+.areaIn {
+  fill: color-mix(in sRGB, var(--volt) 16%, transparent);
+}
+
+.areaOut {
+  fill: color-mix(in sRGB, var(--fire) 16%, transparent);
 }
 
 .grid {
@@ -179,6 +234,7 @@
 
 .lineMid {
   stroke: $dust;
+  stroke-dasharray: 4 3;
 }
 
 .lineIn {

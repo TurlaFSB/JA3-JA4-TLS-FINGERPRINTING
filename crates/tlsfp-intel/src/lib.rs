@@ -18,9 +18,11 @@ mod detect;
 mod hosts;
 mod import;
 mod infer;
+mod labels;
 mod matcher;
 mod model;
 mod net;
+mod observed;
 mod rules;
 mod schema;
 mod seed;
@@ -35,11 +37,14 @@ use serde::Serialize;
 use tlsfp_core::FingerprintEvent;
 
 pub use detect::{Alert, AlertSeverity, AlertSink, DetectConfig, Rule};
+pub use hosts::HostRole;
 pub use hosts::{ClientSpan, Counted, HostProfile, HostSummary};
 pub use import::ImportSummary;
 pub use infer::{ClientFamily, ClientGuess, Confidence, infer_client};
+pub use labels::{LOCAL_SOURCE, LocalLabel};
 pub use model::{CatalogEntry, Category, FpKind, IntelHit, MatchReport, MatchStrength, Verdict};
 pub use net::Network;
+pub use observed::{Coverage, Knowledge, Observed, ObservedClient};
 pub use rules::RuleSet;
 pub use seed::{FeedLoad, SeedSummary};
 
@@ -157,9 +162,38 @@ impl IntelStore {
         detect::recent(&self.conn, limit)
     }
 
+    /// Client fingerprints seen on this sensor, with how much of it the feed
+    /// can name.
+    pub fn observed(&self) -> Result<Observed> {
+        observed::report(&self.conn)
+    }
+
+    /// Names a fingerprint locally, in the operator's own feed. Returns whether
+    /// the label is new rather than a replacement.
+    pub fn add_label(
+        &mut self,
+        kind: FpKind,
+        value: &str,
+        label: &str,
+        category: Category,
+        note: Option<&str>,
+    ) -> Result<bool> {
+        labels::add(&mut self.conn, kind, value, label, category, note)
+    }
+
+    /// Removes a local label; returns whether one existed.
+    pub fn remove_label(&mut self, kind: FpKind, value: &str) -> Result<bool> {
+        labels::remove(&mut self.conn, kind, value)
+    }
+
+    /// The operator's labels.
+    pub fn labels(&self) -> Result<Vec<LocalLabel>> {
+        labels::list(&self.conn)
+    }
+
     /// The addresses observed, most recently active first.
-    pub fn hosts(&self, limit: i64) -> Result<Vec<HostSummary>> {
-        hosts::list(&self.conn, limit)
+    pub fn hosts(&self, limit: i64, role: HostRole) -> Result<Vec<HostSummary>> {
+        hosts::list(&self.conn, limit, role)
     }
 
     /// Everything observed about one source address.

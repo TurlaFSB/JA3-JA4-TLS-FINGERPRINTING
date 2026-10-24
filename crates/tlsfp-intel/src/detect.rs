@@ -235,15 +235,18 @@ struct Context {
     host: Option<String>,
     user_agent: Option<String>,
     os_claim: Option<String>,
+    /// The raw JA4 of a ClientHello, kept so its client family can be read back.
+    raw: Option<String>,
 }
 
 fn context_of(event: &StreamEvent) -> Context {
     match event {
-        StreamEvent::ClientHello { sni, .. } => Context {
+        StreamEvent::ClientHello { sni, ja4, .. } => Context {
             sni: sni.clone(),
             host: None,
             user_agent: None,
             os_claim: None,
+            raw: Some(ja4.raw.clone()),
         },
         StreamEvent::HttpRequest {
             host, user_agent, ..
@@ -257,6 +260,7 @@ fn context_of(event: &StreamEvent) -> Context {
                 host: host.clone(),
                 user_agent: user_agent.clone(),
                 os_claim,
+                raw: None,
             }
         }
         _ => Context {
@@ -264,6 +268,7 @@ fn context_of(event: &StreamEvent) -> Context {
             host: None,
             user_agent: None,
             os_claim: None,
+            raw: None,
         },
     }
 }
@@ -951,8 +956,8 @@ fn insert_observation(
 ) -> Result<i64> {
     conn.execute(
         "INSERT INTO observation
-            (ts, ip, fp_kind, fp_value, verdict, label, category, sni, host, user_agent, os_claim)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            (ts, ip, fp_kind, fp_value, verdict, label, category, sni, host, user_agent, os_claim, fp_raw)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
         params![
             ts,
             ip,
@@ -965,6 +970,7 @@ fn insert_observation(
             context.host,
             context.user_agent,
             context.os_claim,
+            context.raw,
         ],
     )?;
     Ok(conn.last_insert_rowid())

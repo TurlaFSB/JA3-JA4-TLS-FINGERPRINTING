@@ -14,7 +14,7 @@
 //! Migration one is the intelligence half: feeds and the fingerprints they
 //! carry. Migration two is the detection half: the observations the engine
 //! records as it watches traffic and the alerts it raises when a rule fires.
-//! Both tables stand on their own, so a detection run needs intelligence loaded
+//! Migration three adds the raw JA4 to observations. Both tables stand on their own, so a detection run needs intelligence loaded
 //! only for the rules that consult it.
 
 use rusqlite::Connection;
@@ -90,6 +90,12 @@ CREATE TABLE alert (
 CREATE INDEX idx_alert_ts   ON alert(ts);
 CREATE INDEX idx_alert_rule ON alert(rule);
 CREATE INDEX idx_alert_ip   ON alert(ip);
+",
+    // Version three keeps the raw JA4 beside its hash on client observations,
+    // so the client family can be read back from history: the hash alone cannot
+    // say which extensions were offered.
+    r"
+ALTER TABLE observation ADD COLUMN fp_raw TEXT;
 ",
 ];
 

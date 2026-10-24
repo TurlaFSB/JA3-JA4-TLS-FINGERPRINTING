@@ -21,6 +21,7 @@ export const API_ENDPOINTS = {
   LIBRARY: '/library',
   TRAFFIC: '/traffic',
   HOSTS: '/hosts',
+  OBSERVED: '/observed',
 } as const
 
 export const QUERY_KEYS = {
@@ -29,6 +30,7 @@ export const QUERY_KEYS = {
   LIBRARY: ['library'] as const,
   TRAFFIC: ['traffic'] as const,
   HOSTS: ['hosts'] as const,
+  OBSERVED: ['observed'] as const,
   HOST: (ip: string) => ['host', ip] as const,
   ALERTS: (limit: number) => ['alerts', limit] as const,
   SEARCH: (query: string, kind: string) => ['search', query, kind] as const,

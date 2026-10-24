@@ -19,6 +19,7 @@ pub mod ja4;
 pub mod ja4h;
 pub mod ja4t;
 pub mod ja4x;
+pub mod net;
 pub mod parse;
 pub mod pipeline;
 pub mod quic;

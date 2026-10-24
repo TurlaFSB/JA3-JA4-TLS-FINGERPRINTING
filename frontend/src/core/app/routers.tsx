@@ -5,15 +5,18 @@
 
 import { createBrowserRouter, type RouteObject } from 'react-router-dom'
 import { ROUTES } from '@/config'
+import { ErrorPage } from './error-page'
 import { Shell } from './shell'
 
 const routes: RouteObject[] = [
   {
     path: ROUTES.HOME,
     lazy: () => import('@/pages/landing'),
+    errorElement: <ErrorPage />,
   },
   {
     element: <Shell />,
+    errorElement: <ErrorPage />,
     children: [
       {
         path: ROUTES.SCOPE,

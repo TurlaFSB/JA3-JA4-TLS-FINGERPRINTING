@@ -5,7 +5,7 @@
 
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useHost, useHosts } from '@/api/hooks'
+import { type HostRole, useHost, useHosts } from '@/api/hooks'
 import type { HostProfile } from '@/api/types'
 import { formatClock } from '@/api/types'
 import { CropFrame, cx, RuleTag, SeverityTag, VerdictBadge } from '@/components'
@@ -20,6 +20,20 @@ import {
   whenText,
 } from './host-data'
 import styles from './hosts.module.scss'
+
+const ROLES: { id: HostRole; label: string; note: string }[] = [
+  {
+    id: 'clients',
+    label: 'machines',
+    note: 'Addresses that started connections or requests: the hosts being watched',
+  },
+  {
+    id: 'servers',
+    label: 'servers',
+    note: 'Addresses seen only answering',
+  },
+  { id: 'all', label: 'all', note: 'Every address seen' },
+]
 
 const SORTS: { id: HostSort; label: string }[] = [
   { id: 'recent', label: 'recent' },
@@ -169,7 +183,8 @@ function Profile({ ip }: { ip: string }): React.ReactElement {
 }
 
 export function Component(): React.ReactElement {
-  const { data, isLoading } = useHosts()
+  const [role, setRole] = useState<HostRole>('clients')
+  const { data, isLoading } = useHosts(role)
   const [params, setParams] = useSearchParams()
   const selected = params.get('ip')
   const [query, setQuery] = useState('')
@@ -217,6 +232,21 @@ export function Component(): React.ReactElement {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
+            <fieldset className={styles.chips}>
+              <legend className={styles.srOnly}>Which addresses</legend>
+              {ROLES.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={cx(styles.chip, role === item.id && styles.chipOn)}
+                  aria-pressed={role === item.id}
+                  title={item.note}
+                  onClick={() => setRole(item.id)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </fieldset>
             <fieldset className={styles.chips}>
               <legend className={styles.srOnly}>Sort</legend>
               {SORTS.map((item) => (

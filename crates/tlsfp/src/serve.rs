@@ -41,7 +41,7 @@ use tokio::sync::broadcast;
 use tokio_stream::StreamExt;
 use tokio_stream::wrappers::BroadcastStream;
 use tower_http::compression::CompressionLayer;
-use tower_http::services::{ServeDir, ServeFile};
+use tower_http::services::ServeDir;
 use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 
@@ -121,6 +121,9 @@ pub struct ServeConfig {
     pub location: Option<String>,
     /// Addresses fronting many clients; the rotation and monoculture rules skip them.
     pub shared_networks: Vec<Network>,
+    /// Networks that count as this sensor's own, besides the private ranges and
+    /// the capture interface's networks.
+    pub local_networks: Vec<Network>,
     /// Directories of capture files to find and identify.
     pub library: Vec<PathBuf>,
 }
@@ -179,6 +182,9 @@ struct AppState {
     feed: Feed,
     library: Library,
     db: PathBuf,
+    /// Throughput per second for the last [`RATE_POINTS`] seconds, kept here
+    /// rather than in each browser so the chart is full when a page opens.
+    rates: Mutex<std::collections::VecDeque<RatePoint>>,
     /// What the intelligence feed and the family rules say about each client
     /// fingerprint seen in a conversation, looked up once per fingerprint.
     client_cache: Mutex<HashMap<String, ClientInfo>>,
@@ -342,6 +348,7 @@ async fn serve(config: ServeConfig) -> Result<()> {
         feed: feed.clone(),
         library: Library::default(),
         db: config.db.clone(),
+        rates: Mutex::new(std::collections::VecDeque::with_capacity(RATE_POINTS)),
         client_cache: Mutex::new(HashMap::new()),
         meta: Meta::new(&config, started_unix_ms),
     });
@@ -360,6 +367,16 @@ async fn serve(config: ServeConfig) -> Result<()> {
     });
     if let Some(Err(error)) = &scanner {
         tracing::error!(%error, "could not start the library scanner");
+    }
+    let sampler = {
+        let state = Arc::clone(&state);
+        let stop = Arc::clone(&shutdown);
+        std::thread::Builder::new()
+            .name("rates".into())
+            .spawn(move || sample_rates(&state, &stop))
+    };
+    if let Err(error) = &sampler {
+        tracing::error!(%error, "could not start the throughput sampler");
     }
     let mut capture = spawn_source(&config, feed, Arc::clone(&shutdown), Arc::clone(&state))?;
 
@@ -394,6 +411,7 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .route("/library", get(library))
         .route("/library/{id}/report", get(library_report))
         .route("/traffic", get(traffic))
+        .route("/observed", get(observed))
         .route("/hosts", get(hosts))
         .route("/hosts/{ip}", get(host_profile))
         .layer(CompressionLayer::new());
@@ -403,10 +421,12 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
     let state_for_metrics = Arc::clone(&state);
     let api = data_api.merge(stream_api).with_state(state);
 
-    let index = web.join("index.html");
-    let static_files = ServeDir::new(web)
-        .append_index_html_on_directories(true)
-        .fallback(ServeFile::new(index));
+    // A missing file is a 404. Only a page navigation (a path with no file
+    // extension) falls back to index.html, so a request for a stale script
+    // gets an honest 404 rather than HTML with a 200 that the browser then
+    // fails to run as a module.
+    let static_files = ServeDir::new(web).append_index_html_on_directories(true);
+    let web_root = Arc::new(web.to_path_buf());
 
     let ops = Router::new()
         .route("/metrics", get(metrics))
@@ -416,6 +436,10 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .nest("/api", api)
         .merge(ops)
         .fallback_service(static_files)
+        .layer(axum::middleware::from_fn_with_state(
+            web_root,
+            static_policy,
+        ))
         .layer(security_header(
             axum::http::header::CONTENT_SECURITY_POLICY,
             CONTENT_SECURITY_POLICY,
@@ -430,6 +454,72 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
             "no-referrer",
         ))
         .layer(TraceLayer::new_for_http())
+}
+
+/// Serves the single-page app and sets the caching that keeps a new build from
+/// being masked by an old one: the page and unhashed files are revalidated on
+/// every load, hashed bundles are cached for good, and data is never cached.
+async fn static_policy(
+    State(web): State<Arc<std::path::PathBuf>>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    let path = request.uri().path().to_owned();
+    let mut response = next.run(request).await;
+    if response.status() == StatusCode::NOT_FOUND && is_navigation(&path) {
+        if let Ok(page) = tokio::fs::read(web.join("index.html")).await {
+            response = (
+                StatusCode::OK,
+                [(axum::http::header::CONTENT_TYPE, "text/html; charset=utf-8")],
+                page,
+            )
+                .into_response();
+        }
+    }
+    let policy = cache_policy(&path, response.status());
+    response.headers_mut().insert(
+        axum::http::header::CACHE_CONTROL,
+        axum::http::HeaderValue::from_static(policy),
+    );
+    response
+}
+
+/// A browser asking for a page, as opposed to a file or the API.
+fn is_navigation(path: &str) -> bool {
+    !path.starts_with("/api/")
+        && path != "/metrics"
+        && !path
+            .rsplit('/')
+            .next()
+            .is_some_and(|last| last.contains('.'))
+}
+
+fn cache_policy(path: &str, status: StatusCode) -> &'static str {
+    if path.starts_with("/api/") || path == "/metrics" {
+        "no-store"
+    } else if status.is_success() && is_hashed_bundle(path) {
+        "public, max-age=31536000, immutable"
+    } else {
+        "no-cache"
+    }
+}
+
+/// `/assets/name-HASH.js` or `.css`: the build names these by content, so a
+/// changed file always has a new name.
+fn is_hashed_bundle(path: &str) -> bool {
+    let Some(file) = path.strip_prefix("/assets/") else {
+        return false;
+    };
+    let Some(stem) = file
+        .strip_suffix(".js")
+        .or_else(|| file.strip_suffix(".css"))
+    else {
+        return false;
+    };
+    !file.contains('/')
+        && stem
+            .rsplit_once('-')
+            .is_some_and(|(_, hash)| hash.len() >= 6)
 }
 
 /// The dashboard loads its own script, style and data and nothing else, so the
@@ -663,6 +753,58 @@ struct ServiceShare {
     bytes: u64,
 }
 
+/// How many one-second throughput points are kept: fifteen minutes.
+const RATE_POINTS: usize = 900;
+
+/// Bytes moved in one second, by direction. "other" is internal and transit,
+/// which a sensor on a gateway can see a lot of.
+#[derive(Clone, Serialize)]
+struct RatePoint {
+    t_ms: u64,
+    out_bytes: u64,
+    in_bytes: u64,
+    other_bytes: u64,
+    packets: u64,
+}
+
+/// Every second, turns the monotonic traffic counters into a throughput point.
+fn sample_rates(state: &Shared, stop: &AtomicBool) {
+    let mut last = state.feed.traffic.with(|t| t.totals());
+    while !stop.load(std::sync::atomic::Ordering::Relaxed) {
+        std::thread::sleep(Duration::from_secs(1));
+        let now = state.feed.traffic.with(|t| t.totals());
+        let t_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map_or(0, |d| u64::try_from(d.as_millis()).unwrap_or(u64::MAX));
+        let point = RatePoint {
+            t_ms,
+            out_bytes: now.out_bytes.saturating_sub(last.out_bytes),
+            in_bytes: now.in_bytes.saturating_sub(last.in_bytes),
+            other_bytes: (now.internal_bytes + now.transit_bytes)
+                .saturating_sub(last.internal_bytes + last.transit_bytes),
+            packets: (now.out_packets
+                + now.in_packets
+                + now.internal_packets
+                + now.transit_packets)
+                .saturating_sub(
+                    last.out_packets
+                        + last.in_packets
+                        + last.internal_packets
+                        + last.transit_packets,
+                ),
+        };
+        last = now;
+        let mut rates = state
+            .rates
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if rates.len() == RATE_POINTS {
+            rates.pop_front();
+        }
+        rates.push_back(point);
+    }
+}
+
 #[derive(Serialize)]
 struct TrafficView {
     /// False when the server has no packet source of its own (database tail).
@@ -675,6 +817,8 @@ struct TrafficView {
     talkers: Vec<Talker>,
     services: Vec<ServiceShare>,
     flows: Vec<TrafficFlow>,
+    /// One point per second, oldest first.
+    history: Vec<RatePoint>,
 }
 
 /// How many conversations one response carries at most.
@@ -785,6 +929,13 @@ fn build_traffic_view(state: &Shared, limit: usize) -> TrafficView {
         talkers,
         services,
         flows,
+        history: state
+            .rates
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .cloned()
+            .collect(),
     }
 }
 
@@ -838,6 +989,8 @@ fn family_token(family: tlsfp_intel::ClientFamily) -> &'static str {
 #[derive(Deserialize)]
 struct HostsQuery {
     limit: Option<i64>,
+    /// `clients` (the default), `servers` or `all`.
+    role: Option<String>,
 }
 
 /// How many hosts the list carries at most.
@@ -848,7 +1001,8 @@ async fn hosts(
     Query(query): Query<HostsQuery>,
 ) -> Result<Json<Vec<tlsfp_intel::HostSummary>>, ApiError> {
     let limit = query.limit.unwrap_or(200).clamp(1, MAX_HOSTS);
-    let list = tokio::task::spawn_blocking(move || state.store().hosts(limit)).await??;
+    let role = tlsfp_intel::HostRole::from_token(query.role.as_deref().unwrap_or("clients"));
+    let list = tokio::task::spawn_blocking(move || state.store().hosts(limit, role)).await??;
     Ok(Json(list))
 }
 
@@ -863,6 +1017,13 @@ async fn host_profile(
     }
     let found = tokio::task::spawn_blocking(move || state.store().host_profile(&ip)).await??;
     found.map(Json).ok_or(ApiError::not_found())
+}
+
+/// The client fingerprints this sensor has seen and how much of it the feed can
+/// name.
+async fn observed(State(state): State<Shared>) -> Result<Json<tlsfp_intel::Observed>, ApiError> {
+    let report = tokio::task::spawn_blocking(move || state.store().observed()).await??;
+    Ok(Json(report))
 }
 
 async fn library(State(state): State<Shared>) -> impl IntoResponse {
@@ -1012,6 +1173,10 @@ fn spawn_source(
     shutdown: Arc<AtomicBool>,
     state: Shared,
 ) -> Result<Capture> {
+    // What counts as "ours" for the traffic page: what the operator declared,
+    // plus (for a live capture, below) the networks the interface sits on.
+    feed.traffic
+        .with(|table| table.set_local_networks(config.local_networks.clone()));
     match &config.source {
         Source::Tail => {
             spawn_tail(state, feed, Arc::clone(&shutdown));
@@ -1056,6 +1221,13 @@ fn spawn_source(
             let source = LiveSource::open(interface, &live_config)
                 .with_context(|| format!("opening live capture on {interface}"))?;
             let live_stop = source.stop_handle();
+            let mut local = config.local_networks.clone();
+            local.extend(source.local_networks());
+            tracing::info!(
+                networks = %local.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
+                "treating these networks as this sensor's own, besides the private ranges"
+            );
+            feed.traffic.with(|table| table.set_local_networks(local));
             let db = config.db.clone();
             let stop = Arc::clone(&shutdown);
             let interface = interface.clone();
@@ -1322,6 +1494,7 @@ mod tests {
             source,
             location: location.map(str::to_owned),
             shared_networks: Vec::new(),
+            local_networks: Vec::new(),
             library: Vec::new(),
         }
     }
@@ -1341,6 +1514,38 @@ mod tests {
         let json = serde_json::to_string(&meta).unwrap();
         assert!(!json.contains("secret"), "{json}");
         assert!(!json.contains("intel.db"), "{json}");
+    }
+
+    #[test]
+    fn caching_never_masks_a_new_build() {
+        assert_eq!(cache_policy("/api/traffic", StatusCode::OK), "no-store");
+        assert_eq!(cache_policy("/metrics", StatusCode::OK), "no-store");
+        assert_eq!(cache_policy("/", StatusCode::OK), "no-cache");
+        assert_eq!(cache_policy("/scope", StatusCode::OK), "no-cache");
+        assert_eq!(cache_policy("/theme-init.js", StatusCode::OK), "no-cache");
+        assert_eq!(
+            cache_policy("/assets/objects/xray-butterfly.png", StatusCode::OK),
+            "no-cache",
+            "unhashed artwork is revalidated"
+        );
+        assert_eq!(
+            cache_policy("/assets/traffic-CWOdAE8G.js", StatusCode::OK),
+            "public, max-age=31536000, immutable"
+        );
+        assert_eq!(
+            cache_policy("/assets/traffic-CWOdAE8G.js", StatusCode::NOT_FOUND),
+            "no-cache",
+            "a 404 is never cached for a year"
+        );
+    }
+
+    #[test]
+    fn only_page_navigations_fall_back_to_the_app() {
+        assert!(is_navigation("/"));
+        assert!(is_navigation("/hosts"));
+        assert!(!is_navigation("/assets/traffic-CWOdAE8G.js"));
+        assert!(!is_navigation("/api/nothing"));
+        assert!(!is_navigation("/favicon.ico"));
     }
 
     #[test]

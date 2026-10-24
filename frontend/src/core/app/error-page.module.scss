@@ -1,0 +1,78 @@
+// ===================
+// © Pranav Verma | 2026
+// error-page.module.scss
+// ===================
+
+@use 'index' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: $space-12 $space-4;
+  color: $paper;
+}
+
+.title {
+  margin: 0;
+  font-family: $font-display;
+  font-size: $font-size-3xl;
+  letter-spacing: 0.02em;
+  color: $bone;
+}
+
+.body {
+  margin: 0;
+  line-height: 1.6;
+  color: $ash;
+}
+
+.actions {
+  display: flex;
+  gap: $space-3;
+}
+
+.primary,
+.secondary {
+  padding: $space-2 $space-4;
+  font-family: $font-mono;
+  font-size: $font-size-xs;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.primary {
+  color: $ink-1000;
+  background: $fire;
+  border: 1px solid $fire;
+}
+
+.secondary {
+  color: $paper;
+  background: transparent;
+  border: 1px solid $line-strong;
+}
+
+.primary:hover,
+.primary:focus-visible,
+.secondary:hover,
+.secondary:focus-visible {
+  outline: 2px solid $chalk;
+  outline-offset: 2px;
+}
+
+.detail {
+  margin: 0;
+  padding: $space-3;
+  overflow-x: auto;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $dust;
+  background: $ink-900;
+  border: 1px solid $line;
+  white-space: pre-wrap;
+}

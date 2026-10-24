@@ -34,6 +34,7 @@ use pcap::{Active, Capture, Device};
 use rustix::event::{PollFd, PollFlags, Timespec, poll};
 use smallvec::SmallVec;
 use thiserror::Error;
+use tlsfp_core::net::Network;
 
 use tlsfp_core::{PacketSource, RawFrame, SourceError};
 
@@ -170,6 +171,7 @@ pub struct LiveSource {
     receiver: flume::Receiver<CapturedFrame>,
     staged: CapturedFrame,
     link_type: i32,
+    local: Vec<Network>,
     stop: Arc<AtomicBool>,
     failure: Arc<OnceLock<String>>,
     failure_reported: bool,
@@ -223,11 +225,21 @@ impl LiveSource {
                 data: SmallVec::new(),
             },
             link_type,
+            local: interface_networks(interface),
             stop,
             failure,
             failure_reported: false,
             thread: Some(thread),
         })
+    }
+
+    /// The networks the capture interface sits on, from its addresses and
+    /// netmasks. These are what the Traffic page treats as "inside", so a
+    /// machine with a public address still sees its own traffic as outbound
+    /// and inbound.
+    #[must_use]
+    pub fn local_networks(&self) -> Vec<Network> {
+        self.local.clone()
     }
 
     /// Returns a handle that requests a graceful stop of the capture.
@@ -467,6 +479,37 @@ fn resolve_interface(name: &str) -> String {
     }
 }
 
+/// The networks one interface (or, for `any`, every real interface) is on.
+/// Each address contributes its subnet and itself, so an address with an odd
+/// netmask is still recognised.
+fn interface_networks(name: &str) -> Vec<Network> {
+    let mut out = Vec::new();
+    for device in Device::list().unwrap_or_default() {
+        let wanted = if name == "any" {
+            !device.flags.is_loopback() && device.flags.is_up()
+        } else {
+            device.name == name
+        };
+        if !wanted {
+            continue;
+        }
+        for address in &device.addresses {
+            if let Some(host) =
+                Network::new(address.addr, if address.addr.is_ipv4() { 32 } else { 128 })
+            {
+                out.push(host);
+            }
+            if let Some(net) = address
+                .netmask
+                .and_then(|mask| Network::from_mask(address.addr, mask))
+            {
+                out.push(net);
+            }
+        }
+    }
+    out
+}
+
 /// Adapters that exist to carry traffic between virtual machines, tunnels and
 /// loopback, which a person looking at their own traffic does not mean.
 fn is_virtual(description: Option<&str>) -> bool {
@@ -577,6 +620,7 @@ mod tests {
                 data: SmallVec::new(),
             },
             link_type: 1,
+            local: Vec::new(),
             stop: Arc::new(AtomicBool::new(false)),
             failure,
             failure_reported: false,

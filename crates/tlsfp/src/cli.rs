@@ -223,6 +223,18 @@ pub enum Command {
         )]
         shared_network: Vec<Network>,
 
+        /// Networks that count as this sensor's own, beyond the private
+        /// ranges, for example a public IPv6 prefix. Live capture adds the
+        /// capture interface's networks by itself; a replay of someone else's
+        /// capture needs this to say which side is "inside".
+        #[arg(
+            long = "local-network",
+            value_name = "CIDR",
+            env = "TLSFP_LOCAL_NETWORKS",
+            value_delimiter = ','
+        )]
+        local_network: Vec<Network>,
+
         /// Directory of capture files to find and identify, shown on the
         /// Library page. Repeatable; new and changed files are picked up
         /// while the server runs. Analysis only: nothing is alerted or stored.
@@ -359,6 +371,58 @@ pub enum IntelCommand {
         db: Option<PathBuf>,
     },
 
+    /// Name a fingerprint yourself, in your own feed ("local labels"), so the
+    /// Scope and Intel pages show your name for it. Use it for a browser build
+    /// or an internal tool no public feed knows.
+    Label {
+        /// Fingerprint kind: ja3, ja3s, ja4, ja4s, ja4h, ja4x, ja4t, or ja4ts.
+        kind: String,
+
+        /// The fingerprint value.
+        value: String,
+
+        /// What it is, for example "Brave 1.62 on Windows".
+        #[arg(long, short)]
+        label: String,
+
+        /// benign, tool, os, c2, malware or unknown. Benign and unknown do not
+        /// raise a known-bad alert; c2 and malware do.
+        #[arg(long, default_value = "benign")]
+        category: String,
+
+        /// A note kept with the label.
+        #[arg(long)]
+        note: Option<String>,
+
+        /// Path to the intelligence database, defaulting to the data directory.
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
+
+    /// Remove a label you added.
+    Unlabel {
+        /// Fingerprint kind.
+        kind: String,
+
+        /// The fingerprint value.
+        value: String,
+
+        /// Path to the intelligence database, defaulting to the data directory.
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
+
+    /// List the labels you have added.
+    Labels {
+        /// Emit JSON instead of readable lines.
+        #[arg(long)]
+        json: bool,
+
+        /// Path to the intelligence database, defaulting to the data directory.
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
+
     /// Show what the database holds, by feed and by category.
     Stats {
         /// Emit the summary as JSON instead of readable lines.
@@ -458,6 +522,7 @@ impl Cli {
                 web,
                 location,
                 shared_network,
+                local_network,
                 library,
                 replay,
                 repeat,
@@ -471,6 +536,7 @@ impl Cli {
                 resolve_web(web),
                 location,
                 shared_network,
+                local_network,
                 library,
                 replay,
                 repeat,
@@ -495,6 +561,16 @@ impl IntelCommand {
         match self {
             IntelCommand::Seed { db } => run_intel_seed(db),
             IntelCommand::Import { path, db } => run_intel_import(&path, db),
+            IntelCommand::Label {
+                kind,
+                value,
+                label,
+                category,
+                note,
+                db,
+            } => run_intel_label(&kind, &value, &label, &category, note.as_deref(), db),
+            IntelCommand::Unlabel { kind, value, db } => run_intel_unlabel(&kind, &value, db),
+            IntelCommand::Labels { json, db } => run_intel_labels(json, db),
             IntelCommand::Lookup {
                 kind,
                 value,
@@ -674,6 +750,7 @@ fn run_serve(
     web: PathBuf,
     location: Option<String>,
     shared_networks: Vec<Network>,
+    local_networks: Vec<Network>,
     library: Vec<PathBuf>,
     replay: Option<PathBuf>,
     repeat: bool,
@@ -711,6 +788,7 @@ fn run_serve(
         source,
         location,
         shared_networks,
+        local_networks,
         library,
     })
 }
@@ -1085,12 +1163,71 @@ fn run_intel_import(path: &Path, db: Option<PathBuf>) -> Result<()> {
     Ok(())
 }
 
-fn run_intel_lookup(kind: &str, value: &str, json: bool, db: Option<PathBuf>) -> Result<()> {
-    let kind = FpKind::from_token(&kind.to_ascii_lowercase()).with_context(|| {
+fn parse_kind(kind: &str) -> Result<FpKind> {
+    FpKind::from_token(&kind.to_ascii_lowercase()).with_context(|| {
         format!(
             "unknown fingerprint kind '{kind}'; expected ja3, ja3s, ja4, ja4s, ja4h, ja4x, ja4t, or ja4ts"
         )
-    })?;
+    })
+}
+
+fn run_intel_label(
+    kind: &str,
+    value: &str,
+    label: &str,
+    category: &str,
+    note: Option<&str>,
+    db: Option<PathBuf>,
+) -> Result<()> {
+    let kind = parse_kind(kind)?;
+    let category = tlsfp_intel::Category::from_token(category);
+    let mut store = open_or_create(&resolve_db(db))?;
+    let created = store.add_label(kind, value, label, category, note)?;
+    println!(
+        "{} {} {} as \"{}\" ({})",
+        if created { "labelled" } else { "relabelled" },
+        kind.as_str(),
+        value.trim().to_ascii_lowercase(),
+        label.trim(),
+        category.as_str()
+    );
+    Ok(())
+}
+
+fn run_intel_unlabel(kind: &str, value: &str, db: Option<PathBuf>) -> Result<()> {
+    let kind = parse_kind(kind)?;
+    let mut store = open_existing(&resolve_db(db))?;
+    if store.remove_label(kind, value)? {
+        println!("removed the label for {} {}", kind.as_str(), value.trim());
+        Ok(())
+    } else {
+        anyhow::bail!("no local label for {} {}", kind.as_str(), value.trim())
+    }
+}
+
+fn run_intel_labels(json: bool, db: Option<PathBuf>) -> Result<()> {
+    let store = open_existing(&resolve_db(db))?;
+    let labels = store.labels()?;
+    if json {
+        let stdout = std::io::stdout().lock();
+        serde_json::to_writer_pretty(stdout, &labels).context("writing labels as JSON")?;
+        println!();
+        return Ok(());
+    }
+    if labels.is_empty() {
+        println!("no local labels; add one with: tlsfp intel label ja4 VALUE --label \"name\"");
+    }
+    for label in &labels {
+        println!(
+            "{:<6} {}  {} ({})",
+            label.kind, label.value, label.label, label.category
+        );
+    }
+    Ok(())
+}
+
+fn run_intel_lookup(kind: &str, value: &str, json: bool, db: Option<PathBuf>) -> Result<()> {
+    let kind = parse_kind(kind)?;
     let store = open_existing(&resolve_db(db))?;
     let report = store.match_fingerprint(kind, value)?;
     if json {

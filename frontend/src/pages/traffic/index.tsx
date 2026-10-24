@@ -28,18 +28,30 @@ const CHART_W = 600
 const CHART_H = 120
 const SHOWN = 200
 
+function areaPath(values: number[], max: number): string {
+  const line = linePath(values, CHART_W, CHART_H, max)
+  return line === '' ? '' : `${line} L${CHART_W} ${CHART_H} L0 ${CHART_H} Z`
+}
+
+function spanLabel(seconds: number): string {
+  if (seconds >= 120) return `${Math.round(seconds / 60)} min ago`
+  return `${seconds} s ago`
+}
+
 function Throughput({ samples }: { samples: RateSample[] }): React.ReactElement {
   const ins = samples.map((s) => s.inBps)
   const outs = samples.map((s) => s.outBps)
-  const mids = samples.map((s) => s.internalBps)
-  const max = chartMax([...ins, ...outs, ...mids])
+  const others = samples.map((s) => s.otherBps)
+  const peak = Math.max(0, ...ins, ...outs, ...others)
+  const max = chartMax([...ins, ...outs, ...others])
   const latest = samples.at(-1)
+  const quiet = samples.length > 0 && peak === 0
   return (
     <CropFrame
       label="throughput"
       aside={
         <span className={styles.aside}>
-          {latest ? `peak scale ${formatBitRate(max)}` : 'waiting for samples'}
+          {latest ? `scale ${formatBitRate(max)}` : 'waiting for samples'}
         </span>
       }
       className={styles.chartFrame}
@@ -52,40 +64,63 @@ function Throughput({ samples }: { samples: RateSample[] }): React.ReactElement 
           <span className={styles.keyIn}>
             in {latest ? formatBitRate(latest.inBps) : '-'}
           </span>
-          <span className={styles.keyMid}>
-            internal {latest ? formatBitRate(latest.internalBps) : '-'}
+          <span
+            className={styles.keyMid}
+            title="Traffic between two local hosts, or two remote ones the sensor merely sees"
+          >
+            other {latest ? formatBitRate(latest.otherBps) : '-'}
           </span>
           <span className={styles.keyPkt}>
             {latest ? Math.round(latest.packetsPerSecond).toLocaleString() : '-'}{' '}
             pkt/s
           </span>
         </div>
-        <svg
-          viewBox={`0 0 ${CHART_W} ${CHART_H}`}
-          className={styles.chart}
-          role="img"
-          aria-label="Inbound and outbound throughput over the last few minutes"
-          preserveAspectRatio="none"
-        >
-          {[0.25, 0.5, 0.75].map((line) => (
-            <line
-              key={line}
-              x1="0"
-              x2={CHART_W}
-              y1={CHART_H * line}
-              y2={CHART_H * line}
-              className={styles.grid}
+        <div className={styles.plot}>
+          <div className={styles.yAxis} aria-hidden="true">
+            <span>{formatBitRate(max)}</span>
+            <span>{formatBitRate(max / 2)}</span>
+            <span>0</span>
+          </div>
+          <svg
+            viewBox={`0 0 ${CHART_W} ${CHART_H}`}
+            className={styles.chart}
+            role="img"
+            aria-label={`Throughput over the last ${spanLabel(samples.length)}: outbound, inbound and other`}
+            preserveAspectRatio="none"
+          >
+            {[0.25, 0.5, 0.75].map((line) => (
+              <line
+                key={line}
+                x1="0"
+                x2={CHART_W}
+                y1={CHART_H * line}
+                y2={CHART_H * line}
+                className={styles.grid}
+              />
+            ))}
+            <path d={areaPath(ins, max)} className={styles.areaIn} />
+            <path d={areaPath(outs, max)} className={styles.areaOut} />
+            <path
+              d={linePath(others, CHART_W, CHART_H, max)}
+              className={styles.lineMid}
             />
-          ))}
-          <path
-            d={linePath(ins, CHART_W, CHART_H, max)}
-            className={styles.lineIn}
-          />
-          <path
-            d={linePath(outs, CHART_W, CHART_H, max)}
-            className={styles.lineOut}
-          />
-        </svg>
+            <path
+              d={linePath(ins, CHART_W, CHART_H, max)}
+              className={styles.lineIn}
+            />
+            <path
+              d={linePath(outs, CHART_W, CHART_H, max)}
+              className={styles.lineOut}
+            />
+          </svg>
+          {quiet && (
+            <span className={styles.quiet}>no traffic in this window</span>
+          )}
+        </div>
+        <div className={styles.xAxis} aria-hidden="true">
+          <span>{samples.length > 0 ? spanLabel(samples.length) : ''}</span>
+          <span>now</span>
+        </div>
       </div>
     </CropFrame>
   )
@@ -219,8 +254,9 @@ export function Component(): React.ReactElement {
         <h1 className={styles.title}>Traffic</h1>
         <p className={styles.sub}>
           Every conversation the sensor sees, with bytes and packets each way,
-          which client made it and which server name it asked for. Addresses on
-          private, loopback and link-local networks count as local.
+          which client made it and which server name it asked for. "Local" means
+          the networks the capture interface sits on plus private, loopback and
+          link-local ranges; add others with --local-network.
         </p>
       </section>
 

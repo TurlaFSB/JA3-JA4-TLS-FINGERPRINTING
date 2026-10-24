@@ -52,12 +52,22 @@ export const serviceShareSchema = z.object({
   bytes: z.number(),
 })
 
+// Bytes moved in one second. "other" is internal and transit traffic.
+export const ratePointSchema = z.object({
+  t_ms: z.number(),
+  out_bytes: z.number(),
+  in_bytes: z.number(),
+  other_bytes: z.number(),
+  packets: z.number(),
+})
+
 export const trafficViewSchema = z.object({
   enabled: z.boolean(),
   totals: totalsSchema,
   active_flows: z.number(),
   latest_ns: z.number(),
   talkers: z.array(talkerSchema),
+  history: z.array(ratePointSchema).default([]),
   services: z.array(serviceShareSchema),
   flows: z.array(trafficFlowSchema),
 })

@@ -17,6 +17,8 @@
 
 use std::collections::HashMap;
 use std::net::{IpAddr, SocketAddr};
+
+use crate::net::Network;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use serde::Serialize;
@@ -57,7 +59,10 @@ pub enum FlowState {
     Reset,
 }
 
-/// Whether an address is on a network the sensor treats as local.
+/// Whether an address is in a range that is private by definition: RFC 1918,
+/// loopback, link-local and IPv6 unique-local. A sensor can also be told its
+/// own networks (see [`TrafficTable::set_local_networks`]), which is what makes
+/// a host with a public address count as local.
 #[must_use]
 pub fn is_local(ip: IpAddr) -> bool {
     match ip {
@@ -197,6 +202,9 @@ pub struct TrafficTable {
     max: usize,
     flows: HashMap<Key, Entry>,
     totals: Totals,
+    /// Networks the operator or the capture interface says are ours, beyond
+    /// the private ranges.
+    local: Vec<Network>,
 }
 
 impl Default for TrafficTable {
@@ -212,7 +220,19 @@ impl TrafficTable {
             max: max.max(1),
             flows: HashMap::new(),
             totals: Totals::default(),
+            local: Vec::new(),
         }
+    }
+
+    /// Declares the networks this sensor sits on. Without them only private
+    /// ranges are local, so a machine with a public IPv6 or IPv4 address would
+    /// see all its own traffic as transit between two strangers.
+    pub fn set_local_networks(&mut self, networks: Vec<Network>) {
+        self.local = networks;
+    }
+
+    fn is_ours(&self, ip: IpAddr) -> bool {
+        is_local(ip) || self.local.iter().any(|net| net.contains(ip))
     }
 
     /// Counts one packet. `wire_len` is the captured frame length.
@@ -226,7 +246,7 @@ impl TrafficTable {
         tcp: Option<TcpBits>,
     ) {
         let len = wire_len as u64;
-        match (is_local(src.ip()), is_local(dst.ip())) {
+        match (self.is_ours(src.ip()), self.is_ours(dst.ip())) {
             (true, false) => {
                 self.totals.out_bytes += len;
                 self.totals.out_packets += 1;
@@ -344,7 +364,7 @@ impl TrafficTable {
     /// Every conversation, most recently active first, at most `limit`.
     #[must_use]
     pub fn rows(&self, limit: usize) -> Vec<FlowRow> {
-        let mut rows: Vec<FlowRow> = self.flows.iter().map(|(k, e)| row(k, e)).collect();
+        let mut rows: Vec<FlowRow> = self.flows.iter().map(|(k, e)| self.row(k, e)).collect();
         rows.sort_by(|a, b| {
             b.last_ns
                 .cmp(&a.last_ns)
@@ -357,13 +377,17 @@ impl TrafficTable {
     /// Every conversation, for aggregation.
     #[must_use]
     pub fn all_rows(&self) -> Vec<FlowRow> {
-        self.flows.iter().map(|(k, e)| row(k, e)).collect()
+        self.flows.iter().map(|(k, e)| self.row(k, e)).collect()
+    }
+
+    fn row(&self, key: &Key, e: &Entry) -> FlowRow {
+        row(key, e, |ip| self.is_ours(ip))
     }
 }
 
-fn row(key: &Key, e: &Entry) -> FlowRow {
+fn row(key: &Key, e: &Entry, local: impl Fn(IpAddr) -> bool) -> FlowRow {
     let responder = if e.initiator == key.a { key.b } else { key.a };
-    let direction = match (is_local(e.initiator.ip()), is_local(responder.ip())) {
+    let direction = match (local(e.initiator.ip()), local(responder.ip())) {
         (true, false) => Direction::Outbound,
         (false, true) => Direction::Inbound,
         (true, true) => Direction::Internal,
@@ -408,6 +432,33 @@ mod tests {
 
     fn addr(s: &str) -> SocketAddr {
         s.parse().unwrap()
+    }
+
+    #[test]
+    fn a_public_address_on_a_declared_network_is_local() {
+        let mut t = TrafficTable::default();
+        // A host with a global IPv6 address talking to a CDN: with no declared
+        // network this is "transit"; once the sensor knows its own prefix it
+        // is outbound.
+        let (me, cdn) = (
+            addr("[2409:40f4:40d1:a0f6::5]:50000"),
+            addr("[2606:4700::1]:443"),
+        );
+        let go = |t: &mut TrafficTable| {
+            t.record(Proto::Tcp, me, cdn, 100, 1, None);
+            t.record(Proto::Tcp, cdn, me, 400, 2, None);
+        };
+        go(&mut t);
+        assert_eq!(t.totals().transit_bytes, 500);
+        assert_eq!(t.totals().out_bytes, 0);
+
+        let mut t = TrafficTable::default();
+        t.set_local_networks(vec!["2409:40f4:40d1:a0f6::/64".parse().unwrap()]);
+        go(&mut t);
+        assert_eq!(t.totals().out_bytes, 100);
+        assert_eq!(t.totals().in_bytes, 400);
+        assert_eq!(t.totals().transit_bytes, 0);
+        assert_eq!(t.rows(1)[0].direction, Direction::Outbound);
     }
 
     #[test]
