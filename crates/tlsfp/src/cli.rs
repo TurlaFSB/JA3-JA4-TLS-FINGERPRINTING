@@ -9,7 +9,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use tracing_subscriber::EnvFilter;
 
-use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, PipelineConfig, SourceError};
+use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, SourceError};
 
 use crate::live::{DEFAULT_BPF_FILTER, LiveConfig, LiveSource};
 use crate::report::ReportBuilder;
@@ -66,6 +66,9 @@ pub struct Cli {
         default_value = "info"
     )]
     pub alert_min_severity: tlsfp_intel::AlertSeverity,
+
+    #[command(flatten)]
+    pub engine: crate::engine::EngineArgs,
 
     #[command(subcommand)]
     pub command: Command,
@@ -156,6 +159,17 @@ pub enum Command {
         /// instead of switching it to promiscuous mode.
         #[arg(long)]
         no_promisc: bool,
+
+        /// Kernel capture buffer in MiB (default 32). Bursts queue here; when
+        /// it overflows the kernel drops frames, which the capture health
+        /// reports. Raise it on a link that bursts.
+        #[arg(
+            long,
+            env = "TLSFP_CAPTURE_BUFFER_MIB",
+            value_name = "MIB",
+            value_parser = clap::value_parser!(u32).range(1..=1024)
+        )]
+        buffer_mib: Option<u32>,
 
         /// Match each fingerprint against the intelligence database.
         #[arg(long)]
@@ -284,6 +298,17 @@ pub enum Command {
         /// Capture only the interface's own traffic instead of promiscuous mode.
         #[arg(long)]
         no_promisc: bool,
+
+        /// Kernel capture buffer in MiB (default 32). Bursts queue here; when
+        /// it overflows the kernel drops frames, which the capture health
+        /// reports. Raise it on a link that bursts.
+        #[arg(
+            long,
+            env = "TLSFP_CAPTURE_BUFFER_MIB",
+            value_name = "MIB",
+            value_parser = clap::value_parser!(u32).range(1..=1024)
+        )]
+        buffer_mib: Option<u32>,
     },
 
     /// Work with detection rule files.
@@ -533,6 +558,7 @@ impl Cli {
     }
 
     pub fn run(self) -> Result<()> {
+        crate::engine::init(self.engine);
         crate::extras::init(self.rules.as_ref())?;
         crate::deliver::init(&crate::deliver::DeliveryConfig {
             file: self.alert_file.clone(),
@@ -570,6 +596,7 @@ impl Cli {
                 json,
                 filter,
                 no_promisc,
+                buffer_mib,
                 intel,
                 detect,
                 shared_network,
@@ -579,6 +606,7 @@ impl Cli {
                 json,
                 filter,
                 !no_promisc,
+                buffer_mib,
                 intel,
                 detect,
                 &shared_network,
@@ -600,6 +628,7 @@ impl Cli {
                 live,
                 filter,
                 no_promisc,
+                buffer_mib,
             } => run_serve(
                 bind,
                 db,
@@ -616,6 +645,7 @@ impl Cli {
                 live,
                 filter,
                 no_promisc,
+                buffer_mib,
             ),
             Command::Rules { action } => match action {
                 RulesCommand::Check { file } => run_rules_check(&file),
@@ -686,7 +716,7 @@ fn run_pcap(
     let mut source = PcapFileSource::open(path)
         .with_context(|| format!("cannot open capture {}", path.display()))?;
     let mut store = open_for_run(intel, detect, db, shared)?;
-    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    let mut pipeline = Pipeline::new(crate::engine::config());
 
     let stdout = std::io::stdout().lock();
     let mut out = std::io::BufWriter::new(stdout);
@@ -772,7 +802,7 @@ fn run_pcap_report(
         .with_context(|| format!("cannot open capture {}", path.display()))?;
     let mut store = open_for_report(db, shared)?;
     let enabled = store.is_some();
-    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    let mut pipeline = Pipeline::new(crate::engine::config());
     let mut builder = ReportBuilder::new(&path.display().to_string());
 
     let started = Instant::now();
@@ -841,6 +871,7 @@ fn run_serve(
     live: Option<String>,
     filter: String,
     no_promisc: bool,
+    buffer_mib: Option<u32>,
 ) -> Result<()> {
     if replay.is_some() && live.is_some() {
         anyhow::bail!("choose either --replay or --live as the live feed, not both");
@@ -860,6 +891,7 @@ fn run_serve(
             interface,
             filter,
             promiscuous: !no_promisc,
+            buffer_mib,
         }
     } else {
         Source::Tail
@@ -890,6 +922,7 @@ fn run_live(
     json: bool,
     filter: String,
     promiscuous: bool,
+    buffer_mib: Option<u32>,
     intel: bool,
     detect: bool,
     shared: &[Network],
@@ -898,6 +931,7 @@ fn run_live(
     let config = LiveConfig {
         filter,
         promiscuous,
+        buffer_mib,
     };
     let store = open_for_run(intel, detect, db, shared)?;
     let source = LiveSource::open(interface, &config)?;
@@ -936,7 +970,7 @@ async fn drive_live(
         }
     });
 
-    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    let mut pipeline = Pipeline::new(crate::engine::config());
     let stdout = std::io::stdout().lock();
     let mut out = std::io::BufWriter::new(stdout);
     let mut write_failure: Option<std::io::Error> = None;

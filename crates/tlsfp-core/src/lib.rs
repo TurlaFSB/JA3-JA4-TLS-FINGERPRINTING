@@ -36,4 +36,4 @@ pub use ja4x::ja4x;
 pub use parse::{ClientHello, Extension, ServerHello};
 pub use pipeline::event::{FingerprintEvent, StreamEvent};
 pub use pipeline::source::{PacketSource, PcapFileSource, RawFrame, SourceError};
-pub use pipeline::{Counters, Pipeline, PipelineConfig};
+pub use pipeline::{Counters, CountersHandle, Pipeline, PipelineConfig};

@@ -20,6 +20,7 @@ pub mod tls;
 pub mod traffic;
 
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex, PoisonError};
 
 use serde::Serialize;
 
@@ -88,7 +89,7 @@ impl Default for PipelineConfig {
 /// What the pipeline saw, for the operator and for the miss rate honesty
 /// check: a fingerprinting tool that cannot say what it failed to read is a
 /// tool whose silence gets mistaken for absence.
-#[derive(Debug, Default, Clone, Copy, Serialize)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct Counters {
     pub frames: u64,
     pub bytes: u64,
@@ -122,6 +123,28 @@ pub struct Counters {
     /// Initials carrying a QUIC version this build has no salt for.
     pub quic_version_unsupported: u64,
 }
+
+/// A shareable window onto a running pipeline's [`Counters`], so a server
+/// thread can report capture health while the capture thread works.
+#[derive(Clone, Default)]
+pub struct CountersHandle(Arc<Mutex<Counters>>);
+
+impl CountersHandle {
+    /// The counters as of the pipeline's last publication.
+    #[must_use]
+    pub fn get(&self) -> Counters {
+        *self.0.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    fn set(&self, counters: Counters) {
+        *self.0.lock().unwrap_or_else(PoisonError::into_inner) = counters;
+    }
+}
+
+/// Frames between two publications of the counters. A lock per frame would
+/// be wasted work; per 64 keeps the view fresh to well under a second on a
+/// busy link and costs nothing measurable.
+const PUBLISH_EVERY_FRAMES: u64 = 64;
 
 impl Counters {
     /// The share of recognized TLS streams the capture clipped before a
@@ -225,6 +248,7 @@ pub struct Pipeline {
     quic_flows: HashMap<FlowKey, QuicFlow>,
     counters: Counters,
     traffic: Option<TrafficHandle>,
+    published: Option<CountersHandle>,
 }
 
 impl Pipeline {
@@ -236,6 +260,7 @@ impl Pipeline {
             quic_flows: HashMap::new(),
             counters: Counters::default(),
             traffic: None,
+            published: None,
         }
     }
 
@@ -244,6 +269,12 @@ impl Pipeline {
     /// lock per packet, which a file analysis does not need.
     pub fn track_traffic(&mut self, handle: TrafficHandle) {
         self.traffic = Some(handle);
+    }
+
+    /// Publishes the counters into `handle` as frames are processed, so
+    /// another thread can show how the capture is doing.
+    pub fn publish_counters(&mut self, handle: CountersHandle) {
+        self.published = Some(handle);
     }
 
     #[must_use]
@@ -268,6 +299,11 @@ impl Pipeline {
     pub fn feed(&mut self, frame: &RawFrame<'_>, sink: &mut impl FnMut(FingerprintEvent)) {
         self.counters.frames += 1;
         self.counters.bytes += frame.data.len() as u64;
+        if self.counters.frames % PUBLISH_EVERY_FRAMES == 0 {
+            if let Some(handle) = &self.published {
+                handle.set(self.counters);
+            }
+        }
 
         // What a client hello reveals is attached to its conversation after the
         // packet is handled, so the traffic table is locked once per frame.
@@ -561,6 +597,9 @@ impl Pipeline {
         }
         self.flows.clear();
         self.quic_flows.clear();
+        if let Some(handle) = &self.published {
+            handle.set(self.counters);
+        }
     }
 
     /// Sheds flows when the table is full: everything idle past the timeout

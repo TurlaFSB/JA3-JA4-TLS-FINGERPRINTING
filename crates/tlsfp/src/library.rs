@@ -22,7 +22,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::Serialize;
-use tlsfp_core::{PcapFileSource, Pipeline, PipelineConfig, StreamEvent};
+use tlsfp_core::{PcapFileSource, Pipeline, StreamEvent};
 use tlsfp_intel::{
     ClientFamily, ClientGuess, Confidence, IntelStore, MatchStrength, Verdict, infer_client,
 };
@@ -146,7 +146,7 @@ pub fn analyse(path: &Path, name: String, store: &IntelStore) -> CaptureSummary 
             return summary;
         }
     };
-    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    let mut pipeline = Pipeline::new(crate::engine::config());
     let mut clients: HashMap<String, ClientAcc> = HashMap::new();
     let run = pipeline.run(&mut source, |event| {
         summary.first_ts_nanos = Some(

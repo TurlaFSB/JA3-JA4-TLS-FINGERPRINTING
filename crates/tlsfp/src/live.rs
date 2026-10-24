@@ -26,8 +26,9 @@
 use std::io::ErrorKind;
 use std::sync::Arc;
 use std::sync::OnceLock;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::thread::JoinHandle;
+use std::time::{Duration, Instant};
 
 use pcap::{Active, Capture, Device};
 #[cfg(unix)]
@@ -57,6 +58,9 @@ const SNAPLEN: i32 = 65_535;
 /// an idle interface, and it is paid only as latency, never as busy work.
 const POLL_TIMEOUT_MILLIS: i64 = 100;
 
+/// How often the kernel's drop counters are re-read while capturing.
+const STATS_REFRESH: Duration = Duration::from_secs(1);
+
 /// Kernel capture buffer. This is the shock absorber while the channel is
 /// full: bursts queue here, and only when it overflows does the kernel
 /// drop, visibly, into [`CaptureStats::kernel_dropped`].
@@ -69,13 +73,26 @@ pub const BUFFER_ENV: &str = "TLSFP_CAPTURE_BUFFER_MIB";
 
 /// The kernel capture buffer in bytes: the environment override when it is a
 /// sensible number, the default otherwise.
-fn kernel_buffer_bytes() -> i32 {
-    let mib = std::env::var(BUFFER_ENV)
-        .ok()
-        .and_then(|value| value.trim().parse::<i32>().ok())
-        .filter(|mib| (1..=1024).contains(mib))
+fn kernel_buffer_bytes(requested: Option<u32>) -> i32 {
+    let mib = requested
+        .and_then(|mib| i32::try_from(mib).ok())
+        .or_else(|| {
+            std::env::var(BUFFER_ENV)
+                .ok()
+                .and_then(|value| value.trim().parse::<i32>().ok())
+        })
+        .filter(|mib| (1..=MAX_BUFFER_MIB).contains(mib))
         .unwrap_or(DEFAULT_BUFFER_MIB);
     mib * 1024 * 1024
+}
+
+/// The largest kernel buffer accepted, in MiB.
+pub const MAX_BUFFER_MIB: i32 = 1024;
+
+/// The kernel buffer a capture with this configuration will ask for, in MiB.
+#[must_use]
+pub fn effective_buffer_mib(config: &LiveConfig) -> i32 {
+    kernel_buffer_bytes(config.buffer_mib) / (1024 * 1024)
 }
 
 /// Frames in flight between the capture thread and the consumer. Bounded
@@ -112,6 +129,9 @@ pub struct LiveConfig {
     pub filter: String,
     /// Whether to ask the interface for traffic beyond its own addresses.
     pub promiscuous: bool,
+    /// Kernel capture buffer in MiB. `None` uses the environment override
+    /// or the default.
+    pub buffer_mib: Option<u32>,
 }
 
 impl Default for LiveConfig {
@@ -119,6 +139,30 @@ impl Default for LiveConfig {
         Self {
             filter: DEFAULT_BPF_FILTER.to_owned(),
             promiscuous: true,
+            buffer_mib: None,
+        }
+    }
+}
+
+/// The kernel's running counts for a live capture, readable from any thread
+/// while the capture runs. Refreshed about once a second.
+#[derive(Clone, Default)]
+pub struct KernelStats(Arc<[AtomicU64; 3]>);
+
+impl KernelStats {
+    fn store(&self, stats: CaptureStats) {
+        self.0[0].store(stats.received, Ordering::Relaxed);
+        self.0[1].store(stats.kernel_dropped, Ordering::Relaxed);
+        self.0[2].store(stats.interface_dropped, Ordering::Relaxed);
+    }
+
+    /// The counts as of the last refresh.
+    #[must_use]
+    pub fn get(&self) -> CaptureStats {
+        CaptureStats {
+            received: self.0[0].load(Ordering::Relaxed),
+            kernel_dropped: self.0[1].load(Ordering::Relaxed),
+            interface_dropped: self.0[2].load(Ordering::Relaxed),
         }
     }
 }
@@ -174,6 +218,7 @@ pub struct LiveSource {
     local: Vec<Network>,
     stop: Arc<AtomicBool>,
     failure: Arc<OnceLock<String>>,
+    kernel: KernelStats,
     failure_reported: bool,
     thread: Option<JoinHandle<Option<CaptureStats>>>,
 }
@@ -190,7 +235,7 @@ impl LiveSource {
             .snaplen(SNAPLEN)
             .immediate_mode(true)
             .timeout(i32::try_from(POLL_TIMEOUT_MILLIS).unwrap_or(100))
-            .buffer_size(kernel_buffer_bytes());
+            .buffer_size(kernel_buffer_bytes(config.buffer_mib));
         let mut capture = inactive
             .open()
             .map_err(|error| open_error(interface, &error))?;
@@ -209,12 +254,14 @@ impl LiveSource {
         let (sender, receiver) = flume::bounded(CHANNEL_CAPACITY);
         let stop = Arc::new(AtomicBool::new(false));
         let failure = Arc::new(OnceLock::new());
+        let kernel = KernelStats::default();
         let thread = std::thread::Builder::new()
             .name("tlsfp-capture".to_owned())
             .spawn({
                 let stop = Arc::clone(&stop);
                 let failure = Arc::clone(&failure);
-                move || capture_loop(capture, &sender, &stop, &failure)
+                let kernel = kernel.clone();
+                move || capture_loop(capture, &sender, &stop, &failure, &kernel)
             })
             .map_err(LiveError::Spawn)?;
 
@@ -228,6 +275,7 @@ impl LiveSource {
             local: interface_networks(interface),
             stop,
             failure,
+            kernel,
             failure_reported: false,
             thread: Some(thread),
         })
@@ -240,6 +288,12 @@ impl LiveSource {
     #[must_use]
     pub fn local_networks(&self) -> Vec<Network> {
         self.local.clone()
+    }
+
+    /// The kernel's running drop counts, for showing capture health.
+    #[must_use]
+    pub fn kernel_stats(&self) -> KernelStats {
+        self.kernel.clone()
     }
 
     /// Returns a handle that requests a graceful stop of the capture.
@@ -377,8 +431,20 @@ fn capture_loop(
     sender: &flume::Sender<CapturedFrame>,
     stop: &AtomicBool,
     failure: &OnceLock<String>,
+    kernel: &KernelStats,
 ) -> Option<CaptureStats> {
+    let mut refreshed = Instant::now();
     'capture: while !stop.load(Ordering::Relaxed) {
+        if refreshed.elapsed() >= STATS_REFRESH {
+            if let Ok(stat) = capture.stats() {
+                kernel.store(CaptureStats {
+                    received: u64::from(stat.received),
+                    kernel_dropped: u64::from(stat.dropped),
+                    interface_dropped: u64::from(stat.if_dropped),
+                });
+            }
+            refreshed = Instant::now();
+        }
         let hangup = match wait_readable(&capture, failure) {
             Wait::Idle => continue,
             Wait::Failed => break 'capture,
@@ -623,6 +689,7 @@ mod tests {
             local: Vec::new(),
             stop: Arc::new(AtomicBool::new(false)),
             failure,
+            kernel: super::KernelStats::default(),
             failure_reported: false,
             thread: None,
         }
@@ -739,6 +806,7 @@ mod tests {
         let config = LiveConfig {
             filter: "tcp and port 39999".to_owned(),
             promiscuous: false,
+            ..LiveConfig::default()
         };
         let mut source = LiveSource::open("lo", &config).unwrap();
         let _ = std::net::TcpStream::connect(("127.0.0.1", 39999));

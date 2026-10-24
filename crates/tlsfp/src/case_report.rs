@@ -17,7 +17,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use anyhow::{Context, Result};
 use sha2::{Digest, Sha256};
-use tlsfp_core::{PcapFileSource, Pipeline, PipelineConfig};
+use tlsfp_core::{PcapFileSource, Pipeline};
 use tlsfp_intel::{Alert, DetectConfig, IntelStore, Rule};
 
 use crate::deliver::rfc3339;
@@ -76,7 +76,7 @@ fn detect(path: &Path, db: &Path, scratch: &Path) -> Result<(Vec<Alert>, usize)>
         ..DetectConfig::default()
     });
     let mut source = PcapFileSource::open(path).context("opening the capture")?;
-    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    let mut pipeline = Pipeline::new(crate::engine::config());
     let mut alerts = Vec::new();
     let run = pipeline.run(&mut source, |event| {
         if let Ok(found) = store.detect(&event) {

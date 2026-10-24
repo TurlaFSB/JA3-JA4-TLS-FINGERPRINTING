@@ -46,7 +46,7 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 
 use tlsfp_core::pipeline::traffic::{Direction, FlowRow, Totals, TrafficHandle};
-use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, PipelineConfig, StreamEvent};
+use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, StreamEvent};
 use tlsfp_intel::{
     Alert, CatalogEntry, DetectConfig, FpKind, IntelStore, MatchReport, MatchStrength, Network,
     Rule, Stats, infer_client,
@@ -106,6 +106,7 @@ pub enum Source {
         interface: String,
         filter: String,
         promiscuous: bool,
+        buffer_mib: Option<u32>,
     },
 }
 
@@ -142,6 +143,20 @@ struct Feed {
     history: Arc<Mutex<std::collections::VecDeque<Arc<str>>>>,
     /// The conversation table the capture thread fills and `/api/traffic` reads.
     traffic: TrafficHandle,
+    /// The engine's counters, published by the capture thread.
+    counters: tlsfp_core::CountersHandle,
+    /// How the capture was set up, filled in once it starts.
+    capture: Arc<std::sync::OnceLock<CaptureSetup>>,
+}
+
+/// How the feed is captured, for the capture health panel.
+struct CaptureSetup {
+    mode: &'static str,
+    interface: Option<String>,
+    filter: Option<String>,
+    promiscuous: Option<bool>,
+    buffer_mib: Option<i32>,
+    kernel: Option<crate::live::KernelStats>,
 }
 
 impl Feed {
@@ -153,6 +168,8 @@ impl Feed {
                 HISTORY_LINES,
             ))),
             traffic: TrafficHandle::default(),
+            counters: tlsfp_core::CountersHandle::default(),
+            capture: Arc::new(std::sync::OnceLock::new()),
         }
     }
 
@@ -455,6 +472,7 @@ fn router(web: &std::path::Path, state: Shared, allowed: &[String]) -> Router {
     let web_root = Arc::new(web.to_path_buf());
 
     let ops = Router::new()
+        .route("/api/capture", get(capture_health))
         .route("/metrics", get(metrics))
         .with_state(Arc::clone(&state_for_metrics));
 
@@ -697,6 +715,26 @@ async fn metrics(State(state): State<Shared>) -> Result<impl IntoResponse, ApiEr
         }
         let _ = writeln!(out, "# HELP tlsfp_conversations Conversations currently tracked.\n# TYPE tlsfp_conversations gauge\ntlsfp_conversations {active}");
         let _ = writeln!(out, "# HELP tlsfp_conversations_shed_total Conversations dropped because the table was full.\n# TYPE tlsfp_conversations_shed_total counter\ntlsfp_conversations_shed_total {}", totals.flows_shed);
+        {
+            let view = build_capture_view(&state);
+            let c = &view.counters;
+            for (name, help, value) in [
+                ("tlsfp_frames_total", "Frames read by the engine.", c.frames),
+                ("tlsfp_handshakes_fingerprinted_total", "TLS handshake messages fully read.", c.tls_handshakes_fingerprinted),
+                ("tlsfp_tls_streams_unfinished_total", "TLS streams that ended before a full handshake was read.", c.unfinished_tls_streams),
+                ("tlsfp_flows_evicted_pressure_total", "Conversations shed because the table was full.", c.flows_evicted_pressure),
+                ("tlsfp_streams_capped_total", "Streams clipped at the per-stream limit.", c.streams_capped),
+                ("tlsfp_frames_malformed_total", "Frames skipped as malformed.", c.skipped_malformed),
+                ("tlsfp_quic_initials_total", "QUIC Initial packets seen.", c.quic_initials),
+                ("tlsfp_quic_decrypted_total", "QUIC client Initials decrypted.", c.quic_decrypted),
+            ] {
+                let _ = writeln!(out, "# HELP {name} {help}\n# TYPE {name} counter\n{name} {value}");
+            }
+            if let Some(kernel) = &view.kernel {
+                let _ = writeln!(out, "# HELP tlsfp_kernel_received_total Frames the capture socket accepted.\n# TYPE tlsfp_kernel_received_total counter\ntlsfp_kernel_received_total {}", kernel.received);
+                let _ = writeln!(out, "# HELP tlsfp_kernel_dropped_total Frames the kernel dropped because the reader fell behind.\n# TYPE tlsfp_kernel_dropped_total counter\ntlsfp_kernel_dropped_total {}", kernel.dropped + kernel.interface_dropped);
+            }
+        }
         let _ = writeln!(out, "# HELP tlsfp_alerts_total Alerts recorded, by rule.\n# TYPE tlsfp_alerts_total counter");
         for (rule, count) in counts {
             let _ = writeln!(out, "tlsfp_alerts_total{{rule=\"{}\"}} {count}", rule.as_str());
@@ -968,6 +1006,197 @@ const DEFAULT_TRAFFIC_FLOWS: usize = 300;
 #[derive(Deserialize)]
 struct TrafficQuery {
     limit: Option<usize>,
+}
+
+/// One thing the operator should know about how well the capture is reading.
+#[derive(Serialize, Clone, Debug, PartialEq, Eq)]
+struct HealthNote {
+    /// `warn` when results are being lost, `info` when they are only limited.
+    level: &'static str,
+    text: String,
+}
+
+#[derive(Serialize)]
+struct KernelView {
+    received: u64,
+    dropped: u64,
+    interface_dropped: u64,
+}
+
+#[derive(Serialize)]
+struct LimitsView {
+    max_flows: usize,
+    idle_timeout_secs: u64,
+    stream_limit_kib: usize,
+}
+
+/// How the capture is set up and how well it is reading: the numbers that
+/// tell an operator whether an absence of fingerprints means an absence of
+/// handshakes.
+#[derive(Serialize)]
+struct CaptureView {
+    mode: String,
+    interface: Option<String>,
+    filter: Option<String>,
+    promiscuous: Option<bool>,
+    buffer_mib: Option<i32>,
+    limits: LimitsView,
+    counters: tlsfp_core::Counters,
+    kernel: Option<KernelView>,
+    /// Share of recognised TLS streams that ended before a full handshake
+    /// message was read.
+    tls_miss_rate: f64,
+    /// `ok`, `degraded` (limits hit) or `lossy` (frames lost).
+    status: &'static str,
+    notes: Vec<HealthNote>,
+}
+
+/// How much a finding matters to the results.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Weight {
+    Info,
+    /// Results are limited (clipped streams, partial handshakes).
+    Limit,
+    /// Frames or conversations were lost.
+    Loss,
+}
+
+/// Turns raw counters into plain statements about what may have been missed.
+/// Pure so every threshold is tested.
+fn assess(
+    counters: &tlsfp_core::Counters,
+    kernel: Option<&KernelView>,
+    limits: &LimitsView,
+) -> (&'static str, Vec<HealthNote>) {
+    let mut found: Vec<(Weight, String)> = Vec::new();
+    if let Some(kernel) = kernel {
+        let lost = kernel.dropped + kernel.interface_dropped;
+        if lost > 0 {
+            #[allow(clippy::cast_precision_loss)]
+            let share = lost as f64 / (kernel.received + lost).max(1) as f64 * 100.0;
+            found.push((
+                Weight::Loss,
+                format!(
+                    "The kernel dropped {lost} frames ({share:.2}% of those offered) because the \
+                     reader fell behind. Some handshakes were not seen. Raise --buffer-mib or \
+                     narrow --filter."
+                ),
+            ));
+        }
+    }
+    if counters.flows_evicted_pressure > 0 {
+        found.push((
+            Weight::Loss,
+            format!(
+                "The conversation table filled {} times and shed live conversations (limit {}). \
+                 Raise --max-flows.",
+                counters.flows_evicted_pressure, limits.max_flows
+            ),
+        ));
+    }
+    let recognised = counters.tls_handshakes_fingerprinted + counters.unfinished_tls_streams;
+    if counters.tls_miss_rate() > 0.05 && recognised >= 20 {
+        found.push((
+            Weight::Limit,
+            format!(
+                "{:.1}% of TLS streams ended before a full handshake was read (packet loss, \
+                 asymmetric routing or a clipped capture).",
+                counters.tls_miss_rate() * 100.0
+            ),
+        ));
+    }
+    if counters.streams_capped > 0 {
+        found.push((
+            Weight::Limit,
+            format!(
+                "{} streams exceeded the per-stream limit ({} KiB) and were clipped. Raise \
+                 --stream-limit-kib to read larger certificate chains.",
+                counters.streams_capped, limits.stream_limit_kib
+            ),
+        ));
+    }
+    if counters.segments_dropped > 0 {
+        found.push((
+            Weight::Info,
+            format!(
+                "{} out-of-order or overlapping segments were discarded by the reassembler.",
+                counters.segments_dropped
+            ),
+        ));
+    }
+    if counters.skipped_malformed > 0 {
+        found.push((
+            Weight::Info,
+            format!(
+                "{} frames were malformed and skipped.",
+                counters.skipped_malformed
+            ),
+        ));
+    }
+    if counters.quic_version_unsupported > 0 {
+        found.push((
+            Weight::Info,
+            format!(
+                "{} QUIC Initials used a version this build cannot open.",
+                counters.quic_version_unsupported
+            ),
+        ));
+    }
+    let worst = found.iter().map(|(weight, _)| *weight).max();
+    let status = match worst {
+        Some(Weight::Loss) => "lossy",
+        Some(Weight::Limit) => "degraded",
+        _ => "ok",
+    };
+    let notes = found
+        .into_iter()
+        .map(|(weight, text)| HealthNote {
+            level: if weight == Weight::Info {
+                "info"
+            } else {
+                "warn"
+            },
+            text,
+        })
+        .collect();
+    (status, notes)
+}
+
+async fn capture_health(State(state): State<Shared>) -> Json<CaptureView> {
+    Json(build_capture_view(&state))
+}
+
+fn build_capture_view(state: &Shared) -> CaptureView {
+    let config = crate::engine::config();
+    let limits = LimitsView {
+        max_flows: config.max_flows,
+        idle_timeout_secs: config.idle_timeout_nanos / 1_000_000_000,
+        stream_limit_kib: config.max_assembled_bytes / 1024,
+    };
+    let counters = state.feed.counters.get();
+    let setup = state.feed.capture.get();
+    let kernel = setup.and_then(|s| s.kernel.as_ref()).map(|k| {
+        let counts = k.get();
+        KernelView {
+            received: counts.received,
+            dropped: counts.kernel_dropped,
+            interface_dropped: counts.interface_dropped,
+        }
+    });
+    let (status, notes) = assess(&counters, kernel.as_ref(), &limits);
+    CaptureView {
+        mode: setup.map_or_else(|| state.meta.source.kind.to_owned(), |s| s.mode.to_owned()),
+        interface: setup.and_then(|s| s.interface.clone()),
+        filter: setup.and_then(|s| s.filter.clone()),
+        promiscuous: setup.and_then(|s| s.promiscuous),
+        buffer_mib: setup.and_then(|s| s.buffer_mib),
+        limits,
+        tls_miss_rate: counters.tls_miss_rate(),
+        counters,
+        kernel,
+        status,
+        notes,
+    }
 }
 
 async fn traffic(
@@ -1369,6 +1598,14 @@ fn spawn_source(
             looping,
             interval,
         } => {
+            let _ = feed.capture.set(CaptureSetup {
+                mode: "replay",
+                interface: None,
+                filter: None,
+                promiscuous: None,
+                buffer_mib: None,
+                kernel: None,
+            });
             let path = path.clone();
             let db = config.db.clone();
             let looping = *looping;
@@ -1391,14 +1628,24 @@ fn spawn_source(
             interface,
             filter,
             promiscuous,
+            buffer_mib,
         } => {
             let live_config = LiveConfig {
                 filter: filter.clone(),
                 promiscuous: *promiscuous,
+                buffer_mib: *buffer_mib,
             };
             let source = LiveSource::open(interface, &live_config)
                 .with_context(|| format!("opening live capture on {interface}"))?;
             let live_stop = source.stop_handle();
+            let _ = feed.capture.set(CaptureSetup {
+                mode: "live",
+                interface: Some(interface.clone()),
+                filter: Some(filter.clone()),
+                promiscuous: Some(*promiscuous),
+                buffer_mib: Some(crate::live::effective_buffer_mib(&live_config)),
+                kernel: Some(source.kernel_stats()),
+            });
             let mut local = config.local_networks.clone();
             local.extend(source.local_networks());
             tracing::info!(
@@ -1466,12 +1713,13 @@ fn replay_loop(
                 return;
             }
         };
-        let mut pipeline = Pipeline::new(PipelineConfig::default());
+        let mut pipeline = Pipeline::new(crate::engine::config());
         // Each pass starts with an empty conversation table; the byte totals
         // keep counting so rates never run backwards.
         feed.traffic
             .with(tlsfp_core::pipeline::traffic::TrafficTable::clear_flows);
         pipeline.track_traffic(feed.traffic.clone());
+        pipeline.publish_counters(feed.counters.clone());
         let run = pipeline.run(&mut source, |event| {
             if shutdown.load(Ordering::Relaxed) {
                 return;
@@ -1510,8 +1758,9 @@ fn live_loop(
         }
     };
     store.set_detect_config(detect);
-    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    let mut pipeline = Pipeline::new(crate::engine::config());
     pipeline.track_traffic(feed.traffic.clone());
+    pipeline.publish_counters(feed.counters.clone());
     let run = pipeline.run(&mut source, |event| {
         if shutdown.load(Ordering::Relaxed) {
             return;
@@ -1751,6 +2000,82 @@ mod tests {
         )
     }
 
+    fn limits() -> super::LimitsView {
+        super::LimitsView {
+            max_flows: 65_536,
+            idle_timeout_secs: 60,
+            stream_limit_kib: 256,
+        }
+    }
+
+    #[test]
+    fn a_clean_capture_is_ok_and_says_nothing() {
+        let (status, notes) = super::assess(&tlsfp_core::Counters::default(), None, &limits());
+        assert_eq!(status, "ok");
+        assert_eq!(notes, Vec::new());
+    }
+
+    #[test]
+    fn kernel_drops_make_the_capture_lossy_and_name_the_remedy() {
+        let kernel = super::KernelView {
+            received: 900,
+            dropped: 100,
+            interface_dropped: 0,
+        };
+        let (status, notes) =
+            super::assess(&tlsfp_core::Counters::default(), Some(&kernel), &limits());
+        assert_eq!(status, "lossy");
+        assert!(notes[0].text.contains("10.00%"), "{}", notes[0].text);
+        assert!(notes[0].text.contains("--buffer-mib"));
+    }
+
+    #[test]
+    fn a_full_flow_table_is_lossy_and_clipped_streams_are_only_degraded() {
+        let full = tlsfp_core::Counters {
+            flows_evicted_pressure: 3,
+            ..tlsfp_core::Counters::default()
+        };
+        assert_eq!(super::assess(&full, None, &limits()).0, "lossy");
+        let clipped = tlsfp_core::Counters {
+            streams_capped: 2,
+            ..tlsfp_core::Counters::default()
+        };
+        let (status, notes) = super::assess(&clipped, None, &limits());
+        assert_eq!(status, "degraded");
+        assert!(notes[0].text.contains("--stream-limit-kib"));
+    }
+
+    #[test]
+    fn a_high_miss_rate_needs_enough_streams_to_mean_anything() {
+        let few = tlsfp_core::Counters {
+            tls_handshakes_fingerprinted: 1,
+            unfinished_tls_streams: 3,
+            ..tlsfp_core::Counters::default()
+        };
+        assert_eq!(super::assess(&few, None, &limits()).0, "ok");
+        let many = tlsfp_core::Counters {
+            tls_handshakes_fingerprinted: 80,
+            unfinished_tls_streams: 20,
+            ..tlsfp_core::Counters::default()
+        };
+        let (status, notes) = super::assess(&many, None, &limits());
+        assert_eq!(status, "degraded");
+        assert!(notes[0].text.contains("20.0%"));
+    }
+
+    #[tokio::test]
+    async fn the_capture_endpoint_reports_limits_and_mode() {
+        let (app, _s) = build("127.0.0.1:8090", &[]);
+        let (status, _, body) = get(&app, "/api/capture", "localhost").await;
+        assert_eq!(status, axum::http::StatusCode::OK);
+        let json: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(json["status"], "ok");
+        assert_eq!(json["limits"]["max_flows"], 65_536);
+        assert!(json["counters"]["frames"].is_u64());
+        let (_, _, metrics) = get(&app, "/metrics", "localhost").await;
+        assert!(metrics.contains("tlsfp_frames_total"));
+    }
+
     #[tokio::test]
     async fn a_loopback_dashboard_refuses_a_foreign_host_header() {
         let (app, _state) = build("127.0.0.1:8080", &[]);
@@ -1907,6 +2232,7 @@ mod tests {
             interface: "eth0".to_owned(),
             filter: String::new(),
             promiscuous: true,
+            buffer_mib: None,
         };
         let meta = Meta::new(&config(live, None), 0);
         assert_eq!(meta.source.kind, "live");
