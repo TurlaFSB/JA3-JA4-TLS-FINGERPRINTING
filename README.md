@@ -194,32 +194,97 @@ Build the frontend once with `cd frontend && pnpm install && pnpm build`; `tlsfp
 
 ## Architecture
 
+Five layers, each handing one kind of thing to the next. The source of this diagram is [`docs/architecture.mmd`](docs/architecture.mmd); a rendered copy for slides is [`docs/architecture.svg`](docs/architecture.svg) and [`docs/architecture.png`](docs/architecture.png).
+
+```mermaid
+flowchart TB
+  classDef src fill:#1b2838,stroke:#4a6a96,color:#e6eef8
+  classDef core fill:#1e2d21,stroke:#5b9a63,color:#e6f3e8
+  classDef intel fill:#2b2536,stroke:#8a6aa8,color:#f0e8f7
+  classDef app fill:#35291f,stroke:#c98a4b,color:#f8ece0
+  classDef ui fill:#12313b,stroke:#3aa6b9,color:#dcf4f8
+
+  subgraph IN["1 · Packet sources"]
+    direction LR
+    F["pcap / pcapng file"]
+    L["Live interface<br/>libpcap · Npcap"]
+    R["Replay of a file<br/>looped"]
+    F ~~~ L ~~~ R
+  end
+
+  subgraph CORE["2 · tlsfp-core · engine"]
+    direction LR
+    D["Decode<br/>Ethernet · SLL<br/>raw IP · 802.11"]
+    S["Reassemble<br/>TCP streams<br/>QUIC Initial decrypt"]
+    P["Parse<br/>TLS · certificates<br/>HTTP/1.x · TCP options"]
+    FP["Fingerprint<br/>JA3 JA3S JA4 JA4S<br/>JA4H JA4X JA4T JA4TS"]
+    TT["Traffic table<br/>conversations<br/>direction · bytes"]
+    D --> S --> P --> FP
+    FP ~~~ TT
+  end
+
+  subgraph INTEL["3 · tlsfp-intel · SQLite"]
+    direction LR
+    M["Match<br/>exact + JA4 partial<br/>scored verdict"]
+    DET["Detect<br/>7 built-in rules<br/>+ your TOML rules"]
+    DB[("Observations<br/>Alerts · Feed<br/>local labels")]
+    CI["Infer client<br/>family from the<br/>handshake shape"]
+    M --> DET --> DB
+    DB ~~~ CI
+  end
+
+  subgraph APP["4 · tlsfp · CLI and server"]
+    direction LR
+    CLI["CLI<br/>pcap · live · identify<br/>html · intel · rules"]
+    API["axum API<br/>SSE stream · /metrics<br/>Host check · CSP"]
+    LIB["Capture library<br/>watched folder"]
+    REP["HTML report<br/>SHA-256 · escaped"]
+    DEL["Alert delivery<br/>file · syslog · webhook<br/>queue, never blocks capture"]
+    CLI ~~~ API ~~~ DEL ~~~ LIB
+    LIB --> REP
+  end
+
+  subgraph OUT["5 · What you use"]
+    direction LR
+    UI["Dashboard<br/>Scope · Traffic · Hosts<br/>Alerts · Library · Intel"]
+    PROM["Prometheus"]
+    SIEM["SIEM · log shipper · chat"]
+    UI ~~~ PROM ~~~ SIEM
+  end
+
+  IN ==>|"link-layer frames"| CORE
+  CORE ==>|"FingerprintEvent"| INTEL
+  INTEL ==>|"verdicts · alerts · history"| APP
+  APP ==> OUT
+
+  class F,L,R src
+  class D,S,P,FP,TT core
+  class M,DET,DB,CI intel
+  class CLI,API,LIB,REP,DEL app
+  class UI,PROM,SIEM ui
+  style IN fill:#0e141b,stroke:#3a4656,color:#9fb0c3
+  style CORE fill:#111a14,stroke:#3d6b44,color:#9ccaa3
+  style INTEL fill:#17131e,stroke:#5e4878,color:#c8b2dc
+  style APP fill:#1d1610,stroke:#8a5f2f,color:#e0be98
+  style OUT fill:#0c1d23,stroke:#277a89,color:#8fd2de
 ```
-   pcap / pcapng          live interface (libpcap)          QUIC Initial
-          └──────────────────────┬──────────────────────────────┘
-                                 ▼  link-layer frames
-   ┌──────────────────────────────────────────────────────────────┐
-   │ tlsfp-core    decode → TCP reassembly → TLS / HTTP / QUIC     │
-   │               → JA3 · JA4 · JA4H · JA4X · JA4T                │
-   │               no I/O, no async, forbids unsafe                │
-   └─────────────────────────────┬────────────────────────────────┘
-                                 ▼  FingerprintEvent
-   ┌──────────────────────────────────────────────────────────────┐
-   │ tlsfp-intel   SQLite store · exact + JA4 prefix matching      │
-   │               → scored verdict → detection rules → alerts     │
-   └─────────────────────────────┬────────────────────────────────┘
-                                 ▼  MatchReport, Alert
-   ┌──────────────────────────────────────────────────────────────┐
-   │ tlsfp         CLI · live capture · report · axum API + SSE    │
-   └──────────────────────────────────────────────────────────────┘
-```
+
+| Layer | Crate | Owns | Does not |
+|---|---|---|---|
+| Engine | `tlsfp-core` | Decoding, TCP and QUIC reassembly, protocol parsing, every fingerprint algorithm, conversation accounting | Touch the network, a file's meaning, a database or an async runtime. It forbids `unsafe` and treats every byte as hostile |
+| Intelligence | `tlsfp-intel` | The SQLite store, matching and scoring, client inference, detection rules, host history, operator labels, retention | Know where packets came from |
+| Application | `tlsfp` | Reading files and interfaces, the HTTP API and event stream, alert delivery, the capture library, reports | Compute a fingerprint |
+| Dashboard | `frontend/` | Showing it, with no logic the server cannot be asked for | Hold state that matters |
 
 Design decisions:
 
 - **Parsers treat input as hostile.** The engine forbids `unsafe`, readers are bounds-checked, and every malformed input is an error or a counted drop.
 - **Synchronous core, async only at the edge.** A lookup is one indexed query and a capture is a plain loop; the async runtime exists only in the web server.
 - **QUIC needs no secret.** Client Initial keys derive from the Destination Connection ID, which is sent in the clear (RFC 9001, RFC 9369).
-- **Detection state lives in the database,** not in memory, so a sensor keeps its history across restarts and external writers can share it.
+- **Detection state lives in the database,** not in memory, so a sensor keeps its history across restarts and external writers can share it. Retention keeps it bounded.
+- **Delivery never blocks capture.** Alerts reach files, syslog and webhooks through a bounded queue and one worker thread; a slow destination drops and counts, it does not stall packets.
+- **"Local" is learned, not guessed.** The Traffic page takes the capture interface's own networks as inside, so a host with a public address sees its own traffic as its own.
+- **Windows is a first-class target.** The capture library is delay-loaded, so file analysis runs without Npcap, and the same codebase builds for Linux, macOS and Windows.
 
 ## Performance
 
