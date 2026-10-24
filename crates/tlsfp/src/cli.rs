@@ -482,6 +482,7 @@ fn run_pcap(
         unfinished_tls_streams = counters.unfinished_tls_streams,
         tls_miss_rate = counters.tls_miss_rate(),
         segments_dropped = counters.segments_dropped,
+        flows_restarted = counters.flows_restarted,
         skipped_unsupported_link_type = counters.skipped_unsupported_link_type,
         skipped_not_ip = counters.skipped_not_ip,
         skipped_not_transport = counters.skipped_not_transport,
@@ -726,6 +727,7 @@ async fn drive_live(
         unfinished_tls_streams = counters.unfinished_tls_streams,
         tls_miss_rate = counters.tls_miss_rate(),
         segments_dropped = counters.segments_dropped,
+        flows_restarted = counters.flows_restarted,
         "live capture stopped"
     );
 

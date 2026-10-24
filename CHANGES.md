@@ -85,5 +85,8 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - Library page in the menu (Scope, Alerts, Library, Intel). The Docker stack mounts `tlsfp-captures` in the user's home folder read-only at `/captures`, where the Windows capture script saves, so captures appear without configuration.
 - Dashboard layout: the alert ledger left the Scope page (Alerts has its own), page titles and artwork shrank, the decorative ticker and labelled-with-slashes panel titles are gone, dim text has more contrast, the stream defaults to handshakes only (raw TCP SYN rows are one click away) and each row is one line with the server name in its own column.
 
+## Live capture under load
+- Fixed a missed-handshake bug found by a load test: a client that reused its source port while the old flow was still tracked was never fingerprinted again. A SYN with a new initial sequence number now starts a new flow (`flows_restarted`). The kernel capture buffer is 32 MiB (was 4), the frame channel 4,096 (was 512), `TLSFP_CAPTURE_BUFFER_MIB` overrides it. Results and a multi-process scaling table are in `docs/PERFORMANCE.md`; AUDIT.md F18 and F19.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

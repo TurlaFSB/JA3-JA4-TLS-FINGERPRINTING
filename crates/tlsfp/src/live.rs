@@ -58,11 +58,27 @@ const POLL_TIMEOUT_MILLIS: i64 = 100;
 /// Kernel capture buffer. This is the shock absorber while the channel is
 /// full: bursts queue here, and only when it overflows does the kernel
 /// drop, visibly, into [`CaptureStats::kernel_dropped`].
-const KERNEL_BUFFER_BYTES: i32 = 4 * 1024 * 1024;
+const DEFAULT_BUFFER_MIB: i32 = 32;
+
+/// Environment variable that overrides the kernel capture buffer, in MiB.
+/// Raise it on a link that bursts; the memory belongs to the kernel, not to
+/// this process.
+pub const BUFFER_ENV: &str = "TLSFP_CAPTURE_BUFFER_MIB";
+
+/// The kernel capture buffer in bytes: the environment override when it is a
+/// sensible number, the default otherwise.
+fn kernel_buffer_bytes() -> i32 {
+    let mib = std::env::var(BUFFER_ENV)
+        .ok()
+        .and_then(|value| value.trim().parse::<i32>().ok())
+        .filter(|mib| (1..=1024).contains(mib))
+        .unwrap_or(DEFAULT_BUFFER_MIB);
+    mib * 1024 * 1024
+}
 
 /// Frames in flight between the capture thread and the consumer. Bounded
 /// so the bridge applies backpressure instead of growing without limit.
-const CHANNEL_CAPACITY: usize = 512;
+const CHANNEL_CAPACITY: usize = 4096;
 
 /// Frames at or under this size live inline in the channel message, no
 /// heap allocation per frame. Sized to cover an ethernet frame at the
@@ -166,7 +182,7 @@ impl LiveSource {
             .promisc(config.promiscuous)
             .snaplen(SNAPLEN)
             .immediate_mode(true)
-            .buffer_size(KERNEL_BUFFER_BYTES);
+            .buffer_size(kernel_buffer_bytes());
         let mut capture = inactive
             .open()
             .map_err(|error| open_error(interface, &error))?;

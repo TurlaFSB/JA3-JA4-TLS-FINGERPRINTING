@@ -97,6 +97,10 @@ pub struct Counters {
     pub skipped_not_transport: u64,
     pub skipped_malformed: u64,
     pub flows_created: u64,
+    /// Flows restarted because a SYN with a new initial sequence number
+    /// arrived on a tracked address pair: the client reused its source port
+    /// for a new connection while the old one was still in the table.
+    pub flows_restarted: u64,
     pub flows_evicted_idle: u64,
     pub flows_evicted_pressure: u64,
     pub segments_dropped: u64,
@@ -144,6 +148,9 @@ struct StreamHalf {
     reassembler: StreamReassembler,
     protocol: StreamProtocol,
     syn_fingerprint_emitted: bool,
+    /// Initial sequence number of the SYN seen from this side, to tell a
+    /// retransmitted SYN from a new connection on the same address pair.
+    syn_seq: Option<u32>,
 }
 
 impl StreamHalf {
@@ -152,6 +159,7 @@ impl StreamHalf {
             reassembler: StreamReassembler::new(limits),
             protocol: StreamProtocol::Undecided,
             syn_fingerprint_emitted: false,
+            syn_seq: None,
         }
     }
 }
@@ -276,6 +284,20 @@ impl Pipeline {
         sink: &mut impl FnMut(FingerprintEvent),
     ) {
         let (key, direction) = FlowKey::from_pair(segment.src, segment.dst);
+        // A SYN whose initial sequence number differs from the one this side
+        // already used is a new connection on a reused source port, not a
+        // retransmission: start over, or its handshake would be read as the
+        // tail of the old one and never fingerprinted.
+        if segment.tcp.flags.syn()
+            && self.flows.get(&key).is_some_and(|flow| {
+                flow.halves[direction.index()]
+                    .syn_seq
+                    .is_some_and(|seen| seen != segment.tcp.seq)
+            })
+        {
+            self.drop_flow(key);
+            self.counters.flows_restarted += 1;
+        }
         if !self.flows.contains_key(&key) {
             if self.flows.len() >= self.config.max_flows {
                 self.evict(frame.ts_nanos);
@@ -311,6 +333,7 @@ impl Pipeline {
         }
 
         if segment.tcp.flags.syn() {
+            half.syn_seq = Some(segment.tcp.seq);
             half.reassembler.anchor(segment.tcp.seq.wrapping_add(1));
         }
 
@@ -597,6 +620,62 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].src.to_string(), "10.0.0.1:40000");
         assert_eq!(pipeline.counters().tcp_segments, 2);
+    }
+
+    fn syn_frame(src: ([u8; 4], u16), dst: ([u8; 4], u16), seq: u32) -> Vec<u8> {
+        let builder = PacketBuilder::ethernet2([1; 6], [2; 6])
+            .ipv4(src.0, dst.0, 64)
+            .tcp(src.1, dst.1, seq, 64240)
+            .syn();
+        let mut out = Vec::with_capacity(builder.size(0));
+        builder.write(&mut out, &[]).unwrap();
+        out
+    }
+
+    #[test]
+    fn a_reused_source_port_starts_a_new_flow() {
+        let client = ([10, 0, 0, 1], 40002);
+        let server = ([10, 0, 0, 2], 80);
+        let request = b"GET / HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\n\r\n";
+        let frames = vec![
+            syn_frame(client, server, 5000),
+            tcp_frame(client, server, 5001, request),
+            // The same four values again, a new connection with its own ISN.
+            syn_frame(client, server, 9000),
+            tcp_frame(client, server, 9001, request),
+        ];
+        let mut pipeline = Pipeline::new(PipelineConfig::default());
+        let events = feed_all(&mut pipeline, &frames);
+        let requests = events
+            .iter()
+            .filter(|e| e.to_string().contains("http_request"))
+            .count();
+        assert_eq!(
+            requests, 2,
+            "both connections are fingerprinted: {events:?}"
+        );
+        let syns = events
+            .iter()
+            .filter(|e| e.to_string().contains("tcp_syn "))
+            .count();
+        assert_eq!(syns, 2, "and both SYNs");
+        assert_eq!(pipeline.counters().flows_restarted, 1);
+    }
+
+    #[test]
+    fn a_retransmitted_syn_does_not_restart_the_flow() {
+        let client = ([10, 0, 0, 1], 40003);
+        let server = ([10, 0, 0, 2], 80);
+        let request = b"GET / HTTP/1.1\r\nHost: example.com\r\nAccept: */*\r\n\r\n";
+        let frames = vec![
+            syn_frame(client, server, 5000),
+            syn_frame(client, server, 5000),
+            tcp_frame(client, server, 5001, request),
+        ];
+        let mut pipeline = Pipeline::new(PipelineConfig::default());
+        let events = feed_all(&mut pipeline, &frames);
+        assert_eq!(events.len(), 2, "one SYN and one request: {events:?}");
+        assert_eq!(pipeline.counters().flows_restarted, 0);
     }
 
     #[test]
