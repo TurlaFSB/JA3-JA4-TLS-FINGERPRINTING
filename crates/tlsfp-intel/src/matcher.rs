@@ -280,6 +280,7 @@ mod tests {
             src: "10.0.0.1:1000".parse().unwrap(),
             dst: "10.0.0.2:443".parse().unwrap(),
             event: StreamEvent::ClientHello {
+                detail: None,
                 ja3: Ja3::from_digest([0x1a; 16]),
                 ja3_raw: "raw".into(),
                 ja4: Ja4Family::new("t13d1516h2_8daaf6152771_e5627efa2ab1".into(), "raw".into()),
@@ -302,6 +303,7 @@ mod tests {
             src: "10.0.0.1:1000".parse().unwrap(),
             dst: "10.0.0.2:443".parse().unwrap(),
             event: StreamEvent::ClientHello {
+                detail: None,
                 ja3: Ja3::from_digest([0x00; 16]),
                 ja3_raw: "raw".into(),
                 ja4: Ja4Family::new("t13d1516h2_8daaf6152771_e5627efa2ab1".into(), "raw".into()),

@@ -6,6 +6,7 @@ use std::net::SocketAddr;
 
 use serde::Serialize;
 
+use crate::detail::{ClientDetail, ServerDetail};
 use crate::fingerprint::{Ja3, Ja4Family};
 
 /// A fingerprint produced by one direction of one flow, without addressing.
@@ -23,11 +24,17 @@ pub enum StreamEvent {
         ja4: Ja4Family,
         sni: Option<String>,
         alpn: Option<String>,
+        /// What the hello offered, in words. Absent for an SSLv2 hello.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        detail: Option<Box<ClientDetail>>,
     },
     ServerHello {
         ja3s: Ja3,
         ja3s_raw: String,
         ja4s: Ja4Family,
+        /// What the server chose, in words.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        detail: Option<Box<ServerDetail>>,
     },
     Certificate {
         ja4x: String,

@@ -10,6 +10,7 @@
 //! fuzzed, and unit tested in isolation.
 
 pub mod der;
+pub mod detail;
 pub mod error;
 pub mod fingerprint;
 pub mod grease;

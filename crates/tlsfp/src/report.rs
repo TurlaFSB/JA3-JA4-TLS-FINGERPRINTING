@@ -625,6 +625,7 @@ mod tests {
             src: format!("{ip}:40000").parse().unwrap(),
             dst: "10.0.0.2:443".parse().unwrap(),
             event: StreamEvent::ClientHello {
+                detail: None,
                 ja3: Ja3::from_digest([0u8; 16]),
                 ja3_raw: String::new(),
                 ja4: Ja4Family::new(ja4.to_owned(), String::new()),

@@ -48,6 +48,7 @@ fn client_hello(ip: &str, ts: u64, ja4: &str) -> FingerprintEvent {
         src: format!("{ip}:1000").parse().unwrap(),
         dst: "10.0.0.250:443".parse().unwrap(),
         event: StreamEvent::ClientHello {
+            detail: None,
             ja3: Ja3::from_digest([0u8; 16]),
             ja3_raw: "raw".into(),
             ja4: Ja4Family::new(ja4.into(), "raw".into()),

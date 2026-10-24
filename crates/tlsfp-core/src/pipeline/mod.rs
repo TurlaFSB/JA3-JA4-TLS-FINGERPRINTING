@@ -567,6 +567,7 @@ impl Pipeline {
                                 .alpn_protocols()
                                 .first()
                                 .map(|p| String::from_utf8_lossy(p).into_owned()),
+                            detail: Some(Box::new(crate::detail::client_detail(&hello))),
                         },
                     });
                     self.counters.events += 1;

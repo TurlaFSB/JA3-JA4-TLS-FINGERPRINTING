@@ -319,6 +319,7 @@ mod tests {
             src: src.parse::<SocketAddr>().unwrap(),
             dst: "1.2.3.4:443".parse::<SocketAddr>().unwrap(),
             event: StreamEvent::ClientHello {
+                detail: None,
                 ja3: Ja3::from_digest([1; 16]),
                 ja3_raw: String::new(),
                 ja4: Ja4Family::new(ja4.to_owned(), "x".to_owned()),
@@ -388,6 +389,7 @@ mod tests {
                 src: "1.2.3.4:443".parse::<SocketAddr>().unwrap(),
                 dst: "10.0.0.5:5000".parse::<SocketAddr>().unwrap(),
                 event: StreamEvent::ServerHello {
+                    detail: None,
                     ja3s: Ja3::from_digest([2; 16]),
                     ja3s_raw: String::new(),
                     ja4s: Ja4Family::new("t130200_1301_aaaaaaaaaaaa".to_owned(), "r".to_owned()),

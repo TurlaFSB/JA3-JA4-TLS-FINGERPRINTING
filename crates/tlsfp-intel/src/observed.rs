@@ -153,6 +153,7 @@ mod tests {
             src: "10.0.0.5:5000".parse::<SocketAddr>().unwrap(),
             dst: "1.2.3.4:443".parse::<SocketAddr>().unwrap(),
             event: StreamEvent::ClientHello {
+                detail: None,
                 ja3: Ja3::from_digest([1; 16]),
                 ja3_raw: String::new(),
                 ja4: Ja4Family::new(ja4.to_owned(), raw.to_owned()),

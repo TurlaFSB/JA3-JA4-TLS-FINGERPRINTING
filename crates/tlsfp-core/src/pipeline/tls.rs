@@ -3,6 +3,7 @@
 
 use std::borrow::Cow;
 
+use crate::detail::{client_detail, server_detail};
 use crate::ja3::{ja3, ja3_string, ja3s, ja3s_string};
 use crate::ja4::{Transport, ja4, ja4s};
 use crate::ja4h::{ja4h, parse_http_request};
@@ -198,6 +199,7 @@ fn advance_sslv2(proto: &mut StreamProtocol, stream: &[u8], sink: &mut impl FnMu
                 ja4: ja4(&hello, Transport::Tcp),
                 sni: None,
                 alpn: None,
+                detail: None,
             });
             *proto = StreamProtocol::Done;
         }
@@ -299,6 +301,7 @@ fn walk_messages(
                             .alpn_protocols()
                             .first()
                             .map(|p| String::from_utf8_lossy(p).into_owned()),
+                        detail: Some(Box::new(client_detail(&hello))),
                     });
                 }
                 return true;
@@ -312,6 +315,7 @@ fn walk_messages(
                             ja3s: ja3s(&hello),
                             ja3s_raw: ja3s_string(&hello),
                             ja4s: ja4s(&hello, Transport::Tcp),
+                            detail: Some(Box::new(server_detail(&hello))),
                         });
                         if negotiated_tls13 {
                             return true;
