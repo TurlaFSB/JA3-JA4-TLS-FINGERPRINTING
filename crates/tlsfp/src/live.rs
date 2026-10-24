@@ -398,10 +398,7 @@ fn resolve_interface(name: &str) -> String {
     // address: that is the link the machine actually talks through.
     let usable = Device::list().ok().and_then(|devices| {
         devices.into_iter().find(|d| {
-            d.flags.is_up()
-                && !d.flags.is_loopback()
-                && d.name != "any"
-                && !d.addresses.is_empty()
+            d.flags.is_up() && !d.flags.is_loopback() && d.name != "any" && !d.addresses.is_empty()
         })
     });
     let device = usable.or_else(|| Device::lookup().ok().flatten());
