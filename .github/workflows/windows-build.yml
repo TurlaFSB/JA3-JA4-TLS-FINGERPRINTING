@@ -1,0 +1,54 @@
+# © Pranav Verma | 2026
+# windows-build.yml
+#
+# A button, not an automatic job: Actions > windows-build > Run workflow.
+# Builds the Windows binary and the dashboard and uploads them as a zip you can
+# download and try on a real Windows machine, without a release or a tag.
+
+name: windows-build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the Npcap SDK (build only)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://npcap.com/dist/npcap-sdk-1.13.zip -OutFile sdk.zip
+          Expand-Archive sdk.zip sdk
+          "LIB=$PWD\sdk\Lib\x64" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the dashboard
+        working-directory: frontend
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.29.1 --activate
+          pnpm install --frozen-lockfile
+          pnpm build
+      - name: Build tlsfp
+        run: cargo build --release --locked --bin tlsfp
+      - name: Package
+        shell: pwsh
+        run: |
+          $name = "tlsfp-windows-test"
+          New-Item -ItemType Directory -Path "dist\$name" | Out-Null
+          Copy-Item target\release\tlsfp.exe "dist\$name\"
+          Copy-Item -Recurse frontend\dist "dist\$name\web"
+          Copy-Item scripts\start-windows.ps1 "dist\$name\"
+          Copy-Item LICENSE, NOTICE.md, README.md "dist\$name\"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tlsfp-windows-test
+          path: dist/tlsfp-windows-test
+          retention-days: 14
