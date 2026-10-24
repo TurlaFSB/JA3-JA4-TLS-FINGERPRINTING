@@ -235,6 +235,21 @@ pub enum Command {
         )]
         local_network: Vec<Network>,
 
+        /// A host name the dashboard may be reached by, besides localhost and
+        /// the loopback addresses. When bound to loopback the dashboard
+        /// refuses any other Host header, which blocks DNS-rebinding pages;
+        /// name a reverse proxy or a hosts-file alias here. Repeatable.
+        #[arg(
+            long = "allowed-host",
+            value_name = "NAME",
+            env = "TLSFP_ALLOWED_HOSTS",
+            value_delimiter = ','
+        )]
+        allowed_host: Vec<String>,
+
+        #[command(flatten)]
+        retention: RetentionArgs,
+
         /// Directory of capture files to find and identify, shown on the
         /// Library page. Repeatable; new and changed files are picked up
         /// while the server runs. Analysis only: nothing is alerted or stored.
@@ -323,6 +338,48 @@ pub enum Command {
     },
 }
 
+/// How long to keep what the sensor records. Ages are counted back from the
+/// newest record, so replaying an old capture does not wipe it. 0 keeps all.
+#[derive(Debug, Clone, clap::Args)]
+pub struct RetentionArgs {
+    /// Days of observations to keep (the history behind Hosts and "first seen").
+    #[arg(
+        long,
+        env = "TLSFP_KEEP_DAYS",
+        default_value_t = 90,
+        value_name = "DAYS"
+    )]
+    pub keep_days: u32,
+
+    /// Days of alerts to keep.
+    #[arg(
+        long,
+        env = "TLSFP_KEEP_ALERT_DAYS",
+        default_value_t = 365,
+        value_name = "DAYS"
+    )]
+    pub keep_alert_days: u32,
+
+    /// The most observation rows to keep, newest first.
+    #[arg(
+        long,
+        env = "TLSFP_MAX_OBSERVATIONS",
+        default_value_t = 5_000_000,
+        value_name = "ROWS"
+    )]
+    pub max_observations: u64,
+}
+
+impl RetentionArgs {
+    fn policy(&self) -> tlsfp_intel::Retention {
+        tlsfp_intel::Retention {
+            observation_days: self.keep_days,
+            alert_days: self.keep_alert_days,
+            max_observations: self.max_observations,
+        }
+    }
+}
+
 /// The subcommands under `tlsfp rules`.
 #[derive(Debug, Subcommand)]
 pub enum RulesCommand {
@@ -406,6 +463,17 @@ pub enum IntelCommand {
 
         /// The fingerprint value.
         value: String,
+
+        /// Path to the intelligence database, defaulting to the data directory.
+        #[arg(long)]
+        db: Option<PathBuf>,
+    },
+
+    /// Delete old observations and alerts now (the server also does this every
+    /// fifteen minutes while it runs).
+    Prune {
+        #[command(flatten)]
+        retention: RetentionArgs,
 
         /// Path to the intelligence database, defaulting to the data directory.
         #[arg(long)]
@@ -523,6 +591,8 @@ impl Cli {
                 location,
                 shared_network,
                 local_network,
+                allowed_host,
+                retention,
                 library,
                 replay,
                 repeat,
@@ -537,6 +607,8 @@ impl Cli {
                 location,
                 shared_network,
                 local_network,
+                allowed_host,
+                retention.policy(),
                 library,
                 replay,
                 repeat,
@@ -571,6 +643,15 @@ impl IntelCommand {
             } => run_intel_label(&kind, &value, &label, &category, note.as_deref(), db),
             IntelCommand::Unlabel { kind, value, db } => run_intel_unlabel(&kind, &value, db),
             IntelCommand::Labels { json, db } => run_intel_labels(json, db),
+            IntelCommand::Prune { retention, db } => {
+                let mut store = open_existing(&resolve_db(db))?;
+                let pruned = store.prune(retention.policy())?;
+                println!(
+                    "removed {} observation(s) and {} alert(s)",
+                    pruned.observations, pruned.alerts
+                );
+                Ok(())
+            }
             IntelCommand::Lookup {
                 kind,
                 value,
@@ -751,6 +832,8 @@ fn run_serve(
     location: Option<String>,
     shared_networks: Vec<Network>,
     local_networks: Vec<Network>,
+    allowed_hosts: Vec<String>,
+    retention: tlsfp_intel::Retention,
     library: Vec<PathBuf>,
     replay: Option<PathBuf>,
     repeat: bool,
@@ -790,6 +873,8 @@ fn run_serve(
         shared_networks,
         local_networks,
         library,
+        allowed_hosts,
+        retention,
     })
 }
 

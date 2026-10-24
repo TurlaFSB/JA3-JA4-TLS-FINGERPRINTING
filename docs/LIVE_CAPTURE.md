@@ -28,6 +28,14 @@ Without Npcap everything except live capture still works: `tlsfp pcap`, `identif
 
 How it was checked: CI builds the Windows binary on a Windows runner, starts it, reads a capture file and runs `interfaces` with no Npcap present, and runs the engine and store tests. **Live capture on Windows itself has not been exercised by an automated test**, because the free Npcap installer cannot run unattended; it is verified by hand on a real machine (see the checklist in `RELEASING.md`). `auto` skips loopback and virtual adapters (VMware, Hyper-V, VPN taps) by their description.
 
+## What counts as "inside"
+
+The Traffic page calls a conversation outbound, inbound, internal or transit by whether each end is local. Local is: the networks of the capture interface (read from its addresses and netmasks, so a machine with a public IPv6 or IPv4 address still sees its own traffic as outbound and inbound), the private, loopback and link-local ranges, and anything you declare with `--local-network CIDR` (or `TLSFP_LOCAL_NETWORKS`). A replay of somebody else's capture has no interface, so name its inside with `--local-network`. The startup log lists the networks in use.
+
+## Reaching the dashboard
+
+While bound to a loopback address (the default) the dashboard accepts only `localhost`, `127.0.0.1` and `::1` as the Host. To use another name (a hosts-file alias, a reverse proxy), start with `--allowed-host NAME`. A dashboard bound to a network address skips this check; authentication and TLS are then your proxy's job.
+
 ## What it shows
 
 - **Scope:** TLS and QUIC handshakes with the intelligence verdict, plus what the sensor has seen by transport, TLS version, application protocol and server name.

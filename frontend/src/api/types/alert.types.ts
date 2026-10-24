@@ -32,6 +32,7 @@ export const statsResponseSchema = z.object({
   intel: intelStatsSchema,
   alerts_by_rule: z.array(ruleCountSchema),
   alert_total: z.number(),
+  alert_attention: z.number().default(0),
 })
 
 export type StatsResponse = z.infer<typeof statsResponseSchema>

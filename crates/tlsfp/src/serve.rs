@@ -126,6 +126,11 @@ pub struct ServeConfig {
     pub local_networks: Vec<Network>,
     /// Directories of capture files to find and identify.
     pub library: Vec<PathBuf>,
+    /// Host names the dashboard answers to, besides loopback, when it is bound
+    /// to a loopback address (see [`host_guard`]).
+    pub allowed_hosts: Vec<String>,
+    /// How long observations and alerts are kept.
+    pub retention: tlsfp_intel::Retention,
 }
 
 /// The live channel plus a bounded memory of what has crossed it. Publishing
@@ -182,6 +187,10 @@ struct AppState {
     feed: Feed,
     library: Library,
     db: PathBuf,
+    /// Open event streams, capped at [`MAX_STREAMS`].
+    streams: std::sync::atomic::AtomicUsize,
+    /// One report is built at a time: each reads a whole capture file.
+    report_gate: tokio::sync::Semaphore,
     /// Throughput per second for the last [`RATE_POINTS`] seconds, kept here
     /// rather than in each browser so the chart is full when a page opens.
     rates: Mutex<std::collections::VecDeque<RatePoint>>,
@@ -285,6 +294,20 @@ enum LiveMessage {
     },
 }
 
+fn new_state(store: IntelStore, feed: Feed, config: &ServeConfig, started_unix_ms: u64) -> Shared {
+    Arc::new(AppState {
+        store: Mutex::new(store),
+        feed,
+        library: Library::default(),
+        db: config.db.clone(),
+        streams: std::sync::atomic::AtomicUsize::new(0),
+        report_gate: tokio::sync::Semaphore::new(1),
+        rates: Mutex::new(std::collections::VecDeque::with_capacity(RATE_POINTS)),
+        client_cache: Mutex::new(HashMap::new()),
+        meta: Meta::new(config, started_unix_ms),
+    })
+}
+
 /// What a ClientHello says about its sender: an exact intelligence match when
 /// there is one, otherwise the family its shape suggests, with the evidence and
 /// the limit of the claim, so the dashboard can show more than a hash.
@@ -343,15 +366,7 @@ async fn serve(config: ServeConfig) -> Result<()> {
         .map_or(0, |elapsed| {
             u64::try_from(elapsed.as_millis()).unwrap_or(u64::MAX)
         });
-    let state: Shared = Arc::new(AppState {
-        store: Mutex::new(store),
-        feed: feed.clone(),
-        library: Library::default(),
-        db: config.db.clone(),
-        rates: Mutex::new(std::collections::VecDeque::with_capacity(RATE_POINTS)),
-        client_cache: Mutex::new(HashMap::new()),
-        meta: Meta::new(&config, started_unix_ms),
-    });
+    let state = new_state(store, feed.clone(), &config, started_unix_ms);
 
     let shutdown = Arc::new(AtomicBool::new(false));
     let scanner = (!config.library.is_empty()).then(|| {
@@ -378,9 +393,20 @@ async fn serve(config: ServeConfig) -> Result<()> {
     if let Err(error) = &sampler {
         tracing::error!(%error, "could not start the throughput sampler");
     }
+    let pruner = {
+        let db = config.db.clone();
+        let policy = config.retention;
+        let stop = Arc::clone(&shutdown);
+        std::thread::Builder::new()
+            .name("retention".into())
+            .spawn(move || prune_loop(&db, policy, &stop))
+    };
+    if let Err(error) = &pruner {
+        tracing::error!(%error, "could not start the retention task");
+    }
     let mut capture = spawn_source(&config, feed, Arc::clone(&shutdown), Arc::clone(&state))?;
 
-    let app = router(&config.web, Arc::clone(&state));
+    let app = router(&config.web, Arc::clone(&state), &allowed_hosts(&config));
     let listener = tokio::net::TcpListener::bind(&config.bind)
         .await
         .with_context(|| format!("binding {}", config.bind))?;
@@ -400,7 +426,7 @@ async fn serve(config: ServeConfig) -> Result<()> {
 /// Builds the route table. The data API and the static files are compressed;
 /// the event stream is merged in afterwards so the compression layer never
 /// touches it.
-fn router(web: &std::path::Path, state: Shared) -> Router {
+fn router(web: &std::path::Path, state: Shared, allowed: &[String]) -> Router {
     let data_api = Router::new()
         .route("/stats", get(stats))
         .route("/alerts", get(alerts))
@@ -440,6 +466,10 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
             web_root,
             static_policy,
         ))
+        .layer(axum::middleware::from_fn_with_state(
+            Arc::new(allowed.to_vec()),
+            host_guard,
+        ))
         .layer(security_header(
             axum::http::header::CONTENT_SECURITY_POLICY,
             CONTENT_SECURITY_POLICY,
@@ -454,6 +484,84 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
             "no-referrer",
         ))
         .layer(TraceLayer::new_for_http())
+}
+
+/// The host names a loopback-bound dashboard answers to. Empty (no check) when
+/// it is bound to a network address, where the operator's own proxy and
+/// authentication are in charge and the names are theirs to choose.
+fn allowed_hosts(config: &ServeConfig) -> Vec<String> {
+    let loopback = config
+        .bind
+        .rsplit_once(':')
+        .map(|(host, _)| host.trim_matches(['[', ']']))
+        .is_some_and(|host| {
+            host == "localhost"
+                || host
+                    .parse::<std::net::IpAddr>()
+                    .is_ok_and(|ip| ip.is_loopback())
+        });
+    if !loopback {
+        return Vec::new();
+    }
+    let mut hosts: Vec<String> = ["localhost", "127.0.0.1", "::1"]
+        .iter()
+        .map(|h| (*h).to_owned())
+        .collect();
+    hosts.extend(config.allowed_hosts.iter().map(|h| h.to_ascii_lowercase()));
+    hosts
+}
+
+/// Refuses a request whose `Host` is not one the dashboard expects.
+///
+/// A dashboard on `127.0.0.1` shows who your machine talks to. Without this, a
+/// web page on any site could point its own domain at `127.0.0.1` (DNS
+/// rebinding) and read the API as if it were the same origin. A rebinding page
+/// still sends its own domain as the Host, so checking it closes that route.
+async fn host_guard(
+    State(allowed): State<Arc<Vec<String>>>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
+) -> Response {
+    if allowed.is_empty() {
+        return next.run(request).await;
+    }
+    let host = request
+        .headers()
+        .get(header::HOST)
+        .and_then(|value| value.to_str().ok())
+        .map(host_without_port)
+        .unwrap_or_default();
+    if allowed.contains(&host) {
+        return next.run(request).await;
+    }
+    tracing::warn!(
+        host,
+        "refused a request for an unexpected Host; use --allowed-host to permit it"
+    );
+    (
+        StatusCode::MISDIRECTED_REQUEST,
+        Json(serde_json::json!({
+            "error": "this dashboard answers only to localhost; start it with --allowed-host NAME to use another name"
+        })),
+    )
+        .into_response()
+}
+
+/// `example.com:8080` to `example.com`, `[::1]:8080` to `::1`.
+fn host_without_port(value: &str) -> String {
+    let value = value.trim().to_ascii_lowercase();
+    if let Some(rest) = value.strip_prefix('[') {
+        return rest.split(']').next().unwrap_or_default().to_owned();
+    }
+    value
+        .rsplit_once(':')
+        .map_or(value.clone(), |(host, port)| {
+            if port.bytes().all(|b| b.is_ascii_digit()) {
+                host.to_owned()
+            } else {
+                value.clone()
+            }
+        })
 }
 
 /// Serves the single-page app and sets the caching that keeps a new build from
@@ -550,6 +658,8 @@ struct StatsResponse {
     intel: Stats,
     alerts_by_rule: Vec<RuleCount>,
     alert_total: i64,
+    /// Alerts above informational severity, what the menu badge counts.
+    alert_attention: i64,
 }
 
 /// Prometheus text exposition: totals a monitoring system can scrape and
@@ -620,6 +730,7 @@ async fn stats(State(state): State<Shared>) -> Result<Json<StatsResponse>, ApiEr
         let intel = store.stats()?;
         let counts = store.alert_counts()?;
         let alert_total = counts.iter().map(|(_, count)| count).sum();
+        let alert_attention = store.actionable_alert_count()?;
         let alerts_by_rule = counts
             .into_iter()
             .map(|(rule, count)| RuleCount { rule, count })
@@ -628,6 +739,7 @@ async fn stats(State(state): State<Shared>) -> Result<Json<StatsResponse>, ApiEr
             intel,
             alerts_by_rule,
             alert_total,
+            alert_attention,
         })
     })
     .await??;
@@ -751,6 +863,34 @@ struct ServiceShare {
     service: String,
     flows: usize,
     bytes: u64,
+}
+
+/// How often old records are removed while the server runs.
+const PRUNE_EVERY: Duration = Duration::from_secs(15 * 60);
+
+/// Applies the retention policy on its own connection, so the shared store is
+/// never held while rows are deleted.
+fn prune_loop(db: &std::path::Path, policy: tlsfp_intel::Retention, stop: &AtomicBool) {
+    let mut waited = PRUNE_EVERY; // once soon after start, then every interval
+    waited = waited.saturating_sub(Duration::from_secs(30));
+    while !stop.load(std::sync::atomic::Ordering::Relaxed) {
+        if waited >= PRUNE_EVERY {
+            waited = Duration::ZERO;
+            match IntelStore::open(db).and_then(|mut store| store.prune(policy)) {
+                Ok(pruned) if pruned.observations + pruned.alerts > 0 => {
+                    tracing::info!(
+                        observations = pruned.observations,
+                        alerts = pruned.alerts,
+                        "retention removed old records"
+                    );
+                }
+                Ok(_) => {}
+                Err(error) => tracing::warn!(%error, "retention could not run"),
+            }
+        }
+        std::thread::sleep(Duration::from_secs(1));
+        waited += Duration::from_secs(1);
+    }
 }
 
 /// How many one-second throughput points are kept: fifteen minutes.
@@ -1046,6 +1186,12 @@ async fn library_report(
     };
     let name = summary.name.clone();
     let db = state.db.clone();
+    // Each report reads a whole capture file; build one at a time.
+    let Ok(_permit) = state.report_gate.try_acquire() else {
+        return Err(ApiError::busy(
+            "a report is already being built; try again in a moment",
+        ));
+    };
     let html = tokio::task::spawn_blocking(move || -> anyhow::Result<String> {
         let case = crate::case_report::build(&path, name, &db, &std::env::temp_dir())?;
         let total = IntelStore::open(&db)?.stats()?.total;
@@ -1078,7 +1224,8 @@ async fn health() -> impl IntoResponse {
 /// falls behind rather than tearing its connection down.
 async fn stream(
     State(state): State<Shared>,
-) -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
+) -> Result<Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>>, ApiError> {
+    let guard = StreamGuard::acquire(&state)?;
     let (backlog, receiver) = state.feed.join();
     // One event carrying the whole backlog as a JSON array, so the page fills
     // at once instead of rendering hundreds of single updates.
@@ -1099,12 +1246,43 @@ async fn stream(
         Ok(line) => Some(Ok(Event::default().data(line.as_ref()))),
         Err(_lagged) => None,
     });
-    let events = tokio_stream::iter(first).chain(live);
-    Sse::new(events).keep_alive(
+    // The guard rides along with the stream and releases its slot when the
+    // client goes away and the stream is dropped.
+    let events = tokio_stream::iter(first).chain(live).map(move |item| {
+        let _held = &guard;
+        item
+    });
+    Ok(Sse::new(events).keep_alive(
         KeepAlive::new()
             .interval(Duration::from_secs(KEEPALIVE_SECS))
             .text("keep-alive"),
-    )
+    ))
+}
+
+/// How many event streams may be open at once. A person uses one or two tabs;
+/// a runaway page or a hostile client opening thousands would otherwise cost a
+/// subscriber each.
+const MAX_STREAMS: usize = 64;
+
+struct StreamGuard(Shared);
+
+impl StreamGuard {
+    fn acquire(state: &Shared) -> Result<Self, ApiError> {
+        use std::sync::atomic::Ordering;
+        if state.streams.fetch_add(1, Ordering::AcqRel) >= MAX_STREAMS {
+            state.streams.fetch_sub(1, Ordering::AcqRel);
+            return Err(ApiError::busy("too many open event streams"));
+        }
+        Ok(Self(Arc::clone(state)))
+    }
+}
+
+impl Drop for StreamGuard {
+    fn drop(&mut self) {
+        self.0
+            .streams
+            .fetch_sub(1, std::sync::atomic::Ordering::AcqRel);
+    }
 }
 
 /// Clamps a requested page size into a sane range, defaulting an absent or
@@ -1416,6 +1594,7 @@ async fn shutdown_signal() {
 
 /// The error type every handler returns. Failures become a 500 with a JSON
 /// body; a bad request is the one client-caused case that is reported as a 400.
+#[derive(Debug)]
 struct ApiError {
     status: StatusCode,
     message: String,
@@ -1425,7 +1604,14 @@ impl ApiError {
     fn not_found() -> Self {
         Self {
             status: StatusCode::NOT_FOUND,
-            message: "no such host".to_owned(),
+            message: "not found".to_owned(),
+        }
+    }
+
+    fn busy(message: &str) -> Self {
+        Self {
+            status: StatusCode::SERVICE_UNAVAILABLE,
+            message: message.to_owned(),
         }
     }
 
@@ -1452,18 +1638,21 @@ impl IntoResponse for ApiError {
 
 impl From<anyhow::Error> for ApiError {
     fn from(error: anyhow::Error) -> Self {
+        // The detail (a path, a query) is for the log, not for the browser.
+        tracing::error!(error = %format!("{error:#}"), "request failed");
         Self {
             status: StatusCode::INTERNAL_SERVER_ERROR,
-            message: error.to_string(),
+            message: "internal error; the details are in the server log".to_owned(),
         }
     }
 }
 
 impl From<tokio::task::JoinError> for ApiError {
     fn from(error: tokio::task::JoinError) -> Self {
+        tracing::error!(%error, "a request task failed");
         Self {
             status: StatusCode::INTERNAL_SERVER_ERROR,
-            message: format!("request task failed: {error}"),
+            message: "internal error; the details are in the server log".to_owned(),
         }
     }
 }
@@ -1495,6 +1684,8 @@ mod tests {
             location: location.map(str::to_owned),
             shared_networks: Vec::new(),
             local_networks: Vec::new(),
+            allowed_hosts: Vec::new(),
+            retention: tlsfp_intel::Retention::default(),
             library: Vec::new(),
         }
     }
@@ -1514,6 +1705,155 @@ mod tests {
         let json = serde_json::to_string(&meta).unwrap();
         assert!(!json.contains("secret"), "{json}");
         assert!(!json.contains("intel.db"), "{json}");
+    }
+
+    // --- the HTTP surface, through the real router ---
+
+    fn build(bind: &str, allowed: &[&str]) -> (axum::Router, super::Shared) {
+        let mut cfg = config(Source::Tail, None);
+        cfg.bind = bind.to_owned();
+        cfg.allowed_hosts = allowed.iter().map(|h| (*h).to_owned()).collect();
+        let web = std::env::temp_dir().join(format!("tlsfp-web-{}-{bind}", std::process::id()));
+        std::fs::create_dir_all(web.join("assets")).unwrap();
+        std::fs::write(web.join("index.html"), "<!doctype html><title>app</title>").unwrap();
+        std::fs::write(web.join("assets/app-ABCDEF12.js"), "export{}").unwrap();
+        let state = super::new_state(
+            tlsfp_intel::IntelStore::open_in_memory().unwrap(),
+            super::Feed::new(),
+            &cfg,
+            0,
+        );
+        let hosts = super::allowed_hosts(&cfg);
+        (
+            super::router(&web, std::sync::Arc::clone(&state), &hosts),
+            state,
+        )
+    }
+
+    async fn get(
+        app: &axum::Router,
+        path: &str,
+        host: &str,
+    ) -> (axum::http::StatusCode, axum::http::HeaderMap, String) {
+        use tower::ServiceExt;
+        let request = axum::http::Request::builder()
+            .uri(path)
+            .header("host", host)
+            .body(axum::body::Body::empty())
+            .unwrap();
+        let response = app.clone().oneshot(request).await.unwrap();
+        let (parts, body) = response.into_parts();
+        let bytes = axum::body::to_bytes(body, 1 << 20).await.unwrap();
+        (
+            parts.status,
+            parts.headers,
+            String::from_utf8_lossy(&bytes).into_owned(),
+        )
+    }
+
+    #[tokio::test]
+    async fn a_loopback_dashboard_refuses_a_foreign_host_header() {
+        let (app, _state) = build("127.0.0.1:8080", &[]);
+        for ok in [
+            "localhost:8080",
+            "127.0.0.1:8080",
+            "[::1]:8080",
+            "LOCALHOST",
+        ] {
+            let (status, _, _) = get(&app, "/api/health", ok).await;
+            assert_eq!(status, axum::http::StatusCode::OK, "{ok}");
+        }
+        // A DNS-rebinding page arrives under its own name.
+        let (status, _, body) = get(&app, "/api/stats", "evil.example:8080").await;
+        assert_eq!(status, axum::http::StatusCode::MISDIRECTED_REQUEST);
+        assert!(body.contains("--allowed-host"));
+    }
+
+    #[tokio::test]
+    async fn an_allowed_host_is_accepted_and_a_network_bind_skips_the_check() {
+        let (app, _s) = build("127.0.0.1:8081", &["dash.lan"]);
+        assert_eq!(
+            get(&app, "/api/health", "dash.lan:8081").await.0,
+            axum::http::StatusCode::OK
+        );
+        let (open, _s) = build("0.0.0.0:8082", &[]);
+        assert_eq!(
+            get(&open, "/api/health", "anything.example").await.0,
+            axum::http::StatusCode::OK
+        );
+    }
+
+    #[tokio::test]
+    async fn pages_fall_back_to_the_app_and_missing_files_are_404() {
+        let (app, _s) = build("127.0.0.1:8083", &[]);
+        let (status, headers, body) = get(&app, "/hosts", "localhost").await;
+        assert_eq!(status, axum::http::StatusCode::OK);
+        assert!(body.contains("<title>app</title>"));
+        assert_eq!(headers["cache-control"], "no-cache");
+
+        let (status, _, body) = get(&app, "/assets/app-OLDOLD99.js", "localhost").await;
+        assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
+        assert!(!body.contains("<title>"), "never HTML in place of a script");
+
+        let (status, headers, _) = get(&app, "/assets/app-ABCDEF12.js", "localhost").await;
+        assert_eq!(status, axum::http::StatusCode::OK);
+        assert_eq!(
+            headers["cache-control"],
+            "public, max-age=31536000, immutable"
+        );
+        let (_, headers, _) = get(&app, "/api/health", "localhost").await;
+        assert_eq!(headers["cache-control"], "no-store");
+    }
+
+    #[tokio::test]
+    async fn every_response_carries_the_security_headers() {
+        let (app, _s) = build("127.0.0.1:8084", &[]);
+        let (_, headers, _) = get(&app, "/", "localhost").await;
+        assert!(
+            headers["content-security-policy"]
+                .to_str()
+                .unwrap()
+                .contains("script-src 'self'")
+        );
+        assert_eq!(headers["x-frame-options"], "DENY");
+        assert_eq!(headers["x-content-type-options"], "nosniff");
+        assert_eq!(headers["referrer-policy"], "no-referrer");
+    }
+
+    #[tokio::test]
+    async fn an_unknown_report_or_host_is_a_plain_404_and_a_bad_query_a_400_not_a_leak() {
+        let (app, _s) = build("127.0.0.1:8085", &[]);
+        assert_eq!(
+            get(&app, "/api/library/deadbeef/report", "localhost")
+                .await
+                .0,
+            axum::http::StatusCode::NOT_FOUND
+        );
+        assert_eq!(
+            get(&app, "/api/hosts/not-an-ip", "localhost").await.0,
+            axum::http::StatusCode::NOT_FOUND
+        );
+        let (status, _, body) = get(&app, "/api/observed", "localhost").await;
+        assert_eq!(status, axum::http::StatusCode::OK);
+        assert!(body.contains("coverage"));
+    }
+
+    #[tokio::test]
+    async fn event_streams_are_capped() {
+        let (_app, state) = build("127.0.0.1:8086", &[]);
+        let mut held = Vec::new();
+        for _ in 0..super::MAX_STREAMS {
+            held.push(super::StreamGuard::acquire(&state).unwrap());
+        }
+        assert!(
+            super::StreamGuard::acquire(&state).is_err(),
+            "one past the cap is refused"
+        );
+        held.pop();
+        assert!(
+            super::StreamGuard::acquire(&state).is_ok(),
+            "a closed stream frees its slot"
+        );
     }
 
     #[test]

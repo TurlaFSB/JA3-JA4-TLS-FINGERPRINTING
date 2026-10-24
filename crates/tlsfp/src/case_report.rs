@@ -55,7 +55,13 @@ pub fn build(path: &Path, name: String, db: &Path, scratch: &Path) -> Result<Cas
 }
 
 fn detect(path: &Path, db: &Path, scratch: &Path) -> Result<(Vec<Alert>, usize)> {
-    let copy = scratch.join(format!("case-{}.db", std::process::id()));
+    // Unique per call: two reports may be built in one process.
+    static NEXT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+    let copy = scratch.join(format!(
+        "tlsfp-case-{}-{}.db",
+        std::process::id(),
+        NEXT.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+    ));
     let _ = std::fs::remove_file(&copy);
     let mut store = if db.exists() {
         std::fs::copy(db, &copy).context("copying the intelligence database")?;

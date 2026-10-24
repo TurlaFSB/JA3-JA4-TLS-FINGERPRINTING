@@ -118,5 +118,10 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - The row tag says what happened (`new`, `ua mismatch`, `known bad`, ...) instead of only a severity, with the rule's explanation on hover. `INFO` was the first-seen alert and read like a button.
 - The detail view is a side drawer above the page: a plain sentence about the event, the connection facts, who the client is and why, every fingerprint with a one-line explanation and copy, JA4 anatomy, the other events of the same connection (click to jump), intelligence (with an explanation when there is no match), alerts with what each rule means, and shortcuts to filter to the fingerprint or the site or to open the host's history. Esc closes; up and down or j and k step through events.
 
+## Audit pass: what a real user found and what the review found
+- Fixed the "Failed to fetch dynamically imported module" crash (honest 404s, cache policy, reload once, a real error page); traffic direction for hosts with public addresses and a throughput history kept on the server; the Hosts list; the Intel page now shows what this sensor has seen against the feed, with `tlsfp intel label`; Host-header check against DNS rebinding, capped event streams, no internal detail in 500s, webhook URLs never logged, one report at a time; tokio 1.54.1 and `cargo deny` in CI. Findings F20 to F29 in `AUDIT.md`.
+- Retention of observations and alerts (`--keep-days`, `--keep-alert-days`, `--max-observations`, `tlsfp intel prune`); frontend dependencies updated to clear 36 audit advisories, with `pnpm audit` in CI.
+- `--local-network` and `--allowed-host`; README, threat model, intelligence and live-capture guides brought up to date.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

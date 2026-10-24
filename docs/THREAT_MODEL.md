@@ -16,7 +16,10 @@ Do not use it to track individuals, to monitor traffic you have no authority ove
 |---|---|
 | The sensor host | Parses attacker-controlled bytes at line rate |
 | The intelligence database | Poisoned feed entries could cause false verdicts |
-| The dashboard / API | Exposes observed hosts and alerts; no authentication |
+| The dashboard / API | Exposes observed hosts, sites and alerts; no authentication. Reachable from any web page in the same browser when bound to loopback, unless the Host header is checked |
+| Alert delivery | Sends alert content off the host; a webhook URL is a secret |
+| HTML reports | Contain addresses, server names and a capture's hash; built from untrusted captures |
+| The capture library | Reads files from a folder an operator points it at |
 | Capture files | May contain sensitive metadata (IPs, SNI, User-Agent in cleartext HTTP) |
 
 ## Adversaries and mitigations
@@ -29,6 +32,12 @@ Do not use it to track individuals, to monitor traffic you have no authority ove
 | Encrypted Client Hello | Inner ClientHello hidden | Detection degrades to the outer hello; impact is a planned experiment |
 | Feed poisoning | False positives or hidden malware | Importer validates records; feeds are vendored and versioned |
 | Sensor fingerprinting / evasion by timing | Adversary notices detection | Out of scope: the sensor is passive |
+| A web page uses DNS rebinding to reach `127.0.0.1:8080` | Reads the API (who this machine talks to) as if same-origin | While bound to loopback the server answers only `localhost` and loopback Host headers; `--allowed-host` adds names. Tested through the router |
+| Hostile text in a capture (SNI, User-Agent, file name) | Script injection into the dashboard or a report | React escapes every value; the CSP allows only own scripts; the HTML report escapes every value (tested with a hostile name) and contains no script |
+| A client opens thousands of event streams, or requests reports in a loop | Memory or CPU exhaustion | Streams capped at 64; one report built at a time; capture files over 1 GiB are not read |
+| A long-running sensor fills the disk | The observation and alert tables grow with every handshake | Retention deletes by age and by row cap, oldest first, every 15 minutes (`--keep-days`, `--keep-alert-days`, `--max-observations`) |
+| A stack trace or message in an error response | Reveals paths or queries | 500 responses carry a fixed message; the detail goes to the log |
+| A log line carries a webhook URL | The secret leaks into logs | Only the host is logged (tested) |
 
 ## Known limits
 
@@ -39,4 +48,4 @@ Do not use it to track individuals, to monitor traffic you have no authority ove
 
 ## Deployment guidance
 
-Bind the dashboard to `127.0.0.1`. If it must be reachable, put it behind a reverse proxy that provides authentication and TLS. Run live capture with only `cap_net_raw` and `cap_net_admin`, never as root.
+Bind the dashboard to `127.0.0.1` (the default; the Host header is then checked). If it must be reachable, put it behind a reverse proxy that provides authentication and TLS. Run live capture with only `cap_net_raw` and `cap_net_admin`, never as root.

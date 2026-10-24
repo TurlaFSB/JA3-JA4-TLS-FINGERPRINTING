@@ -41,7 +41,7 @@ csv = "1"
 
 axum = "0.8"
 tower-http = { version = "0.6", features = ["fs", "trace", "cors", "compression-br", "compression-gzip", "set-header"] }
-tower = "0.5"
+tower = { version = "0.5", features = ["util"] }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

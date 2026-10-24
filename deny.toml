@@ -29,3 +29,6 @@ allow = [
 [bans]
 multiple-versions = "warn"
 wildcards = "deny"
+# The workspace crates depend on each other by path; that is not a wildcard
+# on anything published.
+allow-wildcard-paths = true

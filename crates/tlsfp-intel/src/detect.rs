@@ -1038,6 +1038,15 @@ fn alerts_where(conn: &Connection, ip: Option<&str>, limit: i64) -> Result<Vec<A
 }
 
 /// A small count of alerts per rule, for the stats summary.
+/// Alerts above informational: the ones worth a person's attention.
+pub(crate) fn count_actionable(conn: &Connection) -> Result<i64> {
+    Ok(conn.query_row(
+        "SELECT count(*) FROM alert WHERE severity != 'info'",
+        [],
+        |row| row.get(0),
+    )?)
+}
+
 pub(crate) fn counts_by_rule(conn: &Connection) -> Result<Vec<(Rule, i64)>> {
     let mut statement =
         conn.prepare("SELECT rule, count(*) FROM alert GROUP BY rule ORDER BY count(*) DESC")?;

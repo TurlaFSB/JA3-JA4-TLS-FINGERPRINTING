@@ -354,7 +354,19 @@ impl Worker {
                     return false;
                 }
                 Err(error) => {
-                    tracing::warn!(attempt, %error, "the webhook did not accept the alert");
+                    // ureq's own message carries the whole URL, and a webhook
+                    // URL is usually a secret. Say which host and what kind of
+                    // failure, never the path.
+                    let reason = match &error {
+                        ureq::Error::Status(code, _) => format!("status {code}"),
+                        ureq::Error::Transport(transport) => transport.kind().to_string(),
+                    };
+                    tracing::warn!(
+                        attempt,
+                        host = webhook_host(url),
+                        reason,
+                        "the webhook did not accept the alert"
+                    );
                     if attempt < WEBHOOK_ATTEMPTS {
                         thread::sleep(pause);
                         pause *= 2;
@@ -364,6 +376,16 @@ impl Worker {
         }
         false
     }
+}
+
+/// The host part of a URL, for logging in place of the URL itself.
+fn webhook_host(url: &str) -> &str {
+    url.split_once("://")
+        .map_or(url, |(_, rest)| rest)
+        .split(['/', '?', '#'])
+        .next()
+        .and_then(|authority| authority.rsplit('@').next())
+        .unwrap_or("?")
 }
 
 /// The alert as one line of JSON with a readable time and a sensor tag.
@@ -550,6 +572,19 @@ mod tests {
         long.detail = "x".repeat(5_000);
         let discord = webhook_body(&long, WebhookFormat::Discord);
         assert!(discord["content"].as_str().unwrap().len() <= 1_900);
+    }
+
+    #[test]
+    fn only_the_host_of_a_webhook_is_ever_logged() {
+        assert_eq!(
+            webhook_host("https://hooks.slack.com/services/T000/B000/SECRETSECRET"),
+            "hooks.slack.com"
+        );
+        assert_eq!(
+            webhook_host("http://user:pw@siem.local:8088/x?token=1"),
+            "siem.local:8088"
+        );
+        assert_eq!(webhook_host("https://example.com"), "example.com");
     }
 
     #[test]

@@ -223,8 +223,11 @@ export function EventDetail({
     return () => window.removeEventListener('keydown', onKey)
   }, [onClose, onPrev, onNext])
 
+  // Move focus into the drawer, and give it back to the row that opened it.
   useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null
     closeRef.current?.focus()
+    return () => opener?.focus?.()
   }, [])
 
   return (

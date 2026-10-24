@@ -23,6 +23,7 @@ mod matcher;
 mod model;
 mod net;
 mod observed;
+mod retention;
 mod rules;
 mod schema;
 mod seed;
@@ -45,6 +46,7 @@ pub use labels::{LOCAL_SOURCE, LocalLabel};
 pub use model::{CatalogEntry, Category, FpKind, IntelHit, MatchReport, MatchStrength, Verdict};
 pub use net::Network;
 pub use observed::{Coverage, Knowledge, Observed, ObservedClient};
+pub use retention::{Pruned, Retention};
 pub use rules::RuleSet;
 pub use seed::{FeedLoad, SeedSummary};
 
@@ -191,6 +193,12 @@ impl IntelStore {
         labels::list(&self.conn)
     }
 
+    /// Deletes observations and alerts beyond the retention policy, oldest
+    /// first. See [`Retention`].
+    pub fn prune(&mut self, policy: Retention) -> Result<Pruned> {
+        retention::prune(&self.conn, policy)
+    }
+
     /// The addresses observed, most recently active first.
     pub fn hosts(&self, limit: i64, role: HostRole) -> Result<Vec<HostSummary>> {
         hosts::list(&self.conn, limit, role)
@@ -199,6 +207,11 @@ impl IntelStore {
     /// Everything observed about one source address.
     pub fn host_profile(&self, ip: &str) -> Result<Option<HostProfile>> {
         hosts::profile(&self.conn, ip)
+    }
+
+    /// Recorded alerts above informational severity.
+    pub fn actionable_alert_count(&self) -> Result<i64> {
+        detect::count_actionable(&self.conn)
     }
 
     /// A count of recorded alerts per rule, for the stats summary.

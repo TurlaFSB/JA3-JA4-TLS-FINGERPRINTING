@@ -123,6 +123,9 @@ const TITLES: Record<string, string> = {
 export function Shell(): React.ReactElement {
   const { pathname } = useLocation()
   const { data: stats } = useStats()
+  // Only alerts above informational count toward the badge: a new fingerprint
+  // is worth knowing about, not worth a red number.
+  const attention = stats?.alert_attention ?? 0
   const alertTotal = stats?.alert_total ?? 0
   useEffect(() => {
     document.title = `${TITLES[pathname] ?? 'Dashboard'} · tlsfp`
@@ -149,9 +152,12 @@ export function Shell(): React.ReactElement {
               }
             >
               {item.label}
-              {item.to === ROUTES.ALERTS && alertTotal > 0 && (
-                <span className={styles.badge}>
-                  {alertTotal.toLocaleString()}
+              {item.to === ROUTES.ALERTS && attention > 0 && (
+                <span
+                  className={styles.badge}
+                  title={`${attention.toLocaleString()} alert(s) above informational, of ${alertTotal.toLocaleString()} recorded`}
+                >
+                  {attention.toLocaleString()}
                 </span>
               )}
             </NavLink>
