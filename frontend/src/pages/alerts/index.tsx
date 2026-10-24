@@ -62,7 +62,12 @@ function Entry({
             {alert.ip && (
               <>
                 <dt>address</dt>
-                <dd>{alert.ip}</dd>
+                <dd>
+                  {alert.ip}{' '}
+                  <Link to={`${ROUTES.HOSTS}?ip=${encodeURIComponent(alert.ip)}`}>
+                    history
+                  </Link>
+                </dd>
               </>
             )}
             {alert.fp_value && (

@@ -24,10 +24,6 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0"
     />
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'self'; worker-src 'self' blob:;"
-    />
     <title>tlsfp</title>
     <meta
       name="description"
@@ -65,16 +61,7 @@
       name="twitter:description"
       content="Passive TLS fingerprinting sensor: JA3, JA4 and the JA4+ family, QUIC Initial decryption, and fingerprint intelligence."
     />
-    <script>
-      try {
-        var t = JSON.parse(localStorage.getItem('ui-storage') || '{}').state;
-        var theme = (t && t.theme) || 'dark';
-        if (theme === 'system') {
-          theme = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-        }
-        document.documentElement.dataset.theme = theme;
-      } catch (e) {}
-    </script>
+    <script src="/theme-init.js"></script>
   </head>
   <body>
     <div id="root"></div>

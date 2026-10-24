@@ -101,5 +101,9 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## One-click report
 - `tlsfp html FILE... -o report.html` writes a single self-contained page per run: file name, SHA-256, size, first and last packet time, handshake counts, the most likely client and its confidence, every client with its servers, the detection rules that fired with a plain-language reason, and the limits of those claims. No script and no network request; every value from a capture is HTML-escaped (tested with a hostile server name). Detection runs on a private copy of the intelligence database, so your own is untouched. The Library page has a "Download report" link per capture (`/api/library/{id}/report`; an id not in the listing is a 404, so a request cannot name a path).
 
+## Hardening the dashboard server
+- The server sends a Content-Security-Policy (own script, style, data only; no framing; no `<base>`), `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` and `nosniff`. The page no longer needs inline or `eval` script: the theme bootstrap moved to `theme-init.js`, and the policy that allowed `unsafe-inline` and `unsafe-eval` script in `index.html` is gone. Checked in a real browser across every page with no policy violations.
+- Alerts show a link to the address's history on the Hosts page.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

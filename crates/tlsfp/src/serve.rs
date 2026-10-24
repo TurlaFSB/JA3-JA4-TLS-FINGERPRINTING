@@ -42,6 +42,7 @@ use tokio_stream::StreamExt;
 use tokio_stream::wrappers::BroadcastStream;
 use tower_http::compression::CompressionLayer;
 use tower_http::services::{ServeDir, ServeFile};
+use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 
 use tlsfp_core::pipeline::traffic::{Direction, FlowRow, Totals, TrafficHandle};
@@ -380,7 +381,32 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .nest("/api", api)
         .merge(ops)
         .fallback_service(static_files)
+        .layer(security_header(
+            axum::http::header::CONTENT_SECURITY_POLICY,
+            CONTENT_SECURITY_POLICY,
+        ))
+        .layer(security_header(
+            axum::http::header::X_CONTENT_TYPE_OPTIONS,
+            "nosniff",
+        ))
+        .layer(security_header(axum::http::header::X_FRAME_OPTIONS, "DENY"))
+        .layer(security_header(
+            axum::http::header::REFERRER_POLICY,
+            "no-referrer",
+        ))
         .layer(TraceLayer::new_for_http())
+}
+
+/// The dashboard loads its own script, style and data and nothing else, so the
+/// policy says exactly that. A hostile server name or User-Agent that somehow
+/// reached the page as markup could not run script or load anything remote.
+const CONTENT_SECURITY_POLICY: &str = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'";
+
+fn security_header(
+    name: axum::http::HeaderName,
+    value: &'static str,
+) -> SetResponseHeaderLayer<axum::http::HeaderValue> {
+    SetResponseHeaderLayer::if_not_present(name, axum::http::HeaderValue::from_static(value))
 }
 
 /// A count of alerts attributed to one rule, the shape the distribution chart
