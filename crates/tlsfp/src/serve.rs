@@ -46,7 +46,7 @@ use tower_http::set_header::SetResponseHeaderLayer;
 use tower_http::trace::TraceLayer;
 
 use tlsfp_core::pipeline::traffic::{Direction, FlowRow, Totals, TrafficHandle};
-use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, PipelineConfig};
+use tlsfp_core::{FingerprintEvent, PcapFileSource, Pipeline, PipelineConfig, StreamEvent};
 use tlsfp_intel::{
     Alert, CatalogEntry, DetectConfig, FpKind, IntelStore, MatchReport, MatchStrength, Network,
     Rule, Stats, infer_client,
@@ -270,10 +270,45 @@ enum LiveMessage {
         intel: Vec<MatchReport>,
         #[serde(skip_serializing_if = "Vec::is_empty")]
         alerts: Vec<Alert>,
+        /// Who the client appears to be, for a ClientHello only.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        client: Option<Box<ClientRead>>,
     },
     Alert {
         alert: Alert,
     },
+}
+
+/// What a ClientHello says about its sender: an exact intelligence match when
+/// there is one, otherwise the family its shape suggests, with the evidence and
+/// the limit of the claim, so the dashboard can show more than a hash.
+#[derive(Serialize)]
+struct ClientRead {
+    /// The label of an exact intelligence match, if any.
+    known_as: Option<String>,
+    family: &'static str,
+    /// Human name of the family.
+    family_name: &'static str,
+    confidence: tlsfp_intel::Confidence,
+    reasons: Vec<String>,
+    caveat: Option<&'static str>,
+}
+
+fn read_client(raw: &str, intel: &[MatchReport]) -> ClientRead {
+    let guess = infer_client(raw);
+    let known_as = intel
+        .iter()
+        .flat_map(|report| report.hits.iter())
+        .find(|hit| hit.strength == MatchStrength::Exact)
+        .map(|hit| hit.label.clone());
+    ClientRead {
+        known_as,
+        family: family_token(guess.family),
+        family_name: guess.family.display(),
+        confidence: guess.confidence,
+        reasons: guess.reasons,
+        caveat: guess.caveat,
+    }
 }
 
 /// Runs the dashboard until interrupted. Builds its own runtime so the rest of
@@ -1182,10 +1217,15 @@ fn spawn_tail(state: Shared, feed: Feed, shutdown: Arc<AtomicBool>) {
 fn broadcast_flow(store: &mut IntelStore, feed: &Feed, event: FingerprintEvent) {
     let intel = store.match_event(&event).unwrap_or_default();
     let alerts = store.detect(&event).unwrap_or_default();
+    let client = match &event.event {
+        StreamEvent::ClientHello { ja4, .. } => Some(Box::new(read_client(&ja4.raw, &intel))),
+        _ => None,
+    };
     let message = LiveMessage::Flow {
         event,
         intel,
         alerts,
+        client,
     };
     if let Ok(line) = serde_json::to_string(&message) {
         feed.publish(line);
@@ -1301,6 +1341,19 @@ mod tests {
         let json = serde_json::to_string(&meta).unwrap();
         assert!(!json.contains("secret"), "{json}");
         assert!(!json.contains("intel.db"), "{json}");
+    }
+
+    #[test]
+    fn a_client_hello_is_read_as_a_family_with_its_evidence() {
+        let raw = "t13d1516h2_002f,0035,009c,009d,1301,1302,1303,c013,c014,c02b,c02c,c02f,c030,cca8,cca9_0005,000a,000b,000d,0012,0015,0017,001b,0023,002b,002d,0033,4469,ff01_0403,0804,0401,0503,0805,0501,0806,0601";
+        let read = read_client(raw, &[]);
+        assert_eq!(read.family, "chromium");
+        assert!(read.known_as.is_none());
+        assert!(!read.reasons.is_empty());
+        assert!(
+            read.caveat.is_some(),
+            "an impersonable family carries its caveat"
+        );
     }
 
     #[test]

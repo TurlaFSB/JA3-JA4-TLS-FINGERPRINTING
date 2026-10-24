@@ -6,13 +6,13 @@
 @use 'index' as *;
 
 .panel {
-  position: absolute;
+  position: fixed;
   inset: 0 0 0 auto;
-  z-index: 3;
+  z-index: $z-overlay;
   display: flex;
   flex-direction: column;
   gap: $space-4;
-  width: min(480px, 100%);
+  width: min(560px, 100vw);
   padding: $space-4;
   overflow: hidden auto;
   background: color-mix(in sRGB, var(--ink-900) 97%, transparent);
@@ -159,7 +159,7 @@
   }
 }
 
-.code {
+.codeCell {
   color: $thermal;
   white-space: nowrap;
 }
@@ -208,4 +208,182 @@
 
 .alertTitle {
   color: $bone;
+}
+
+.code {
+  padding: 0 4px;
+  color: $ash;
+  font-size: $font-size-3xs;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  border: 1px solid $line;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+
+  button:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+}
+
+.position {
+  color: $dust;
+  font-size: $font-size-3xs;
+}
+
+.summary {
+  margin: 0;
+  padding: $space-3;
+  font-family: $font-mono;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $bone;
+  background: $ink-800;
+  border-left: 2px solid $fire;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+}
+
+.action {
+  padding: 3px 9px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: $paper;
+  background: transparent;
+  border: 1px solid $line-strong;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $chalk;
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  margin: 0;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: $space-2;
+
+  dt {
+    color: $dust;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: $bone;
+  }
+}
+
+.lead {
+  margin: 0;
+  font-family: $font-display;
+  font-size: $font-size-lg;
+  letter-spacing: 0.04em;
+  color: $bone;
+
+  &[data-basis='exact'] {
+    color: $thermal;
+  }
+}
+
+.note,
+.hint {
+  margin: 0;
+  color: $dust;
+  line-height: 1.45;
+}
+
+.hint {
+  font-size: $font-size-3xs;
+}
+
+.caveat {
+  margin: 0;
+  padding: $space-2;
+  color: $paper;
+  border-left: 2px solid $magma;
+  background: $ink-800;
+}
+
+.reasons {
+  margin: 0;
+  padding-left: $space-4;
+  color: $paper;
+
+  li {
+    margin: 2px 0;
+  }
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.relatedList {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.related {
+  display: flex;
+  align-items: baseline;
+  gap: $space-2;
+  width: 100%;
+  padding: 3px $space-2;
+  text-align: left;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $paper;
+  background: $ink-900;
+  border: 1px solid $line-faint;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+.relatedFp {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: $volt-soft;
+}
+
+@media (width <= 640px) {
+  .panel {
+    width: 100vw;
+  }
 }

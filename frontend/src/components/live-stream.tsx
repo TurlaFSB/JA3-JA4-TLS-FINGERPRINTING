@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import type { LiveItem } from '@/api/hooks'
 import {
   type Alert,
+  type ClientRead,
   fingerprintOf,
   formatClock,
   type MatchReport,
@@ -20,6 +21,19 @@ import { cx } from './cx'
 import { EventDetail } from './event-detail'
 import styles from './live-stream.module.scss'
 import { CropFrame } from './marks'
+import {
+  buildConnections,
+  bySite,
+  type Connection,
+  clientName,
+  connectionKey,
+  leadAlert,
+  matchesSite,
+  NO_NAME,
+  RULE_NOTE,
+  RULE_SHORT,
+  type SiteRow,
+} from './stream-data'
 
 const SEV_ORDER: Record<Severity, number> = {
   info: 0,
@@ -75,7 +89,8 @@ function searchText(item: LiveItem): string {
   }
   const { event } = message
   const sni = 'sni' in event ? (event.sni ?? '') : ''
-  return `${event.src} ${event.dst} ${fingerprintOf(event).value} ${sni}`.toLowerCase()
+  const who = message.client ? clientName(message.client).text : ''
+  return `${event.src} ${event.dst} ${fingerprintOf(event).value} ${sni} ${who}`.toLowerCase()
 }
 
 function matches(item: LiveItem, filter: FilterId, query: string): boolean {
@@ -105,6 +120,8 @@ function FlowRow({
   event,
   intel,
   alerts,
+  client,
+  conn,
   selected,
   animate,
   onSelect,
@@ -113,6 +130,8 @@ function FlowRow({
   event: StreamEvent
   intel?: MatchReport[]
   alerts?: Alert[]
+  client?: ClientRead
+  conn?: Connection
   selected: boolean
   onSelect: () => void
 }): React.ReactElement {
@@ -120,9 +139,15 @@ function FlowRow({
   const src = splitAddr(event.src)
   const dst = splitAddr(event.dst)
   const verdict = worstVerdict(intel)
+  const lead = leadAlert(alerts)
   const severity = topSeverity(alerts ?? [])
   const hot = severity === 'high' || severity === 'critical'
-  const sni = 'sni' in event ? event.sni : undefined
+  const own = 'sni' in event ? event.sni : undefined
+  // A server's reply carries no name of its own; take it from the connection
+  // it answers, and say so by dimming it.
+  const borrowed = own === undefined && event.kind !== 'client_hello'
+  const sni = own ?? conn?.sni
+  const who = clientName(client ?? conn?.client)
 
   return (
     <button
@@ -132,16 +157,37 @@ function FlowRow({
       data-selected={selected}
       onClick={onSelect}
       aria-pressed={selected}
+      aria-label={`${KIND_CODE[event.kind]} ${sni ?? event.dst}, open details`}
     >
       <span className={styles.time}>{formatClock(event.ts_nanos)}</span>
       <span className={styles.code}>{KIND_CODE[event.kind]}</span>
-      <span className={styles.route}>
+      <span className={styles.route} title={`${event.src} -> ${event.dst}`}>
         <span className={styles.host}>{src.host}</span>
         <span className={styles.arrow}>-&gt;</span>
         <span className={styles.host}>{dst.host}</span>
       </span>
-      <span className={styles.sni} title={sni}>
-        {sni ?? ''}
+      <span
+        className={cx(styles.sni, borrowed && styles.borrowed)}
+        title={
+          sni
+            ? `${sni}${borrowed ? ' (from the matching client hello)' : ''}`
+            : undefined
+        }
+      >
+        {sni ?? (event.kind === 'client_hello' ? '(no server name)' : '')}
+      </span>
+      <span
+        className={cx(styles.who, borrowed && styles.borrowed)}
+        data-basis={who.basis}
+        title={
+          who.basis === 'inferred'
+            ? 'Inferred from the shape of the handshake, not matched exactly'
+            : who.basis === 'exact'
+              ? 'Matched exactly in the intelligence feed'
+              : undefined
+        }
+      >
+        {who.text}
       </span>
       <span className={styles.fp} title={fingerprint.value}>
         <span className={styles.fpKind}>{fingerprint.kind}</span>
@@ -153,9 +199,80 @@ function FlowRow({
             {verdict}
           </span>
         )}
-        {severity && <SeverityTag severity={severity} />}
+        {lead && severity && (
+          <span
+            className={styles.tag}
+            data-sev={severity}
+            title={`${lead.title}. ${RULE_NOTE[lead.rule]}`}
+          >
+            {RULE_SHORT[lead.rule]}
+            {(alerts?.length ?? 0) > 1 ? ` +${(alerts?.length ?? 1) - 1}` : ''}
+          </span>
+        )}
       </span>
     </button>
+  )
+}
+
+function SiteTable({
+  rows,
+  onPick,
+}: {
+  rows: SiteRow[]
+  onPick: (site: string) => void
+}): React.ReactElement {
+  return (
+    <div className={styles.sites}>
+      <div className={cx(styles.siteRow, styles.siteHead)} aria-hidden="true">
+        <span>site</span>
+        <span>clients that reached it</span>
+        <span className={styles.num}>conn.</span>
+        <span className={styles.num}>quic</span>
+        <span className={styles.num}>last</span>
+      </div>
+      {rows.map((row) => (
+        <button
+          key={row.site}
+          type="button"
+          className={styles.siteRow}
+          data-verdict={row.verdict ?? 'unknown'}
+          onClick={() => onPick(row.site)}
+          title="Show the handshakes for this site"
+        >
+          <span className={styles.siteName}>
+            {row.site}
+            {row.alerts > 0 && (
+              <span className={styles.siteAlerts}>{row.alerts} alert(s)</span>
+            )}
+          </span>
+          <span className={styles.siteClients}>
+            {row.clients.slice(0, 3).map((client) => (
+              <span key={client.ja4} className={styles.siteClient}>
+                <span className={styles.who} data-basis={client.name.basis}>
+                  {client.name.text || 'unnamed'}
+                </span>
+                <span className={styles.siteJa4} title={client.ja4}>
+                  {client.ja4}
+                </span>
+                {client.connections > 1 && (
+                  <span className={styles.siteCount}>x{client.connections}</span>
+                )}
+              </span>
+            ))}
+            {row.clients.length > 3 && (
+              <span className={styles.siteMore}>
+                +{row.clients.length - 3} more fingerprint(s)
+              </span>
+            )}
+          </span>
+          <span className={styles.num}>{row.connections}</span>
+          <span className={styles.num}>{row.quic}</span>
+          <span className={styles.num}>
+            {formatClock(row.lastTs).slice(0, 8)}
+          </span>
+        </button>
+      ))}
+    </div>
   )
 }
 
@@ -181,6 +298,86 @@ function AlertRow({
   )
 }
 
+function StreamBody({
+  view,
+  sites,
+  items,
+  feedEmpty,
+  connections,
+  selectedSeq,
+  onSelect,
+  onPickSite,
+}: {
+  view: 'events' | 'sites'
+  sites: SiteRow[]
+  items: LiveItem[]
+  feedEmpty: boolean
+  connections: Map<string, Connection>
+  selectedSeq?: number
+  onSelect: (item: LiveItem) => void
+  onPickSite: (site: string) => void
+}): React.ReactElement {
+  if (view === 'sites') {
+    return (
+      <div className={styles.scroll}>
+        {sites.length === 0 ? (
+          <div className={styles.idle}>
+            <span className={styles.idleLine}>no sites yet</span>
+            <span className={styles.idleSub}>
+              sites appear as clients start TLS or QUIC connections
+            </span>
+          </div>
+        ) : (
+          <SiteTable rows={sites} onPick={onPickSite} />
+        )}
+      </div>
+    )
+  }
+  if (items.length === 0) {
+    return (
+      <div className={styles.scroll}>
+        <div className={styles.idle}>
+          <span className={styles.idleLine}>
+            {feedEmpty
+              ? 'awaiting handshakes on the wire'
+              : 'no events match this filter'}
+          </span>
+          <span className={styles.idleSub}>
+            {feedEmpty
+              ? 'nothing has crossed the scope yet. replay a capture or start a live sensor'
+              : 'clear the filter to see the full stream'}
+          </span>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className={styles.scroll}>
+      {items.map((item) =>
+        item.message.type === 'flow' ? (
+          <FlowRow
+            key={item.seq}
+            event={item.message.event}
+            intel={item.message.intel}
+            alerts={item.message.alerts}
+            client={item.message.client}
+            conn={connections.get(connectionKey(item.message.event))}
+            animate={item.animate}
+            selected={selectedSeq === item.seq}
+            onSelect={() => onSelect(item)}
+          />
+        ) : (
+          <AlertRow
+            key={item.seq}
+            alert={item.message.alert}
+            animate={item.animate}
+          />
+        )
+      )}
+    </div>
+  )
+}
+
 export function LiveStream({
   feed,
   connected,
@@ -196,6 +393,7 @@ export function LiveStream({
   onQuery: (value: string) => void
   className?: string
 }): React.ReactElement {
+  const [view, setView] = useState<'events' | 'sites'>('events')
   const [filter, setFilter] = useState<FilterId>('tls')
   const [frozen, setFrozen] = useState<LiveItem[] | null>(null)
   const [selected, setSelected] = useState<LiveItem | null>(null)
@@ -231,15 +429,35 @@ export function LiveStream({
     [source, filter, needle, clearedThrough]
   )
 
+  const connections = useMemo(() => buildConnections(source), [source])
+  const sites = useMemo(
+    () => bySite(source).filter((row) => matchesSite(row, needle)),
+    [source, needle]
+  )
+
+  const flowItems = useMemo(
+    () => items.filter((item) => item.message.type === 'flow'),
+    [items]
+  )
+  const selectedIndex = selected
+    ? flowItems.findIndex((item) => item.seq === selected.seq)
+    : -1
+  const step = (delta: number): void => {
+    const next = flowItems[selectedIndex + delta]
+    if (next) setSelected(next)
+  }
+
   const aside = (
     <span className={styles.aside}>
       <span className={cx(styles.live, connected && !paused && styles.liveOn)}>
         {!connected ? 'down' : paused ? 'paused' : 'rec'}
       </span>
       <span className={styles.count}>
-        {items.length === source.length
-          ? `${flowCount.toLocaleString()} flows`
-          : `${items.length.toLocaleString()} shown / ${flowCount.toLocaleString()} flows`}
+        {view === 'sites'
+          ? `${sites.length.toLocaleString()} sites`
+          : items.length === source.length
+            ? `${flowCount.toLocaleString()} flows`
+            : `${items.length.toLocaleString()} shown / ${flowCount.toLocaleString()} flows`}
       </span>
     </span>
   )
@@ -254,7 +472,26 @@ export function LiveStream({
       className={cx(styles.frame, className)}
     >
       <div className={styles.controls}>
-        <fieldset className={styles.filters}>
+        <fieldset className={styles.views}>
+          <legend className={styles.srOnly}>View</legend>
+          {(
+            [
+              ['events', 'events'],
+              ['sites', 'by site'],
+            ] as const
+          ).map(([id, label]) => (
+            <button
+              key={id}
+              type="button"
+              className={cx(styles.chip, view === id && styles.chipOn)}
+              aria-pressed={view === id}
+              onClick={() => setView(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </fieldset>
+        <fieldset className={styles.filters} hidden={view === 'sites'}>
           <legend className={styles.srOnly}>Filter by event type</legend>
           {FILTERS.map((item) => (
             <button
@@ -273,7 +510,7 @@ export function LiveStream({
           className={styles.search}
           ref={searchRef}
           id="live-stream-filter"
-          placeholder="filter ip, sni, fingerprint  ( / )"
+          placeholder="filter ip, site, client, fingerprint  ( / )"
           aria-label="Filter the live stream"
           value={query}
           onChange={(event) => onQuery(event.target.value)}
@@ -299,51 +536,50 @@ export function LiveStream({
         </button>
       </div>
 
-      <div className={styles.scroll}>
-        {items.length === 0 ? (
-          <div className={styles.idle}>
-            <span className={styles.idleLine}>
-              {feed.length === 0
-                ? 'awaiting handshakes on the wire'
-                : 'no events match this filter'}
-            </span>
-            <span className={styles.idleSub}>
-              {feed.length === 0
-                ? 'nothing has crossed the scope yet. replay a capture or start a live sensor'
-                : 'clear the filter to see the full stream'}
-            </span>
-          </div>
-        ) : (
-          items.map((item) =>
-            item.message.type === 'flow' ? (
-              <FlowRow
-                key={item.seq}
-                event={item.message.event}
-                intel={item.message.intel}
-                alerts={item.message.alerts}
-                animate={item.animate}
-                selected={selected?.seq === item.seq}
-                onSelect={() =>
-                  setSelected(selected?.seq === item.seq ? null : item)
-                }
-              />
-            ) : (
-              <AlertRow
-                key={item.seq}
-                alert={item.message.alert}
-                animate={item.animate}
-              />
-            )
-          )
-        )}
-      </div>
+      <StreamBody
+        view={view}
+        sites={sites}
+        items={items}
+        feedEmpty={feed.length === 0}
+        connections={connections}
+        selectedSeq={selected?.seq}
+        onSelect={(item) => setSelected(selected?.seq === item.seq ? null : item)}
+        onPickSite={(site) => {
+          onQuery(site === NO_NAME ? '' : site)
+          setFilter('client')
+          setView('events')
+        }}
+      />
 
       {selectedFlow && (
         <EventDetail
           event={selectedFlow.event}
           intel={selectedFlow.intel}
           alerts={selectedFlow.alerts}
+          client={selectedFlow.client}
+          conn={connections.get(connectionKey(selectedFlow.event))}
           onClose={() => setSelected(null)}
+          onFilter={(value) => {
+            onQuery(value)
+            setView('events')
+            setFilter('all')
+            setSelected(null)
+          }}
+          onOpen={(seq) => {
+            const target = source.find((item) => item.seq === seq)
+            if (target) setSelected(target)
+          }}
+          onPrev={selectedIndex > 0 ? () => step(-1) : undefined}
+          onNext={
+            selectedIndex >= 0 && selectedIndex < flowItems.length - 1
+              ? () => step(1)
+              : undefined
+          }
+          position={
+            selectedIndex >= 0
+              ? `${selectedIndex + 1} of ${flowItems.length}`
+              : undefined
+          }
         />
       )}
     </CropFrame>

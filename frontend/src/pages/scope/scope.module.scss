@@ -89,7 +89,7 @@
     'live anomaly' minmax(240px, auto)
     'live dist' minmax(280px, auto)
     'profiles profiles' auto
-    / minmax(0, 1.62fr) minmax(0, 1fr);
+    / minmax(0, 2.2fr) minmax(0, 1fr);
   gap: $space-4;
 
   @include breakpoint-down('lg') {

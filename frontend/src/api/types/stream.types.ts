@@ -54,12 +54,26 @@ export type StreamEvent = z.infer<typeof streamEventSchema>
 
 export type EventKind = StreamEvent['kind']
 
+// Who a ClientHello appears to come from, worked out by the sensor: an exact
+// intelligence match when there is one, otherwise the family its shape suggests.
+export const clientReadSchema = z.object({
+  known_as: z.string().nullable(),
+  family: z.string(),
+  family_name: z.string(),
+  confidence: z.enum(['high', 'medium', 'low']),
+  reasons: z.array(z.string()),
+  caveat: z.string().nullable(),
+})
+
+export type ClientRead = z.infer<typeof clientReadSchema>
+
 export const liveMessageSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('flow'),
     event: streamEventSchema,
     intel: z.array(matchReportSchema).optional(),
     alerts: z.array(alertSchema).optional(),
+    client: clientReadSchema.optional(),
   }),
   z.object({
     type: z.literal('alert'),
