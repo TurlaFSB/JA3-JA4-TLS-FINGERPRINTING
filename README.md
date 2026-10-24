@@ -52,7 +52,14 @@ tlsfp serve --live auto      # dashboard on http://127.0.0.1:8080, capturing the
 
 `./install.sh` without `--live` skips the capability grant (capture then needs sudo). To build without installing: `cargo build --release`, then `tlsfp intel seed`.
 
-**Windows.** Install [Npcap](https://npcap.com) once (about 1 MB; free for personal use), download the Windows zip (a release asset, or the `windows-build` workflow's artifact), extract it and run `.\start-windows.ps1`. Reading capture files, the Library page and reports work without Npcap. Details and the manual test checklist: [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md).
+**Prebuilt archives.** Each [release](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/releases) carries a Linux x86-64 tarball and a Windows x86-64 zip, each with a `.sha256` file and a build provenance attestation. Verify before running:
+
+```bash
+sha256sum -c tlsfp-0.2.0-linux-x86_64.tar.gz.sha256
+gh attestation verify tlsfp-0.2.0-linux-x86_64.tar.gz --repo TurlaFSB/JA3-JA4-TLS-FINGERPRINTING
+```
+
+**Windows.** Install [Npcap](https://npcap.com) once (about 1 MB; free for personal use), download the Windows zip from the release, extract it and run `.\start-windows.ps1`. Reading capture files, the Library page and reports work without Npcap. Details and the manual test checklist: [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md).
 
 **Container.** `docker compose --profile backend up` serves the dashboard (host port 11790) with a replayed demo capture. A container cannot see the host's network card on Windows or macOS, so it replays a file; use a native install for live traffic. See `compose.yml`.
 
