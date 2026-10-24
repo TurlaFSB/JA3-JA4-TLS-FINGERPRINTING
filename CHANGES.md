@@ -108,5 +108,9 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Linux setup in two commands
 - `--live auto` picks the interface in use (up, has an address, not loopback). `tlsfp serve` finds the dashboard without `--web`: `frontend/dist` in a checkout, else the `web` folder beside the database, where `install.sh` now builds it (when pnpm is present). `docs/LIVE_CAPTURE.md` explains the one unavoidable permission step.
 
+## Windows live capture
+- The `tlsfp` crate now builds on Windows. The capture loop waits with a read timeout where Unix polls the descriptor, `rustix` is a Unix-only dependency, and the data directory is `%LOCALAPPDATA%\tlsfp`. With MSVC, `wpcap.dll` is delay-loaded and located before first use (`src/npcap.rs`, safe code, restarting itself with Npcap's folder on `PATH`), so file analysis works without Npcap and live capture says plainly when Npcap is missing. `--live "Wi-Fi"` matches an interface by description, and `auto` skips loopback and virtual adapters.
+- CI builds and starts the binary on a Windows runner; the release workflow adds a Windows zip with a start script, checksum and provenance attestation. `scripts/start-windows.ps1`. Live capture on Windows is not covered by an automated test (Npcap cannot be installed unattended); `RELEASING.md` has the manual checklist, and nothing here has yet been run on a real Windows machine.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

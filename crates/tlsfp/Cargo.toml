@@ -40,6 +40,8 @@ clap.workspace = true
 etherparse.workspace = true
 smallvec.workspace = true
 thiserror.workspace = true
-rustix.workspace = true
 sha2.workspace = true
 ureq = { version = "2", default-features = false, features = ["tls"] }
+
+[target.'cfg(unix)'.dependencies]
+rustix.workspace = true

@@ -7,6 +7,7 @@ mod deliver;
 mod extras;
 mod library;
 mod live;
+mod npcap;
 mod report;
 mod serve;
 

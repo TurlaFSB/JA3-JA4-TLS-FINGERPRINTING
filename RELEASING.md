@@ -58,3 +58,13 @@ git verify-tag v0.1.0
 3. publishes the container images `ghcr.io/<owner>/tlsfp` (sensor and API) and `ghcr.io/<owner>/tlsfp-dashboard` (nginx and the dashboard) with the version and `latest` tags.
 
 Verify a downloaded archive with `sha256sum -c tlsfp-*.sha256` and `gh attestation verify tlsfp-*.tar.gz --repo <owner>/<repo>`. The first run of this workflow is the first test of it; if a step fails, fix the workflow, delete the tag and release, and push the tag again.
+
+## Manual check before announcing a release: live capture on Windows
+
+CI cannot install Npcap unattended, so this one is done by hand on a Windows machine with Npcap installed, using the release zip:
+
+1. `.\start-windows.ps1` opens the dashboard and the header says `LIVE`, not `REPLAY`.
+2. Browse to a few sites. Handshakes appear on Scope within a second or two; Traffic shows conversations with your own address as the local side.
+3. `tlsfp.exe interfaces` lists your adapters with descriptions; `.\start-windows.ps1 -Interface "Wi-Fi"` (or your adapter's name) captures on it.
+4. With Npcap uninstalled, `tlsfp.exe serve --live auto` prints the "needs Npcap" message and exits; `tlsfp.exe pcap FILE` still works.
+5. Record the Windows version, Npcap version and result in the release notes.

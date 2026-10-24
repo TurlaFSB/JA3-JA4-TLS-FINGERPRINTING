@@ -261,17 +261,33 @@ pub struct Stats {
     pub total: i64,
 }
 
-/// The default on disk location of the database, under the XDG data directory
-/// when one is set and the home directory otherwise.
+/// The default on disk location of the database: under the XDG data
+/// directory (or `~/.local/share`) on Unix, and `%LOCALAPPDATA%` on Windows.
 pub fn default_db_path() -> PathBuf {
-    let base = std::env::var_os("XDG_DATA_HOME")
+    data_dir().join("tlsfp").join("intel.db")
+}
+
+#[cfg(not(windows))]
+fn data_dir() -> PathBuf {
+    std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
         .filter(|path| path.is_absolute())
         .or_else(|| {
             std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".local").join("share"))
         })
-        .unwrap_or_else(|| PathBuf::from("."));
-    base.join("tlsfp").join("intel.db")
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+#[cfg(windows)]
+fn data_dir() -> PathBuf {
+    std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .filter(|path| path.is_absolute())
+        .or_else(|| {
+            std::env::var_os("USERPROFILE")
+                .map(|home| PathBuf::from(home).join("AppData").join("Local"))
+        })
+        .unwrap_or_else(|| PathBuf::from("."))
 }
 
 /// Splits a JA4 client fingerprint into its capability prefix and cipher hash,

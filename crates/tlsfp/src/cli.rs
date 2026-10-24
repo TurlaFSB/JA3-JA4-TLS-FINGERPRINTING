@@ -1220,7 +1220,8 @@ fn read_input(path: &Path) -> Result<String> {
 /// Reads capture files (or every capture under a directory) and prints which
 /// client each handshake came from.
 /// The dashboard folder: the one given, else `frontend/dist` in a checkout,
-/// else the `web` folder beside the database where `install.sh` puts it.
+/// else a `web` folder beside the program (release archives), else the one
+/// beside the database where `install.sh` puts it.
 fn resolve_web(given: Option<PathBuf>) -> PathBuf {
     if let Some(path) = given {
         return path;
@@ -1228,6 +1229,14 @@ fn resolve_web(given: Option<PathBuf>) -> PathBuf {
     let checkout = PathBuf::from("frontend/dist");
     if checkout.join("index.html").exists() {
         return checkout;
+    }
+    // A release archive keeps `web` beside the program.
+    if let Some(beside) = std::env::current_exe()
+        .ok()
+        .and_then(|exe| exe.parent().map(|dir| dir.join("web")))
+        .filter(|dir| dir.join("index.html").exists())
+    {
+        return beside;
     }
     let installed = default_db_path().with_file_name("web");
     if installed.join("index.html").exists() {
@@ -1326,6 +1335,7 @@ fn run_identify(paths: &[PathBuf], json: bool, db: Option<PathBuf>) -> Result<()
 /// Prints the interfaces libpcap can open, with their addresses and state, so
 /// a person knows what to pass to `live` or `serve --live`.
 fn run_interfaces() -> Result<()> {
+    crate::npcap::ensure().map_err(anyhow::Error::msg)?;
     let devices = pcap::Device::list().context("listing network interfaces")?;
     let mut out = std::io::stdout().lock();
     for device in devices {
@@ -1343,6 +1353,10 @@ fn run_interfaces() -> Result<()> {
             writeln!(out, "    {}", address.addr)?;
         }
     }
+    writeln!(
+        out,
+        "\nuse a name above, or part of its description (--live \"Wi-Fi\"), or --live auto"
+    )?;
     Ok(())
 }
 

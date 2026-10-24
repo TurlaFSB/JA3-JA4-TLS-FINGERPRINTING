@@ -30,6 +30,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread::JoinHandle;
 
 use pcap::{Active, Capture, Device};
+#[cfg(unix)]
 use rustix::event::{PollFd, PollFlags, Timespec, poll};
 use smallvec::SmallVec;
 use thiserror::Error;
@@ -86,6 +87,7 @@ const CHANNEL_CAPACITY: usize = 4096;
 const INLINE_FRAME_BYTES: usize = 2048;
 
 const NANOS_PER_SECOND: u64 = 1_000_000_000;
+#[cfg(unix)]
 const NANOS_PER_MILLI: i64 = 1_000_000;
 const NANOS_PER_MICRO: u64 = 1_000;
 
@@ -177,6 +179,7 @@ pub struct LiveSource {
 impl LiveSource {
     /// Opens an interface by name and starts capturing immediately.
     pub fn open(interface: &str, config: &LiveConfig) -> Result<Self, LiveError> {
+        crate::npcap::ensure().map_err(LiveError::Open)?;
         let chosen = resolve_interface(interface);
         let interface = chosen.as_str();
         let inactive = Capture::from_device(interface)
@@ -184,6 +187,7 @@ impl LiveSource {
             .promisc(config.promiscuous)
             .snaplen(SNAPLEN)
             .immediate_mode(true)
+            .timeout(i32::try_from(POLL_TIMEOUT_MILLIS).unwrap_or(100))
             .buffer_size(kernel_buffer_bytes());
         let mut capture = inactive
             .open()
@@ -194,6 +198,7 @@ impl LiveSource {
                 filter: config.filter.clone(),
                 source,
             })?;
+        #[cfg(unix)]
         let capture = capture
             .setnonblock()
             .map_err(|error| open_error(interface, &error))?;
@@ -312,30 +317,60 @@ impl Drop for LiveSource {
 /// because `poll` keeps reporting a latched condition as ready and would
 /// otherwise spin a core over an empty ring. Any other capture or poll
 /// error is recorded for the consumer and ends the loop.
+/// What waiting on the capture handle found.
+#[cfg_attr(windows, allow(dead_code))]
+enum Wait {
+    /// Nothing arrived within the poll timeout; check for a stop request.
+    Idle,
+    /// Waiting itself failed and the reason is recorded.
+    Failed,
+    /// Packets may be queued. `hangup` means the interface went away, so
+    /// drain what is left and stop.
+    Ready { hangup: bool },
+}
+
+/// Unix: poll the capture descriptor with a bounded timeout, so an idle
+/// interface still notices a stop request.
+#[cfg(unix)]
+fn wait_readable(capture: &Capture<Active>, failure: &OnceLock<String>) -> Wait {
+    let timeout = Timespec {
+        tv_sec: 0,
+        tv_nsec: POLL_TIMEOUT_MILLIS * NANOS_PER_MILLI,
+    };
+    let mut fds = [PollFd::new(capture, PollFlags::IN)];
+    match poll(&mut fds, Some(&timeout)) {
+        Ok(0) | Err(rustix::io::Errno::INTR) => Wait::Idle,
+        Ok(_) => Wait::Ready {
+            hangup: fds[0]
+                .revents()
+                .intersects(PollFlags::ERR | PollFlags::HUP | PollFlags::NVAL),
+        },
+        Err(error) => {
+            let _ = failure.set(format!("waiting on the capture failed: {error}"));
+            Wait::Failed
+        }
+    }
+}
+
+/// Windows: a capture handle cannot be polled. The handle is left blocking
+/// with a read timeout instead, so `next_packet` returns `TimeoutExpired`
+/// when idle and the loop comes back to check for a stop request.
+#[cfg(windows)]
+fn wait_readable(_capture: &Capture<Active>, _failure: &OnceLock<String>) -> Wait {
+    Wait::Ready { hangup: false }
+}
+
 fn capture_loop(
     mut capture: Capture<Active>,
     sender: &flume::Sender<CapturedFrame>,
     stop: &AtomicBool,
     failure: &OnceLock<String>,
 ) -> Option<CaptureStats> {
-    let timeout = Timespec {
-        tv_sec: 0,
-        tv_nsec: POLL_TIMEOUT_MILLIS * NANOS_PER_MILLI,
-    };
     'capture: while !stop.load(Ordering::Relaxed) {
-        let revents = {
-            let mut fds = [PollFd::new(&capture, PollFlags::IN)];
-            match poll(&mut fds, Some(&timeout)) {
-                Ok(0) | Err(rustix::io::Errno::INTR) => None,
-                Ok(_) => Some(fds[0].revents()),
-                Err(error) => {
-                    let _ = failure.set(format!("waiting on the capture failed: {error}"));
-                    break 'capture;
-                }
-            }
-        };
-        let Some(revents) = revents else {
-            continue;
+        let hangup = match wait_readable(&capture, failure) {
+            Wait::Idle => continue,
+            Wait::Failed => break 'capture,
+            Wait::Ready { hangup } => hangup,
         };
         loop {
             if stop.load(Ordering::Relaxed) {
@@ -361,7 +396,7 @@ fn capture_loop(
                 }
             }
         }
-        if revents.intersects(PollFlags::ERR | PollFlags::HUP | PollFlags::NVAL) {
+        if hangup {
             let _ = failure.set("the capture interface reported an error or hangup".to_owned());
             break 'capture;
         }
@@ -384,22 +419,43 @@ fn timeval_to_nanos(sec: impl Into<i64>, micros: impl Into<i64>) -> u64 {
         .saturating_add(micros.saturating_mul(NANOS_PER_MICRO))
 }
 
-/// Builds the open failure message an operator can act on: the underlying
-/// error, the capability grant when the cause is permissions, and the
-/// interfaces libpcap can actually see.
-/// `auto` means the interface the system would use to reach the internet:
-/// the first one that is up, has an address and is not loopback. Any other name is
-/// used as given.
+/// Resolves the interface the operator named.
+///
+/// `auto` means the link the machine actually talks through: the first
+/// interface that is up, has an address, is not loopback and is not a
+/// virtual adapter. Any other name is used as given, except that when no
+/// interface has exactly that name a single interface whose description
+/// contains it (case-insensitively) is chosen. That is what makes
+/// `--live "Wi-Fi"` work on Windows, where the real names are
+/// `\Device\NPF_{GUID}`.
 fn resolve_interface(name: &str) -> String {
+    let devices = Device::list().unwrap_or_default();
     if !name.eq_ignore_ascii_case("auto") {
-        return name.to_owned();
+        if devices.iter().any(|d| d.name == name) {
+            return name.to_owned();
+        }
+        let needle = name.to_ascii_lowercase();
+        let mut matches = devices.iter().filter(|d| {
+            d.desc
+                .as_deref()
+                .is_some_and(|desc| desc.to_ascii_lowercase().contains(&needle))
+        });
+        return match (matches.next(), matches.next()) {
+            (Some(only), None) => {
+                tracing::info!(interface = %only.name, "matched the interface by description");
+                only.name.clone()
+            }
+            _ => name.to_owned(),
+        };
     }
-    // Up, not loopback, not the all-interfaces pseudo-device, and holding an
-    // address: that is the link the machine actually talks through.
-    let usable = Device::list().ok().and_then(|devices| {
-        devices.into_iter().find(|d| {
-            d.flags.is_up() && !d.flags.is_loopback() && d.name != "any" && !d.addresses.is_empty()
-        })
+    // Up, not loopback, not the all-interfaces pseudo-device, not a virtual
+    // adapter, and holding an address.
+    let usable = devices.into_iter().find(|d| {
+        d.flags.is_up()
+            && !d.flags.is_loopback()
+            && d.name != "any"
+            && !d.addresses.is_empty()
+            && !is_virtual(d.desc.as_deref())
     });
     let device = usable.or_else(|| Device::lookup().ok().flatten());
     match device {
@@ -411,6 +467,30 @@ fn resolve_interface(name: &str) -> String {
     }
 }
 
+/// Adapters that exist to carry traffic between virtual machines, tunnels and
+/// loopback, which a person looking at their own traffic does not mean.
+fn is_virtual(description: Option<&str>) -> bool {
+    let Some(description) = description else {
+        return false;
+    };
+    let lower = description.to_ascii_lowercase();
+    [
+        "loopback",
+        "virtual",
+        "vmware",
+        "vethernet",
+        "hyper-v",
+        "bluetooth",
+        "wan miniport",
+        "tap-windows",
+    ]
+    .iter()
+    .any(|marker| lower.contains(marker))
+}
+
+/// Builds the open failure message an operator can act on: the underlying
+/// error, the capability grant when the cause is permissions, and the
+/// interfaces libpcap can actually see.
 fn open_error(interface: &str, error: &pcap::Error) -> LiveError {
     use std::fmt::Write as _;
 
@@ -420,6 +500,12 @@ fn open_error(interface: &str, error: &pcap::Error) -> LiveError {
             |_| "$(command -v tlsfp)".to_owned(),
             |path| path.display().to_string(),
         );
+        #[cfg(windows)]
+        let _ = write!(
+            message,
+            "\nlive capture on Windows needs Npcap (https://npcap.com) and an Administrator terminal: {binary}"
+        );
+        #[cfg(not(windows))]
         let _ = write!(
             message,
             "\nlive capture needs CAP_NET_RAW; grant it once per build with:\n  sudo setcap cap_net_raw,cap_net_admin=eip {binary}"
@@ -427,7 +513,13 @@ fn open_error(interface: &str, error: &pcap::Error) -> LiveError {
     }
     if let Ok(devices) = Device::list() {
         if !devices.is_empty() {
-            let names: Vec<String> = devices.into_iter().map(|device| device.name).collect();
+            let names: Vec<String> = devices
+                .into_iter()
+                .map(|device| match device.desc {
+                    Some(desc) => format!("{} ({desc})", device.name),
+                    None => device.name,
+                })
+                .collect();
             let _ = write!(message, "\navailable interfaces: {}", names.join(", "));
         }
     }
@@ -442,7 +534,10 @@ fn is_permission_denied(error: &pcap::Error) -> bool {
     match error {
         pcap::Error::PcapError(message) => {
             let lower = message.to_ascii_lowercase();
-            lower.contains("permission") || lower.contains("not permitted")
+            lower.contains("permission")
+                || lower.contains("not permitted")
+                || lower.contains("access is denied")
+                || lower.contains("administrator")
         }
         pcap::Error::IoError(kind) => *kind == ErrorKind::PermissionDenied,
         _ => false,
@@ -451,6 +546,15 @@ fn is_permission_denied(error: &pcap::Error) -> bool {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn virtual_adapters_are_recognised_by_description() {
+        assert!(super::is_virtual(Some("Npcap Loopback Adapter")));
+        assert!(super::is_virtual(Some("Hyper-V Virtual Ethernet Adapter")));
+        assert!(super::is_virtual(Some("VMware Virtual Ethernet Adapter")));
+        assert!(!super::is_virtual(Some("Intel(R) Wi-Fi 6 AX201 160MHz")));
+        assert!(!super::is_virtual(None));
+    }
+
     use std::sync::Arc;
     use std::sync::OnceLock;
     use std::sync::atomic::AtomicBool;

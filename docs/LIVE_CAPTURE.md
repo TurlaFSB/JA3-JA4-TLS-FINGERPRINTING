@@ -15,6 +15,19 @@ Why a permission step exists at all: reading every packet on a network card is a
 
 Docker on Windows or macOS cannot see the host's network card, so the Docker stack replays a capture instead; use a native install for live traffic.
 
+## Windows
+
+1. Install [Npcap](https://npcap.com) once (default options). It is the capture driver Wireshark uses; free for personal use, a paid licence for commercial redistribution.
+2. Download the Windows release zip, extract it, and run:
+   ```
+   powershell -ExecutionPolicy Bypass -File .\start-windows.ps1
+   ```
+   It seeds the database on the first run, starts `tlsfp serve --live auto` on 127.0.0.1:8080 and opens the dashboard. It also lists captures saved in `%USERPROFILE%\tlsfp-captures` (where `capture-browser.ps1` saves). `-Interface "Wi-Fi"` picks an interface by part of its description; `tlsfp interfaces` lists them.
+
+Without Npcap everything except live capture still works: `tlsfp pcap`, `identify`, `html`, the Library page and a replay. Live capture without Npcap stops with a message saying so.
+
+How it was checked: CI builds the Windows binary on a Windows runner, starts it, reads a capture file and runs `interfaces` with no Npcap present, and runs the engine and store tests. **Live capture on Windows itself has not been exercised by an automated test**, because the free Npcap installer cannot run unattended; it is verified by hand on a real machine (see the checklist in `RELEASING.md`). `auto` skips loopback and virtual adapters (VMware, Hyper-V, VPN taps) by their description.
+
 ## What it shows
 
 - **Scope:** TLS and QUIC handshakes with the intelligence verdict, plus what the sensor has seen by transport, TLS version, application protocol and server name.

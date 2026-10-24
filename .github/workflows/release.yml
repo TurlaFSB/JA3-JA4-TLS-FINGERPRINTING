@@ -1,7 +1,8 @@
 # © Pranav Verma | 2026
 # release.yml
 #
-# Runs when a version tag is pushed. Builds the Linux x86_64 binary with the
+# Runs when a version tag is pushed. Builds the Linux x86_64 and Windows
+# x86_64 binaries with the
 # dashboard assets, attaches it to a GitHub release with a SHA-256 file and a
 # build provenance attestation, and publishes the two container images to the
 # GitHub Container Registry. See RELEASING.md for the tagging procedure.
@@ -75,6 +76,51 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" tlsfp-*.tar.gz tlsfp-*.tar.gz.sha256 \
             --title "$GITHUB_REF_NAME" --generate-notes
+
+  windows:
+    needs: [verify, binary]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the Npcap SDK (build only)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://npcap.com/dist/npcap-sdk-1.13.zip -OutFile sdk.zip
+          Expand-Archive sdk.zip sdk
+          "LIB=$PWD\sdk\Lib\x64" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build the dashboard
+        working-directory: frontend
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.29.1 --activate
+          pnpm install --frozen-lockfile
+          pnpm build
+      - name: Build tlsfp
+        run: cargo build --release --locked --bin tlsfp
+      - name: Package
+        shell: pwsh
+        run: |
+          $name = "tlsfp-${{ needs.verify.outputs.version }}-windows-x86_64"
+          New-Item -ItemType Directory -Path "dist\$name" | Out-Null
+          Copy-Item target\release\tlsfp.exe "dist\$name\"
+          Copy-Item -Recurse frontend\dist "dist\$name\web"
+          Copy-Item scripts\start-windows.ps1 "dist\$name\"
+          Copy-Item LICENSE, NOTICE.md, README.md, CHANGES.md "dist\$name\"
+          Compress-Archive -Path "dist\$name" -DestinationPath "$name.zip"
+          (Get-FileHash "$name.zip" -Algorithm SHA256).Hash.ToLower() + "  $name.zip" | Out-File -Encoding ascii "$name.zip.sha256"
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: tlsfp-*.zip
+      - name: Add to the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$env:GITHUB_REF_NAME" (Get-ChildItem tlsfp-*.zip, tlsfp-*.zip.sha256)
 
   images:
     needs: verify

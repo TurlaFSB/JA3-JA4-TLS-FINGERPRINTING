@@ -24,6 +24,44 @@ jobs:
       - name: Test
         run: cargo +${{ matrix.rust }} test --workspace
 
+  windows:
+    # Builds the Windows binary against the Npcap SDK and checks what can be
+    # checked without a capture driver: the program starts, reads a capture
+    # file and refuses live capture with a clear message, instead of failing to
+    # load wpcap.dll. Live capture itself cannot be tested here: the free Npcap
+    # installer cannot run unattended.
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install the Npcap SDK (build only)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://npcap.com/dist/npcap-sdk-1.13.zip -OutFile sdk.zip
+          (Get-FileHash sdk.zip -Algorithm SHA256).Hash
+          Expand-Archive sdk.zip sdk
+          "LIB=$PWD\sdk\Lib\x64" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+      - name: Build
+        run: cargo build --locked --bin tlsfp
+      - name: Starts and reads a capture file without Npcap
+        shell: pwsh
+        run: |
+          .\target\debug\tlsfp.exe --version
+          if ($LASTEXITCODE -ne 0) { throw "tlsfp --version exited $LASTEXITCODE" }
+          $out = .\target\debug\tlsfp.exe pcap testdata\pcap\tls-handshake.pcapng --json
+          if ($LASTEXITCODE -ne 0) { throw "pcap exited $LASTEXITCODE" }
+          if (($out | Select-String "client_hello").Count -lt 5) { throw "expected client hellos" }
+      - name: Live capture without Npcap fails with a message, not a crash
+        shell: pwsh
+        run: |
+          $msg = .\target\debug\tlsfp.exe interfaces 2>&1 | Out-String
+          Write-Host "exit $LASTEXITCODE"; Write-Host $msg
+          if ($LASTEXITCODE -ne 0 -and $msg -notmatch "Npcap") { throw "no helpful message" }
+          if ($LASTEXITCODE -lt 0 -or $LASTEXITCODE -gt 1) { throw "crashed with $LASTEXITCODE" }
+      - name: Test the engine and the intelligence store
+        run: cargo test --locked -p tlsfp-core -p tlsfp-intel
+
   lint:
     runs-on: ubuntu-latest
     steps:
