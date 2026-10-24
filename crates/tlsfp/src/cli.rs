@@ -34,6 +34,11 @@ pub struct Cli {
     #[arg(short, long, global = true, action = clap::ArgAction::Count)]
     pub verbose: u8,
 
+    /// A TOML file of your own detection rules, evaluated after the built-in
+    /// ones. Validate it with `tlsfp rules check FILE`.
+    #[arg(long, global = true, env = "TLSFP_RULES", value_name = "FILE")]
+    pub rules: Option<PathBuf>,
+
     #[command(subcommand)]
     pub command: Command,
 }
@@ -224,6 +229,12 @@ pub enum Command {
         no_promisc: bool,
     },
 
+    /// Work with detection rule files.
+    Rules {
+        #[command(subcommand)]
+        action: RulesCommand,
+    },
+
     /// List the network interfaces that `live` and `serve --live` can capture on.
     Interfaces,
 
@@ -250,6 +261,17 @@ pub enum Command {
     Intel {
         #[command(subcommand)]
         action: IntelCommand,
+    },
+}
+
+/// The subcommands under `tlsfp rules`.
+#[derive(Debug, Subcommand)]
+pub enum RulesCommand {
+    /// Check a rules file and list the rules in it. Exits non-zero, naming the
+    /// rule and the mistake, if anything in the file is wrong.
+    Check {
+        /// The TOML rules file.
+        file: PathBuf,
     },
 }
 
@@ -332,6 +354,7 @@ impl Cli {
     }
 
     pub fn run(self) -> Result<()> {
+        crate::extras::init(self.rules.as_ref())?;
         match self.command {
             Command::Pcap {
                 path,
@@ -398,6 +421,9 @@ impl Cli {
                 filter,
                 no_promisc,
             ),
+            Command::Rules { action } => match action {
+                RulesCommand::Check { file } => run_rules_check(&file),
+            },
             Command::Interfaces => run_interfaces(),
             Command::Identify { paths, json, db } => run_identify(&paths, json, db),
             Command::Intel { action } => action.run(),
@@ -941,6 +967,7 @@ fn open_for_run(
 fn with_detect_config(mut store: IntelStore, shared: &[Network]) -> IntelStore {
     store.set_detect_config(DetectConfig {
         shared_networks: shared.to_vec(),
+        custom: crate::extras::rules(),
         ..DetectConfig::default()
     });
     store
@@ -1213,6 +1240,17 @@ fn run_interfaces() -> Result<()> {
         for address in &device.addresses {
             writeln!(out, "    {}", address.addr)?;
         }
+    }
+    Ok(())
+}
+
+/// Validates a rules file and prints what it contains.
+fn run_rules_check(file: &Path) -> Result<()> {
+    let set = tlsfp_intel::RuleSet::load(file).map_err(anyhow::Error::msg)?;
+    let mut out = std::io::stdout().lock();
+    writeln!(out, "{}: {} rule(s) valid", file.display(), set.len())?;
+    for (name, severity) in set.names() {
+        writeln!(out, "  {name}  [{}]", severity.as_str())?;
     }
     Ok(())
 }

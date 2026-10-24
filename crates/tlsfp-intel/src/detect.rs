@@ -73,6 +73,8 @@ pub struct DetectConfig {
     pub rotation_threshold: i64,
     pub monoculture_threshold: i64,
     pub shared_networks: Vec<Network>,
+    /// Rules the operator wrote, evaluated after the built-in ones.
+    pub custom: Option<std::sync::Arc<crate::rules::RuleSet>>,
 }
 
 impl DetectConfig {
@@ -90,6 +92,7 @@ impl Default for DetectConfig {
             rotation_threshold: DEFAULT_ROTATION_THRESHOLD,
             monoculture_threshold: DEFAULT_MONOCULTURE_THRESHOLD,
             shared_networks: Vec::new(),
+            custom: None,
         }
     }
 }
@@ -105,6 +108,8 @@ pub enum Rule {
     FpRotation,
     Monoculture,
     HeaderAnomaly,
+    /// A rule the operator wrote in a rules file.
+    Custom,
 }
 
 impl Rule {
@@ -118,6 +123,7 @@ impl Rule {
             Rule::FpRotation => "fp_rotation",
             Rule::Monoculture => "monoculture",
             Rule::HeaderAnomaly => "header_anomaly",
+            Rule::Custom => "custom",
         }
     }
 
@@ -131,6 +137,7 @@ impl Rule {
             "fp_rotation" => Rule::FpRotation,
             "monoculture" => Rule::Monoculture,
             "header_anomaly" => Rule::HeaderAnomaly,
+            "custom" => Rule::Custom,
             _ => Rule::FirstSeen,
         }
     }
@@ -311,6 +318,10 @@ pub(crate) fn run(
                 alerts.push(monoculture(ts, kind, &value, addresses, config.window_secs));
             }
         }
+    }
+
+    if let Some(custom) = &config.custom {
+        alerts.extend(custom.evaluate(event, &reports, kind, &value));
     }
 
     for alert in &mut alerts {

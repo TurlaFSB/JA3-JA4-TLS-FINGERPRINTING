@@ -934,6 +934,7 @@ fn spawn_source(
 fn detect_config(config: &ServeConfig) -> DetectConfig {
     DetectConfig {
         shared_networks: config.shared_networks.clone(),
+        custom: crate::extras::rules(),
         ..DetectConfig::default()
     }
 }

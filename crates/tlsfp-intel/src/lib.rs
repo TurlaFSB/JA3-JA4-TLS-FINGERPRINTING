@@ -20,6 +20,7 @@ mod infer;
 mod matcher;
 mod model;
 mod net;
+mod rules;
 mod schema;
 mod seed;
 mod signal;
@@ -37,6 +38,7 @@ pub use import::ImportSummary;
 pub use infer::{ClientFamily, ClientGuess, Confidence, infer_client};
 pub use model::{CatalogEntry, Category, FpKind, IntelHit, MatchReport, MatchStrength, Verdict};
 pub use net::Network;
+pub use rules::RuleSet;
 pub use seed::{FeedLoad, SeedSummary};
 
 /// A handle to the open intelligence database.

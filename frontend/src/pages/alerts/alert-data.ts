@@ -38,6 +38,10 @@ export const RULE_NOTES: Record<Rule, { what: string; next: string }> = {
     what: 'One fingerprint appeared from many distinct addresses inside the window.',
     next: 'Common for popular software. A rare fingerprint across many hosts suggests one tool deployed widely.',
   },
+  custom: {
+    what: 'A rule from your own rules file matched. The alert title is the rule name and the detail lists what matched.',
+    next: 'What to do is whatever you wrote the rule for. The rules file and its description are the place to record it.',
+  },
   header_anomaly: {
     what: 'A cleartext request claiming a browser carried headers browsers never send to that origin.',
     next: 'Typical of impersonation tools left on defaults. Trivially avoided by a careful attacker.',

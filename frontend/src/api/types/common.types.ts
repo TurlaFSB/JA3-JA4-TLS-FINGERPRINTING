@@ -62,6 +62,7 @@ export const RULE_VALUES = [
   'fp_rotation',
   'monoculture',
   'header_anomaly',
+  'custom',
 ] as const
 
 export const ruleSchema = z.enum(RULE_VALUES)

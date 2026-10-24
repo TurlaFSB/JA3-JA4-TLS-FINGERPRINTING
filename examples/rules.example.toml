@@ -1,0 +1,59 @@
+# Example detection rules for tlsfp. Check a file with:
+#   tlsfp rules check examples/rules.example.toml
+# and use it with:
+#   tlsfp pcap capture.pcapng --detect --rules examples/rules.example.toml
+#   tlsfp serve --live eth0 --rules examples/rules.example.toml
+#
+# Inside a condition a list means "any of"; across conditions, all must hold.
+# [rule.unless] takes the same fields and vetoes the rule.
+# once_per: event | address | fingerprint | address_and_fingerprint (default) | rule
+
+[[rule]]
+name = "dynamic-dns"
+description = "TLS to a dynamic DNS provider, a common home for malware command servers."
+severity = "medium"
+once_per = "address"
+[rule.when]
+event = ["client_hello"]
+sni_glob = ["*.duckdns.org", "*.ddns.net", "*.no-ip.org", "*.hopto.org"]
+
+[[rule]]
+name = "known-malicious-client"
+description = "The client's fingerprint is listed as malicious in the intelligence feed."
+severity = "critical"
+[rule.when]
+event = ["client_hello"]
+verdict = ["malicious"]
+
+[[rule]]
+name = "script-to-https"
+description = "A script or library TLS stack opened an HTTPS or QUIC connection from a workstation subnet."
+severity = "low"
+once_per = "address_and_fingerprint"
+[rule.when]
+event = ["client_hello"]
+family = ["library", "open_ssl"]
+dst_port = [443]
+src_network = ["10.20.0.0/16"]
+[rule.unless]
+# the build servers are expected to
+src_network = ["10.20.99.0/24"]
+
+[[rule]]
+name = "legacy-tls"
+description = "A client offered nothing newer than TLS 1.1."
+severity = "medium"
+[rule.when]
+event = ["client_hello"]
+tls_version = ["10", "11"]
+
+[[rule]]
+name = "https-without-server-name"
+description = "TLS to port 443 with no server name: scanners, some malware, and clients that connect by address."
+severity = "low"
+once_per = "address"
+[rule.when]
+event = ["client_hello"]
+transport = ["tcp"]
+dst_port = [443]
+sni_present = false

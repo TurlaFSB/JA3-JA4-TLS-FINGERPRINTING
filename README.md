@@ -63,6 +63,7 @@ tlsfp pcap capture.pcapng --report           # ranked forensic summary
 tlsfp live eth0 --intel --detect             # live capture
 tlsfp live eth0 --filter "tcp port 443"      # narrow the kernel BPF filter
 
+tlsfp rules check my-rules.toml              # validate your detection rules (--rules FILE to use them)
 tlsfp interfaces                             # what live capture can use
 tlsfp identify captures/                     # which client is in each capture file
 tlsfp intel seed                             # load bundled feeds
@@ -125,6 +126,7 @@ Rules read fingerprint history stored in the database, so they behave identicall
 | `first_seen` | The fingerprint has never been recorded before. Informational. |
 | `fp_rotation` | One address presents more than 5 distinct fingerprints within the window (default 1 hour). |
 | `monoculture` | One fingerprint appears from more than 10 distinct addresses within the window. Never raised for a fingerprint with an exact benign match. |
+| `custom` | A rule from your own TOML file matched: server names, fingerprints, client families, verdicts, networks, ports, TLS version, extensions. [`docs/RULES.md`](docs/RULES.md) |
 | `header_anomaly` | A cleartext request claiming a browser carries headers browsers never send to that origin: `Sec-Fetch-*`, `Sec-CH-*` Client Hints, or an `Upgrade: h2c` / `HTTP2-Settings` handshake. Skips loopback origins. Catches impersonation tools left on their defaults; trivially evaded. |
 
 Thresholds and the window are configurable in `DetectConfig`. Defaults suit a quiet link; busy sensors should raise them. Rotation and monoculture are skipped for addresses declared with `--shared-network` (a NAT gateway, proxy or jump host).
@@ -281,6 +283,7 @@ Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THR
 | [`eval/README.md`](eval/README.md) | Evaluation method and results |
 | [`docs/FIELD_OBSERVATIONS.md`](docs/FIELD_OBSERVATIONS.md) | Fingerprints of real Brave, Edge and Firefox on Windows |
 | [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md) | Capture a real desktop browser and replay it in the dashboard |
+| [`docs/RULES.md`](docs/RULES.md) | Writing your own detection rules |
 | [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md) | Live capture, the Traffic page and their limits |
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured throughput and its limits |
 | [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) | Extending the intelligence feed; licensing |

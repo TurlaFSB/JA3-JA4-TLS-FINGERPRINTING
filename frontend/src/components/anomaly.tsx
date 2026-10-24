@@ -22,6 +22,7 @@ const HEADLINE: Record<Rule, string> = {
   fp_rotation: 'identity rotation',
   monoculture: 'one toolkit, many hosts',
   header_anomaly: 'headers no browser would send',
+  custom: 'your rule matched',
 }
 
 export function AnomalyHighlights({
@@ -31,7 +32,12 @@ export function AnomalyHighlights({
 }): React.ReactElement {
   const { data } = useRecentAlerts()
   const loud = (data ?? [])
-    .filter((alert) => LOUD.includes(alert.rule))
+    .filter(
+      (alert) =>
+        LOUD.includes(alert.rule) ||
+        (alert.rule === 'custom' &&
+          (alert.severity === 'high' || alert.severity === 'critical'))
+    )
     .slice(0, 4)
 
   return (

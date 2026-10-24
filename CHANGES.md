@@ -88,5 +88,9 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Live capture under load
 - Fixed a missed-handshake bug found by a load test: a client that reused its source port while the old flow was still tracked was never fingerprinted again. A SYN with a new initial sequence number now starts a new flow (`flows_restarted`). The kernel capture buffer is 32 MiB (was 4), the frame channel 4,096 (was 512), `TLSFP_CAPTURE_BUFFER_MIB` overrides it. Results and a multi-process scaling table are in `docs/PERFORMANCE.md`; AUDIT.md F18 and F19.
 
+## Your own detection rules
+- `--rules FILE` (or `TLSFP_RULES`) loads detection rules from a TOML file: conditions on the event type, server name globs, fingerprints, client family, intelligence verdict, ALPN, transport, TLS version, extensions, source and destination networks and ports, with `unless` vetoes and a `once_per` limit so a beacon raises one alert. A file with an unknown key or value, a duplicate name or a rule with no condition is refused with the rule named; `tlsfp rules check FILE` validates it. Alerts carry the rule `custom`, the rule name as the title and what matched in the detail. `docs/RULES.md`, `examples/rules.example.toml`, tests through the real binary.
+- `tlsfp ... | head` no longer prints a panic backtrace when the reader of the pipe leaves.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.
