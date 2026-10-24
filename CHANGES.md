@@ -92,5 +92,8 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - `--rules FILE` (or `TLSFP_RULES`) loads detection rules from a TOML file: conditions on the event type, server name globs, fingerprints, client family, intelligence verdict, ALPN, transport, TLS version, extensions, source and destination networks and ports, with `unless` vetoes and a `once_per` limit so a beacon raises one alert. A file with an unknown key or value, a duplicate name or a rule with no condition is refused with the rule named; `tlsfp rules check FILE` validates it. Alerts carry the rule `custom`, the rule name as the title and what matched in the detail. `docs/RULES.md`, `examples/rules.example.toml`, tests through the real binary.
 - `tlsfp ... | head` no longer prints a panic backtrace when the reader of the pipe leaves.
 
+## Per-host history
+- `/api/hosts` and `/api/hosts/{ip}` build a profile per address from the stored observations: first and last seen, every client fingerprint with when it appeared and disappeared, servers contacted, User-Agent and OS claims, and alerts raised. A Hosts page in the dashboard shows a timeline per host; a client that appears later is the sign that something on the host changed. Profiles exist only while detection runs, because they are built from the observation table.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

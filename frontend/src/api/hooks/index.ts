@@ -20,6 +20,10 @@ import {
   type CatalogEntry,
   catalogEntrySchema,
   type FpKind,
+  type HostProfile,
+  type HostSummary,
+  hostProfileSchema,
+  hostSummarySchema,
   isLiveMessage,
   type LibraryView,
   type LiveMessage,
@@ -315,4 +319,37 @@ export function useTraffic(): {
   }, [query.data])
 
   return { view: query.data, samples, error: query.isError }
+}
+
+async function getHosts(): Promise<HostSummary[]> {
+  const { data } = await apiClient.get(API_ENDPOINTS.HOSTS, {
+    params: { limit: 500 },
+  })
+  return hostSummarySchema.array().parse(data)
+}
+
+async function getHost(ip: string): Promise<HostProfile> {
+  const { data } = await apiClient.get(
+    `${API_ENDPOINTS.HOSTS}/${encodeURIComponent(ip)}`
+  )
+  return hostProfileSchema.parse(data)
+}
+
+// Every source address detection has observed, most recently active first.
+export function useHosts(): UseQueryResult<HostSummary[]> {
+  return useQuery({
+    queryKey: QUERY_KEYS.HOSTS,
+    queryFn: getHosts,
+    refetchInterval: QUERY_CONFIG.STALE_TIME.FREQUENT,
+  })
+}
+
+export function useHost(ip: string | null): UseQueryResult<HostProfile> {
+  return useQuery({
+    queryKey: QUERY_KEYS.HOST(ip ?? ''),
+    queryFn: () => getHost(ip ?? ''),
+    enabled: ip !== null,
+    refetchInterval: QUERY_CONFIG.STALE_TIME.FREQUENT,
+    retry: QUERY_CONFIG.RETRY.NONE,
+  })
 }

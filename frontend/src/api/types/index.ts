@@ -6,6 +6,7 @@
 export * from './alert.types'
 export * from './common.types'
 export * from './events'
+export * from './hosts.types'
 export * from './intel.types'
 export * from './library.types'
 export * from './meta.types'

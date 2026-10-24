@@ -1,0 +1,426 @@
+// ===================
+// © Pranav Verma | 2026
+// hosts.module.scss
+// ===================
+
+@use 'index' as *;
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+  padding: clamp($space-4, 3vw, $space-8);
+  max-width: 1640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.masthead {
+  padding-bottom: $space-4;
+  border-bottom: 1px solid $line;
+}
+
+.over {
+  display: block;
+  margin-bottom: $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: $fire;
+}
+
+.title {
+  margin: 0 0 $space-2;
+  font-family: $font-display;
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  line-height: 1;
+  color: $bone;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sub1 {
+  max-width: 72ch;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $ash;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.8fr) minmax(0, 1.6fr);
+  gap: $space-4;
+  align-items: start;
+
+  @include breakpoint-down('lg') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.listFrame,
+.profileFrame {
+  position: relative;
+  min-height: 420px;
+}
+
+.aside {
+  font-family: $font-mono;
+  color: $ash;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  padding: $space-3;
+  border-bottom: 1px solid $line-faint;
+}
+
+.search {
+  flex: 1;
+  min-width: 140px;
+  height: 26px;
+  padding: 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $bone;
+  background: $ink-1000;
+  border: 1px solid $line;
+
+  &::placeholder {
+    color: $dust;
+  }
+
+  &:focus-visible {
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+.chips {
+  display: flex;
+  gap: $space-1-5;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.chip {
+  padding: 3px $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    border-color: $line-strong;
+    outline: none;
+  }
+}
+
+.chipOn {
+  color: $ink-1000;
+  background: $fire;
+  border-color: $fire;
+
+  &:hover,
+  &:focus-visible {
+    color: $ink-1000;
+    border-color: $fire-soft;
+  }
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+  max-height: 640px;
+  overflow-y: auto;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 54px 54px 48px;
+  align-items: center;
+  gap: $space-3;
+  width: 100%;
+  padding: 6px $space-3;
+  margin: 0;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid $line-faint;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+}
+
+button.row {
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: $ink-800;
+    outline: none;
+  }
+
+  &[data-selected='true'] {
+    background: $ink-700;
+    box-shadow: inset 2px 0 0 $volt-soft;
+  }
+}
+
+.head {
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $dust;
+}
+
+.ip {
+  @include truncate;
+
+  color: $volt-soft;
+
+  i {
+    display: block;
+    font-style: normal;
+    color: $ash;
+    @include truncate;
+  }
+}
+
+.num {
+  text-align: right;
+  color: $paper;
+  font-feature-settings: 'tnum' 1;
+}
+
+.profile {
+  padding: $space-4;
+}
+
+.profileHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $space-3;
+  margin-bottom: $space-4;
+}
+
+.address {
+  margin: 0;
+  font-family: $font-mono;
+  font-size: $font-size-lg;
+  font-weight: 400;
+  color: $bone;
+}
+
+.meta {
+  flex-basis: 100%;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $ash;
+}
+
+.sub {
+  margin: $space-4 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: $fire-soft;
+}
+
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(120px, 0.9fr) minmax(0, 2fr) 48px;
+    align-items: center;
+    gap: $space-3;
+    padding: 3px 0;
+    font-family: $font-mono;
+    font-size: $font-size-2xs;
+  }
+}
+
+.who {
+  @include truncate;
+
+  color: $paper;
+}
+
+.track {
+  position: relative;
+  height: 12px;
+  background: $ink-800;
+  border: 1px solid $line-faint;
+}
+
+.bar {
+  position: absolute;
+  top: 1px;
+  bottom: 1px;
+  background: $ash;
+
+  &[data-verdict='benign'] {
+    background: $thermal;
+  }
+
+  &[data-verdict='suspicious'] {
+    background: $fire;
+  }
+
+  &[data-verdict='malicious'] {
+    background: $blood;
+  }
+}
+
+.count {
+  text-align: right;
+  color: $ash;
+}
+
+.axis .ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: $font-size-3xs;
+  color: $dust;
+}
+
+.note {
+  margin: 0;
+  font-size: $font-size-xs;
+  color: $ash;
+}
+
+.changes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: baseline;
+    gap: $space-3;
+    padding: 3px 0;
+    font-size: $font-size-xs;
+    color: $paper;
+  }
+
+  i {
+    font-style: normal;
+    color: $ash;
+  }
+}
+
+.tag {
+  flex-shrink: 0;
+  padding: 0 5px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $magma;
+  border: 1px solid $magma;
+}
+
+.link {
+  margin-left: auto;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $volt-soft;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $space-5;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: $space-3;
+    padding: 1px 0;
+    color: $paper;
+  }
+
+  li > span:first-child {
+    @include truncate;
+  }
+
+  li > span:last-child {
+    color: $ash;
+  }
+}
+
+.alerts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    padding: 3px 0;
+    font-size: $font-size-xs;
+    border-bottom: 1px solid $line-faint;
+  }
+}
+
+.alertTitle {
+  @include truncate;
+
+  flex: 1;
+  color: $bone;
+}
+
+.clock {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $dust;
+}
+
+.idle {
+  margin: 0;
+  padding: $space-12 $space-4;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: $ash;
+
+  code {
+    font-family: $font-mono;
+    color: $bone;
+  }
+}

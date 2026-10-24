@@ -982,12 +982,21 @@ fn persist(conn: &Connection, alert: &Alert, observation_id: i64) -> Result<()> 
 
 /// The most recent alerts, newest first, for the CLI feed and the dashboard.
 pub(crate) fn recent(conn: &Connection, limit: i64) -> Result<Vec<Alert>> {
+    alerts_where(conn, None, limit)
+}
+
+/// The most recent alerts raised about one source address.
+pub(crate) fn for_address(conn: &Connection, ip: &str, limit: i64) -> Result<Vec<Alert>> {
+    alerts_where(conn, Some(ip), limit)
+}
+
+fn alerts_where(conn: &Connection, ip: Option<&str>, limit: i64) -> Result<Vec<Alert>> {
     let mut statement = conn.prepare(
         "SELECT ts, rule, severity, ip, fp_kind, fp_value, title, detail, score
-         FROM alert ORDER BY ts DESC, id DESC LIMIT ?1",
+         FROM alert WHERE (?2 IS NULL OR ip = ?2) ORDER BY ts DESC, id DESC LIMIT ?1",
     )?;
     let rows = statement
-        .query_map(params![limit], |row| {
+        .query_map(params![limit, ip], |row| {
             let rule: String = row.get(1)?;
             let severity: String = row.get(2)?;
             let fp_kind: Option<String> = row.get(4)?;

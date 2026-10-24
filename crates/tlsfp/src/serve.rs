@@ -355,6 +355,8 @@ fn router(web: &std::path::Path, state: Shared) -> Router {
         .route("/meta", get(meta))
         .route("/library", get(library))
         .route("/traffic", get(traffic))
+        .route("/hosts", get(hosts))
+        .route("/hosts/{ip}", get(host_profile))
         .layer(CompressionLayer::new());
 
     let stream_api = Router::new().route("/stream", get(stream));
@@ -759,6 +761,36 @@ fn family_token(family: tlsfp_intel::ClientFamily) -> &'static str {
     }
 }
 
+#[derive(Deserialize)]
+struct HostsQuery {
+    limit: Option<i64>,
+}
+
+/// How many hosts the list carries at most.
+const MAX_HOSTS: i64 = 1000;
+
+async fn hosts(
+    State(state): State<Shared>,
+    Query(query): Query<HostsQuery>,
+) -> Result<Json<Vec<tlsfp_intel::HostSummary>>, ApiError> {
+    let limit = query.limit.unwrap_or(200).clamp(1, MAX_HOSTS);
+    let list = tokio::task::spawn_blocking(move || state.store().hosts(limit)).await??;
+    Ok(Json(list))
+}
+
+async fn host_profile(
+    State(state): State<Shared>,
+    axum::extract::Path(ip): axum::extract::Path<String>,
+) -> Result<Json<tlsfp_intel::HostProfile>, ApiError> {
+    // Only an address is a valid key; refusing anything else keeps free text
+    // out of the query path altogether.
+    if ip.parse::<std::net::IpAddr>().is_err() {
+        return Err(ApiError::not_found());
+    }
+    let found = tokio::task::spawn_blocking(move || state.store().host_profile(&ip)).await??;
+    found.map(Json).ok_or(ApiError::not_found())
+}
+
 async fn library(State(state): State<Shared>) -> impl IntoResponse {
     Json(state.library.view())
 }
@@ -1099,6 +1131,13 @@ struct ApiError {
 }
 
 impl ApiError {
+    fn not_found() -> Self {
+        Self {
+            status: StatusCode::NOT_FOUND,
+            message: "no such host".to_owned(),
+        }
+    }
+
     fn bad_request(message: impl Into<String>) -> Self {
         Self {
             status: StatusCode::BAD_REQUEST,

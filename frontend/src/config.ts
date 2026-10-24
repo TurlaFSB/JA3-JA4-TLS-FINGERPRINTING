@@ -20,6 +20,7 @@ export const API_ENDPOINTS = {
   META: '/meta',
   LIBRARY: '/library',
   TRAFFIC: '/traffic',
+  HOSTS: '/hosts',
 } as const
 
 export const QUERY_KEYS = {
@@ -27,6 +28,8 @@ export const QUERY_KEYS = {
   META: ['meta'] as const,
   LIBRARY: ['library'] as const,
   TRAFFIC: ['traffic'] as const,
+  HOSTS: ['hosts'] as const,
+  HOST: (ip: string) => ['host', ip] as const,
   ALERTS: (limit: number) => ['alerts', limit] as const,
   SEARCH: (query: string, kind: string) => ['search', query, kind] as const,
 } as const
@@ -38,6 +41,7 @@ export const ROUTES = {
   ALERTS: '/alerts',
   LIBRARY: '/library',
   TRAFFIC: '/traffic',
+  HOSTS: '/hosts',
 } as const
 
 export const STORAGE_KEYS = {

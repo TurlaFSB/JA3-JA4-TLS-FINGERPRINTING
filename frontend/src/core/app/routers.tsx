@@ -24,6 +24,10 @@ const routes: RouteObject[] = [
         lazy: () => import('@/pages/traffic'),
       },
       {
+        path: ROUTES.HOSTS,
+        lazy: () => import('@/pages/hosts'),
+      },
+      {
         path: ROUTES.ALERTS,
         lazy: () => import('@/pages/alerts'),
       },

@@ -15,6 +15,7 @@
 //! belongs.
 
 mod detect;
+mod hosts;
 mod import;
 mod infer;
 mod matcher;
@@ -34,6 +35,7 @@ use serde::Serialize;
 use tlsfp_core::FingerprintEvent;
 
 pub use detect::{Alert, AlertSeverity, DetectConfig, Rule};
+pub use hosts::{ClientSpan, Counted, HostProfile, HostSummary};
 pub use import::ImportSummary;
 pub use infer::{ClientFamily, ClientGuess, Confidence, infer_client};
 pub use model::{CatalogEntry, Category, FpKind, IntelHit, MatchReport, MatchStrength, Verdict};
@@ -148,6 +150,16 @@ impl IntelStore {
     /// The most recent alerts, newest first, for the CLI feed and the dashboard.
     pub fn recent_alerts(&self, limit: i64) -> Result<Vec<Alert>> {
         detect::recent(&self.conn, limit)
+    }
+
+    /// The addresses observed, most recently active first.
+    pub fn hosts(&self, limit: i64) -> Result<Vec<HostSummary>> {
+        hosts::list(&self.conn, limit)
+    }
+
+    /// Everything observed about one source address.
+    pub fn host_profile(&self, ip: &str) -> Result<Option<HostProfile>> {
+        hosts::profile(&self.conn, ip)
     }
 
     /// A count of recorded alerts per rule, for the stats summary.
