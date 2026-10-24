@@ -1,122 +1,190 @@
+<div align="center">
+
 # tlsfp
 
-Passive TLS fingerprinting for JA3 and the JA4+ family. Reads packet captures or a live interface, fingerprints every TLS handshake (including TLS carried in QUIC), matches fingerprints against threat intelligence, and raises alerts when a client's fingerprint contradicts what it claims to be.
+**Passive TLS fingerprinting for JA3 and the JA4+ family**
+
+Reads packet captures or a live network interface, fingerprints every TLS and QUIC handshake, matches it against threat intelligence, and alerts when a client's fingerprint contradicts what it claims to be. It never transmits a packet.
 
 [![CI](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/actions/workflows/ci.yml/badge.svg)](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING?sort=semver)](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/releases)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Rust 1.85+](https://img.shields.io/badge/rust-1.85%2B-orange.svg)](https://www.rust-lang.org)
+![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey)
 
-`tlsfp` never transmits. It reads the cleartext part of the handshake, computes hashes of the client's and server's TLS choices, and compares them with what it knows. No decryption, no keys, no active probing.
+[Quick start](#quick-start) · [Installation](docs/INSTALL.md) · [Usage](docs/USAGE.md) · [Dashboard](docs/DASHBOARD.md) · [Architecture](#architecture) · [Security](#security-and-responsible-use)
+
+</div>
+
+![The Scope page: live handshakes with site, client and fingerprints](docs/images/scope.png)
+<sub>The dashboard replaying a vendored capture (`testdata/pcap/browsers-x509.pcapng`). Nothing on it is simulated.</sub>
+
+---
 
 ## Contents
 
-- [Capabilities](#capabilities)
-- [Install](#install)
-- [Usage](#usage)
-- [Fingerprints](#fingerprints)
-- [Detection](#detection)
-- [Intelligence](#intelligence)
-- [Output](#output)
-- [Dashboard](#dashboard)
-- [Architecture](#architecture)
-- [Performance](#performance)
-- [Validation](#validation)
-- [Deployment and security](#deployment-and-security)
-- [Limitations](#limitations)
-- [Documentation](#documentation)
-- [Roadmap](#roadmap)
-- [Contributing, security reports, citation](#contributing-security-reports-citation)
-- [License and acknowledgments](#license-and-acknowledgments)
+1. [Overview](#overview)
+2. [Quick start](#quick-start)
+3. [Installation](#installation)
+4. [Usage](#usage)
+5. [What it computes](#what-it-computes)
+6. [Detection and intelligence](#detection-and-intelligence)
+7. [Dashboard](#dashboard)
+8. [Architecture](#architecture)
+9. [Configuration and tuning](#configuration-and-tuning)
+10. [Validation and performance](#validation-and-performance)
+11. [Security and responsible use](#security-and-responsible-use)
+12. [Limitations](#limitations)
+13. [Documentation](#documentation)
+14. [Roadmap](#roadmap)
+15. [Contributing, citation, licence](#contributing-citation-licence)
 
-## Capabilities
+---
 
-- **Fingerprints:** JA3, JA3S, JA4, JA4S, JA4H, JA4X, JA4T, JA4TS. GREASE values stripped; raw and hashed forms available.
-- **Transports:** TCP with full stream reassembly (reordering, retransmission, overlap); QUIC v1 and v2 Initial packet decryption and CRYPTO-frame reassembly.
-- **Inputs:** pcap and pcapng files; live capture on Linux, macOS and Windows (libpcap, or Npcap on Windows) with `--live auto` choosing the interface you actually use.
-- **Matching:** exact lookup and JA4 prefix matching against a local SQLite database, scored into a verdict with confidence. Name fingerprints yourself with `tlsfp intel label`.
-- **Detection:** seven built-in rules over fingerprint history and cleartext HTTP (known-bad, User-Agent mismatch, OS mismatch, header anomaly, first-seen, rotation, monoculture), plus rules you write in a TOML file.
-- **Who and where:** every handshake is attributed to a site and to a client (an exact feed match, or the family its shape suggests, with the evidence and its limits); each address has a history of the clients it has run.
-- **Output:** text and JSON, an HTML report per capture, alert delivery to a JSON-lines file, syslog or a webhook, Prometheus `/metrics`, and a web dashboard.
-- **Resource bounds:** capped flow table, idle timeouts, per-stream byte limits, capped event streams, and retention of recorded history (90 days of observations, 365 of alerts and 5 million rows by default). The engine crate forbids `unsafe`.
+## Overview
 
-## Install
+A TLS handshake begins in the clear. The ClientHello lists the protocol versions, cipher suites, extensions and curves a program supports, in an order that is characteristic of its TLS library and configuration. Hashing those choices gives a **fingerprint** that stays stable across connections, and that differs between a browser, `curl`, a Go service and a piece of malware.
 
-**Linux and macOS.** Requirements: Rust 1.85 or newer, libpcap development files (`apt-get install libpcap-dev`, `brew install libpcap`) and, for the dashboard, pnpm.
+`tlsfp` computes those fingerprints from traffic it only observes. No decryption, no keys, no active probing, and no change to the network.
+
+**What it is for**
+
+- Naming the software behind a connection without reading its content.
+- Spotting a client that is not what it claims: a "browser" whose handshake belongs to a script, or an operating-system claim its TCP stack contradicts.
+- Recognising known-malicious TLS stacks from public feeds, and noticing when an address starts using a new client.
+- Producing evidence: per-capture HTML reports with the file's SHA-256, JSON for pipelines, alerts to a SIEM.
+
+**What it is not**
+
+- Not an attribution tool. A fingerprint identifies a TLS implementation, not a person or a campaign.
+- Not a decryptor and not an intrusion-prevention system. It observes and reports.
+- Not a replacement for Wireshark. There is no per-packet view and no payload.
+
+| At a glance | |
+|---|---|
+| Fingerprints | JA3, JA3S, JA4, JA4S, JA4H, JA4X, JA4T, JA4TS |
+| Transports | TCP with full stream reassembly; QUIC v1 and v2 (client Initial packets decrypted) |
+| Inputs | pcap and pcapng files; live capture on Linux, Windows and macOS |
+| Outputs | text, JSON, HTML report, alerts to file, syslog or webhook, Prometheus, web dashboard |
+| Implementation | Rust workspace of three crates (the engine forbids `unsafe`) and a React dashboard |
+| Footprint | One binary and a SQLite file; no daemon or external service |
+
+## Quick start
+
+Two minutes, no special privileges. (Only the sample download needs a network.) This analyses a bundled capture and opens the dashboard on it.
+
+**1. Get the program.** Download the archive for your system from the [latest release](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/releases/latest), extract it, and open a terminal in the extracted folder. (Prefer to build it yourself? See [Installation](#installation).)
+
+**2. Load the bundled intelligence feed** (offline, once):
 
 ```bash
-git clone https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING.git
-cd JA3-JA4-TLS-FINGERPRINTING
-./install.sh --live          # builds the program and the dashboard, seeds the feed, grants capture rights
-tlsfp serve --live auto      # dashboard on http://127.0.0.1:8080, capturing the interface you use
+./tlsfp intel seed                 # Windows: .\tlsfp.exe intel seed
 ```
 
-`./install.sh` without `--live` skips the capability grant (capture then needs sudo). To build without installing: `cargo build --release`, then `tlsfp intel seed`.
+**3. Get a sample capture and fingerprint it:**
 
-**Prebuilt archives.** Each [release](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/releases) carries a Linux x86-64 tarball and a Windows x86-64 zip, each with a `.sha256` file and a build provenance attestation. Verify before running:
+```bash
+curl -LO https://raw.githubusercontent.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/main/testdata/pcap/browsers-x509.pcapng
+./tlsfp pcap browsers-x509.pcapng --intel
+```
+
+You should see a line like the following, naming the client from the intelligence feed. The `ja4` value is FoxIO's published reference fingerprint for this handshake.
+
+```
+… 172.27.7.31:54524 -> 13.107.21.239:443 client_hello ja4=t13d1516h2_8daaf6152771_e5627efa2ab1 ja3=34fcb8e0ef812f18e760b52314a54fd0 sni=edge.microsoft.com alpn=h2
+    intel ja4=benign score=0.00 confidence=0.87 Google Chrome (tlsfp curated), Chromium 107.0.0, …
+```
+
+**4. Open the dashboard on it:**
+
+```bash
+./tlsfp serve --replay browsers-x509.pcapng --loop
+```
+
+Browse to <http://127.0.0.1:8080>.
+
+**5. Watch your own traffic** (needs capture permission, see [Installation](docs/INSTALL.md)):
+
+```bash
+./tlsfp serve --live auto
+```
+
+## Installation
+
+Full guide with verification, troubleshooting and upgrade notes: **[`docs/INSTALL.md`](docs/INSTALL.md)**.
+
+| Method | Best for | Steps in brief |
+|---|---|---|
+| **Prebuilt archive** | Most users | Download the Linux `.tar.gz` or Windows `.zip` from the [releases](https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING/releases), check the SHA-256 and provenance, extract, run `tlsfp intel seed`. |
+| **From source** | Linux, macOS, development | Install Rust 1.85+, libpcap headers and pnpm, clone, run `./install.sh --live`. |
+| **Docker** | A demonstration, or analysing files | `docker compose --profile backend up --build`, then open `http://127.0.0.1:11790`. Replay only. |
+
+**Requirements at a glance**
+
+| | Linux | Windows | macOS |
+|---|---|---|---|
+| Run a release archive | libpcap (`apt install libpcap0.8`) | nothing | not offered |
+| Live capture | `setcap` once, or root | [Npcap](https://npcap.com) (about 1 MB) | root (typically) |
+| Build from source | Rust 1.85+, `libpcap-dev`, Node 22, pnpm 10 | Rust (MSVC), Npcap SDK, Node 22, pnpm 10 | Rust 1.85+, Xcode tools, Node 22, pnpm 10 |
+
+Linux and Windows builds are tested in CI on every commit. macOS shares the Linux code path but is **not** tested in CI and has not been tested by the maintainer. Each release archive ships with a `.sha256` file and a signed build provenance attestation:
 
 ```bash
 sha256sum -c tlsfp-0.2.0-linux-x86_64.tar.gz.sha256
 gh attestation verify tlsfp-0.2.0-linux-x86_64.tar.gz --repo TurlaFSB/JA3-JA4-TLS-FINGERPRINTING
 ```
 
-**Windows.** Install [Npcap](https://npcap.com) once (about 1 MB; free for personal use), download the Windows zip from the release, extract it and run `.\start-windows.ps1`. Reading capture files, the Library page and reports work without Npcap. Details and the manual test checklist: [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md).
-
-**Container.** `docker compose --profile backend up` serves the dashboard (host port 11790) with a replayed demo capture. A container cannot see the host's network card on Windows or macOS, so it replays a file; use a native install for live traffic. See `compose.yml`.
-
 ## Usage
 
+The most common tasks. The complete reference, including every option and the HTTP API, is in **[`docs/USAGE.md`](docs/USAGE.md)**.
+
 ```bash
-tlsfp pcap capture.pcapng                    # one line per handshake
-tlsfp pcap capture.pcapng --json             # one JSON object per event
-tlsfp pcap capture.pcapng --intel --detect   # match and run detection rules
-tlsfp pcap capture.pcapng --report           # ranked forensic summary
+# Analyse a file
+tlsfp pcap capture.pcapng                      # one line per handshake
+tlsfp pcap capture.pcapng --json               # one JSON object per event
+tlsfp pcap capture.pcapng --intel --detect     # add verdicts, run the detection rules
+tlsfp pcap capture.pcapng --report             # ranked forensic summary
+tlsfp html capture.pcapng -o report.html       # self-contained report with the file's SHA-256
 
-tlsfp live auto --intel --detect             # live capture on the interface you use (or name one: eth0, "Wi-Fi")
-tlsfp live eth0 --filter "tcp port 443"      # narrow the kernel BPF filter
-tlsfp live eth0 --buffer-mib 128 --max-flows 500000   # size the kernel buffer and the conversation table for a busy link
+# Capture live
+tlsfp interfaces                               # list what can be captured
+tlsfp live auto --intel --detect               # the interface you actually use
+tlsfp live eth0 --filter "tcp port 443"        # narrow the kernel filter
 
-tlsfp html capture.pcapng -o report.html     # one self-contained HTML report with the file's SHA-256
-tlsfp rules check my-rules.toml              # validate your detection rules (--rules FILE to use them)
-tlsfp live eth0 --detect --alert-file alerts.jsonl --alert-syslog udp://siem:514   # forward alerts
-tlsfp interfaces                             # what live capture can use
-tlsfp identify captures/                     # which client is in each capture file
-tlsfp intel seed                             # load bundled feeds
-tlsfp intel import ja4db.json                # import a ja4db.com export (validated per record)
+# Dashboard and API
+tlsfp serve --live auto                        # live, on http://127.0.0.1:8080
+tlsfp serve --replay capture.pcapng --loop     # demo from a file
+tlsfp serve --library ~/captures               # also identify the files in a folder
+
+# Alerts and intelligence
+tlsfp live eth0 --detect --alert-file alerts.jsonl --alert-syslog udp://siem:514
 tlsfp intel lookup ja4 t13d1516h2_8daaf6152771_e5627efa2ab1
-tlsfp intel label ja4 <value> --label "Brave on Windows"   # name a fingerprint yourself (labels, unlabel)
-tlsfp intel alerts                           # recent alerts
-tlsfp intel prune --keep-days 30             # delete old history now (serve does it every 15 minutes; --keep-days, --keep-alert-days, --max-observations, 0 keeps all)
-
-tlsfp serve 127.0.0.1:8080                   # API and dashboard, tails the database
-tlsfp serve --replay capture.pcapng --loop   # dashboard fed from a replayed capture
-tlsfp serve --live eth0                      # dashboard fed from a live interface
-tlsfp serve --library ~/tlsfp-captures       # also list and identify the capture files in a folder
-tlsfp serve --location "DC-2 rack 14"        # label shown in the dashboard header (or TLSFP_SENSOR_LOCATION)
-tlsfp serve --local-network 203.0.113.0/24   # networks that count as "inside" besides the interface's own (or TLSFP_LOCAL_NETWORKS)
-tlsfp serve --allowed-host dash.lan          # another name the dashboard may be reached by (loopback binds check the Host header)
-tlsfp pcap x.pcap --detect --shared-network 10.0.0.0/8   # NAT or proxy addresses (or TLSFP_SHARED_NETWORKS)
+tlsfp intel label ja4 <value> --label "Brave on Windows"
 ```
 
-Live capture needs raw-socket capabilities. Grant them to the binary instead of running as root:
+Sample output (text and JSON):
 
-```bash
-sudo setcap cap_net_raw,cap_net_admin=eip "$(command -v tlsfp)"
+```
+1675707151.805 192.168.1.168:50112 -> 142.251.16.94:443 client_hello ja4=t13d1516h2_8daaf6152771_e5627efa2ab1 ja3=1c258ebef8eee2dfa3df6d8d07285af9 sni=clientservices.googleapis.com alpn=h2
+    intel ja4=benign score=0.00 confidence=0.80 Google Chrome (tlsfp curated)
 ```
 
-The default database is `~/.local/share/tlsfp/intel.db`; override with `--db`.
+```json
+{"ts_nanos":1675707151805776000,"src":"192.168.1.168:50112","dst":"142.251.16.94:443","kind":"client_hello","ja3":"1c258ebef8eee2dfa3df6d8d07285af9","ja4":{"hash":"t13d1516h2_8daaf6152771_e5627efa2ab1","raw":"t13d1516h2_002f,0035,..."},"sni":"clientservices.googleapis.com","alpn":"h2","detail":{"versions":["TLS 1.3","TLS 1.2"],"ciphers":[{"id":4865,"name":"TLS_AES_128_GCM_SHA256"}],"…":"…"}}
+```
 
-## Fingerprints
+## What it computes
 
 | Fingerprint | Computed from | Notes |
 |---|---|---|
-| JA3 / JA3S | ClientHello / ServerHello fields in wire order, MD5 | Unstable for clients that randomize extension order. Kept because public malware feeds use it. |
-| JA4 | ClientHello: transport, version, SNI, ALPN, sorted cipher and extension lists, SHA-256 truncated | Stable under extension shuffling. Primary fingerprint. |
-| JA4S | ServerHello | Extensions in wire order. |
-| JA4H | Cleartext HTTP/1.x request: method, version, header order, cookies, language | HTTP/2 and HTTPS requests are not visible to a passive observer. |
-| JA4X | X.509 certificate issuer, subject and extension OIDs | Visible only where the certificate is in the clear (TLS 1.2 and earlier). |
-| JA4T / JA4TS | TCP SYN / SYN-ACK: window size, options, MSS, window scale | Identifies the OS network stack beneath the TLS client. |
+| **JA3 / JA3S** | ClientHello / ServerHello fields in wire order, MD5 | Unstable for clients that randomise extension order. Kept because public malware feeds use it. |
+| **JA4** | ClientHello: transport, version, SNI, ALPN, sorted ciphers and extensions, truncated SHA-256 | Stable under extension shuffling. The primary fingerprint. |
+| **JA4S** | ServerHello | Extensions in wire order. |
+| **JA4H** | Cleartext HTTP/1.x request: method, version, header order, cookies, language | HTTP/2 and HTTPS requests are not visible to a passive observer. |
+| **JA4X** | X.509 certificate issuer, subject and extension OIDs | Needs the certificate in the clear (TLS 1.2 and earlier). |
+| **JA4T / JA4TS** | TCP SYN / SYN-ACK: window, options, MSS, window scale | Identifies the OS network stack beneath the TLS client. |
 
-Anatomy of a JA4 value:
+Beside the hashes, every hello event carries a readable account of what was offered or chosen (versions, cipher suites, extensions, groups, signature algorithms, ALPN, features such as ECH and GREASE), with registry names.
 
 ```
 t13d1516h2_8daaf6152771_e5627efa2ab1
@@ -130,79 +198,45 @@ t13d1516h2_8daaf6152771_e5627efa2ab1
 └────────────────────────── transport (t = TCP, q = QUIC)
 ```
 
-The exact published vector each fingerprint is tested against, and every deliberate scope boundary, is in [`learn/CONFORMANCE.md`](learn/CONFORMANCE.md).
+Each fingerprint is pinned to published vectors in the test suite; the vectors and every deliberate scope boundary are in [`learn/CONFORMANCE.md`](learn/CONFORMANCE.md).
 
-## Detection
+## Detection and intelligence
 
-Rules read fingerprint history stored in the database, so they behave identically on a capture replayed at once and on a live link, and state survives restarts.
+Seven built-in rules, plus any you write, read fingerprint history stored in the database, so they behave identically on a replayed capture and a live link, and survive restarts.
 
 | Rule | Fires when |
 |---|---|
-| `known_bad` | A fingerprint matches malicious or suspicious intelligence. Raised once per source address, so a beacon is one alert, not one per flow. |
-| `ua_mismatch` | A cleartext request presents a browser User-Agent while the same client's TLS fingerprint belongs to a script or tool. |
-| `os_mismatch` | The OS implied by the User-Agent disagrees with the OS implied by the client's TCP SYN fingerprint (JA4T). |
-| `first_seen` | The fingerprint has never been recorded before. Informational. |
-| `fp_rotation` | One address presents more than 5 distinct fingerprints within the window (default 1 hour). |
-| `monoculture` | One fingerprint appears from more than 10 distinct addresses within the window. Never raised for a fingerprint with an exact benign match. |
-| `custom` | A rule from your own TOML file matched: server names, fingerprints, client families, verdicts, networks, ports, TLS version, extensions. [`docs/RULES.md`](docs/RULES.md) |
-| `header_anomaly` | A cleartext request claiming a browser carries headers browsers never send to that origin: `Sec-Fetch-*`, `Sec-CH-*` Client Hints, or an `Upgrade: h2c` / `HTTP2-Settings` handshake. Skips loopback origins. Catches impersonation tools left on their defaults; trivially evaded. |
+| `known_bad` | A fingerprint matches malicious or suspicious intelligence (once per source address). |
+| `ua_mismatch` | A request claims a browser User-Agent but the TLS fingerprint belongs to a script or tool. |
+| `os_mismatch` | The OS implied by the User-Agent disagrees with the one implied by the TCP SYN fingerprint. |
+| `header_anomaly` | A "browser" sends headers browsers never send to that origin (impersonation tools on their defaults). |
+| `first_seen` | A fingerprint never recorded before (informational). |
+| `fp_rotation` | One address presents more than 5 distinct fingerprints in an hour. |
+| `monoculture` | One fingerprint appears from more than 10 addresses in an hour. |
+| `custom` | A rule from your own TOML file matched ([`docs/RULES.md`](docs/RULES.md)). |
 
-Thresholds and the window are configurable in `DetectConfig`. Defaults suit a quiet link; busy sensors should raise them. Rotation and monoculture are skipped for addresses declared with `--shared-network` (a NAT gateway, proxy or jump host).
-
-## Intelligence
-
-| Source | Records | Category | Licence |
-|---|---|---|---|
-| abuse.ch SSLBL | 97 | malware, C2 | CC0-1.0 |
-| Salesforce `osx-nix` JA3 list | 157 | benign applications | BSD-3-Clause |
-| Curated set | 21 | C2, tools, field-observed Firefox 158 | project |
-| Lab-derived clients (`tlsfp lab`) | 34 | benign libraries and real Chromium builds | AGPL-3.0-only |
-| ja4db.com (optional import) | variable | mixed | see ja4db.com terms |
-
-Feeds are vendored and compiled into the binary, so seeding needs no network. Benign and malicious sources are both loaded on purpose: some hashes appear in both, and the matcher scores the disagreement.
-
-The `tlsfp lab` feed is generated from the project's own labeled captures of real client builds (curl, Python, Go, Java, Ruby, PHP and Chromium 107 to 143); see [`dataset/README.md`](dataset/README.md). Verdict rules: a *benign* verdict needs an exact match, a partial match (same cipher list) is only a similarity hint, and only the strongest match tier votes.
-
-## Output
-
-Text:
-
-```
-1675707151.805 192.168.1.168:50112 -> 142.251.16.94:443 client_hello ja4=t13d1516h2_8daaf6152771_e5627efa2ab1 ja3=1c258ebef8eee2dfa3df6d8d07285af9 sni=clientservices.googleapis.com alpn=h2
-    intel ja4=benign score=0.00 confidence=0.80 Google Chrome (tlsfp curated)
-```
-
-JSON (`--json`), one object per line:
-
-```json
-{"ts_nanos":1675707151805776000,"src":"192.168.1.168:50112","dst":"142.251.16.94:443","kind":"client_hello","ja3":"1c258ebef8eee2dfa3df6d8d07285af9","ja4":{"hash":"t13d1516h2_8daaf6152771_e5627efa2ab1","raw":"t13d1516h2_002f,0035,..."},"sni":"clientservices.googleapis.com","alpn":"h2"}
-```
-
-Forensic report (`--report`) summarizes a whole capture: frame and flow counts, fingerprints by kind, top client JA4 values, top server names, and per-endpoint fingerprints, verdicts and alerts.
+The bundled feed has 309 fingerprints from four vendored sources (abuse.ch SSLBL, Salesforce's JA3 list, a curated set, and fingerprints measured from this project's own labelled captures). It is a baseline, not coverage of current malware. Full rule semantics, sources and licences: [`docs/DETECTION.md`](docs/DETECTION.md); extending the feed: [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md).
 
 ## Dashboard
 
-`tlsfp serve` serves a web dashboard and a JSON API from one process. Every number on it comes from the sensor or the database; nothing is estimated or invented, and a replayed capture says so in the header.
+`tlsfp serve` serves a web dashboard and a JSON API from one process.
 
-| Page | What it answers |
+| Page | Purpose |
 |---|---|
-| **Scope** | What is crossing the sensor now. Each handshake row names the **site** and the **client**; a server's reply borrows the site from its connection. The **By site** view lists each site with the clients and fingerprints that reached it. Click any row for a side drawer: a plain sentence about the event, connection facts, who the client is and why, every fingerprint with a one-line explanation and copy button, the JA4 breakdown, the other events of the same connection, intelligence, alerts with what each rule means, and shortcuts to filter or open the host's history (Esc closes, up and down step). Profiles group the live window by fingerprint or destination and compare two fingerprints side by side. |
-| **Traffic** | Every conversation with bytes and packets each way, direction, server name and client, a 15-minute throughput chart kept on the server (full when you open the page), and top remote hosts. "Local" means the capture interface's own networks plus private ranges plus `--local-network`. `/metrics` exposes Prometheus counters. |
-| **Hosts** | One profile per machine: which client fingerprints it runs and when each first appeared, the servers it talks to, User-Agent and OS claims, and its alerts. A host that starts presenting a new client is the thing to look at. Servers that only answered are listed separately. |
-| **Alerts** | Every alert with severity and rule filters, search, a plain explanation of each rule and what to verify, export, and a link to the host. |
-| **Library** | Capture files found in a watched folder (`--library DIR`), each read once, named, and downloadable as an HTML report. |
-| **Intel** | What this sensor has seen set against what the feed knows: the share of connections the feed can name, the fingerprints it cannot (with the shape-based guess and the exact command to name them), then the catalogue, feeds and licences. |
+| **Scope** | Live handshakes with site, client, verdict; a By site view; a detail drawer for any event |
+| **Traffic** | Conversations, direction, throughput over 15 minutes, and a **capture health** panel |
+| **Hosts** | Per-machine history: which clients each address runs, and when a new one appears |
+| **Alerts** | Every alert with its explanation and what to verify; filters and export |
+| **Library** | Capture files in a watched folder, identified and downloadable as HTML reports |
+| **Intel** | What this sensor has seen against what the feed knows; name unknown fingerprints |
 
-- **Opens populated:** the server keeps the last 500 events and sends them in one piece on connect; a replayed capture is loaded at full speed on its first pass.
-- **Themes:** dark and light. `/` focuses the stream filter.
-- **Header:** backend reachability, the active feed (live interface, replayed capture or database tail), uptime and the operator's `--location` label.
-- **API:** `/api/stats`, `/api/alerts`, `/api/search`, `/api/export`, `/api/observed`, `/api/hosts`, `/api/hosts/{ip}`, `/api/traffic`, `/api/library`, `/api/library/{id}/report`, `/api/meta` (no filesystem paths), `/api/health`, `/api/stream` (Server-Sent Events, capped at 64 open streams) and `/metrics`. Errors never carry internal detail.
+![Event detail drawer](docs/images/detail.png)
 
-Build the frontend once with `cd frontend && pnpm install && pnpm build`; `tlsfp serve` finds `frontend/dist`, or the `web` folder beside the program or the database. The Docker setup builds it for you.
+More, with screenshots and behaviour: [`docs/DASHBOARD.md`](docs/DASHBOARD.md).
 
 ## Architecture
 
-Five layers, each handing one kind of thing to the next. The source of this diagram is [`docs/architecture.mmd`](docs/architecture.mmd); a rendered copy for slides is [`docs/architecture.svg`](docs/architecture.svg) and [`docs/architecture.png`](docs/architecture.png).
+Five layers, each handing one kind of thing to the next. Source: [`docs/architecture.mmd`](docs/architecture.mmd); renders for slides: [`docs/architecture.svg`](docs/architecture.svg), [`docs/architecture.png`](docs/architecture.png).
 
 ```mermaid
 flowchart TB
@@ -279,136 +313,130 @@ flowchart TB
 
 | Layer | Crate | Owns | Does not |
 |---|---|---|---|
-| Engine | `tlsfp-core` | Decoding, TCP and QUIC reassembly, protocol parsing, every fingerprint algorithm, conversation accounting | Touch the network, a file's meaning, a database or an async runtime. It forbids `unsafe` and treats every byte as hostile |
-| Intelligence | `tlsfp-intel` | The SQLite store, matching and scoring, client inference, detection rules, host history, operator labels, retention | Know where packets came from |
+| Engine | `tlsfp-core` | Decoding, TCP and QUIC reassembly, protocol parsing, every fingerprint algorithm, conversation accounting | Touch the network, a database or an async runtime. Forbids `unsafe`; treats every byte as hostile |
+| Intelligence | `tlsfp-intel` | SQLite store, matching and scoring, client inference, detection rules, host history, labels, retention | Know where packets came from |
 | Application | `tlsfp` | Reading files and interfaces, the HTTP API and event stream, alert delivery, the capture library, reports | Compute a fingerprint |
 | Dashboard | `frontend/` | Showing it, with no logic the server cannot be asked for | Hold state that matters |
 
-Design decisions:
+**Design decisions**
 
-- **Parsers treat input as hostile.** The engine forbids `unsafe`, readers are bounds-checked, and every malformed input is an error or a counted drop.
-- **Synchronous core, async only at the edge.** A lookup is one indexed query and a capture is a plain loop; the async runtime exists only in the web server.
-- **QUIC needs no secret.** Client Initial keys derive from the Destination Connection ID, which is sent in the clear (RFC 9001, RFC 9369).
-- **Detection state lives in the database,** not in memory, so a sensor keeps its history across restarts and external writers can share it. Retention keeps it bounded.
-- **Delivery never blocks capture.** Alerts reach files, syslog and webhooks through a bounded queue and one worker thread; a slow destination drops and counts, it does not stall packets.
-- **"Local" is learned, not guessed.** The Traffic page takes the capture interface's own networks as inside, so a host with a public address sees its own traffic as its own.
-- **Windows is a first-class target.** The capture library is delay-loaded, so file analysis runs without Npcap, and the same codebase builds for Linux, macOS and Windows.
+- **Parsers treat input as hostile:** bounds-checked readers, every malformed input is an error or a counted drop.
+- **Synchronous core, async only at the edge:** the async runtime exists only in the web server.
+- **QUIC needs no secret:** client Initial keys derive from the Destination Connection ID, which is sent in the clear (RFC 9001, RFC 9369).
+- **Detection state lives in the database,** so history survives restarts and is bounded by retention.
+- **Delivery never blocks capture:** alerts leave through a bounded queue and one worker; a slow destination drops and counts, it does not stall packets.
+- **"Local" is learned, not guessed:** the capture interface's own networks define what is inside.
+- **Honest about misses:** the engine counts what it fails to read, and the dashboard says so ([`docs/CAPTURE_TUNING.md`](docs/CAPTURE_TUNING.md)).
 
-## Performance
+## Configuration and tuning
 
-Single core (live capture tested to about 1,200 new TLS connections a second with no handshake missed, on a shared 4-core machine; no figure exists for a physical interface): fingerprinting alone runs at about 90,000 TLS handshakes or 80,000 QUIC Initials per second; with intelligence matching and detection (SQLite) about 3,000 per second. Methodology, caveats and what has not been measured: [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
+The sensor is passive; what you tune is how much of a busy link it reads and how it protects itself.
 
-## Validation
+| Setting | Flag | Default |
+|---|---|---|
+| Kernel filter | `--filter` | `tcp or (udp and port 443)` |
+| Promiscuous mode | `--no-promisc` to turn off | on |
+| Kernel capture buffer | `--buffer-mib` | 32 |
+| Conversations tracked | `--max-flows` | 65,536 |
+| Idle timeout | `--idle-timeout` | 60 s |
+| Bytes read per stream | `--stream-limit-kib` | 256 |
+| Retention | `--keep-days`, `--keep-alert-days`, `--max-observations` | 90 d, 365 d, 5,000,000 |
+| Alert destinations | `--alert-file`, `--alert-syslog`, `--alert-webhook`, `--alert-min-severity` | none |
+
+All settings, their environment variables, and how to read the capture health panel: [`docs/CAPTURE_TUNING.md`](docs/CAPTURE_TUNING.md). Alert delivery: [`docs/ALERTS.md`](docs/ALERTS.md).
+
+## Validation and performance
 
 | Check | Scope |
 |---|---|
 | Known-answer tests | JA3 (Salesforce vectors), JA4 (FoxIO vectors), QUIC key schedule (RFC 9001 and RFC 9369 appendices) |
-| Integration tests | Vendored captures in `testdata/pcap/` (provenance in `testdata/pcap/PROVENANCE.md`) |
-| Property tests | Arbitrary and mutated bytes into the TLS, QUIC, HTTP, SSLv2, certificate and pipeline entry points; stream reassembly under arbitrary segmentation |
-| CI | `cargo test` on stable and Rust 1.85, `clippy -D warnings`, `rustfmt`, `cargo audit`, `cargo deny` (licences, bans, advisories), a Windows build that starts and reads a capture without Npcap, frontend lint, types, tests and build, evaluation reproducibility |
+| Integration tests | Vendored real captures in `testdata/pcap/` (provenance in `testdata/pcap/PROVENANCE.md`) |
+| Property tests | Arbitrary and mutated bytes into every parser entry point; reassembly under arbitrary segmentation |
+| CI on every commit | `cargo test` on stable and Rust 1.85, `clippy -D warnings`, `rustfmt`, `cargo audit`, `cargo deny`, a Windows build that starts and reads a capture without Npcap, frontend lint, types, tests and build, `pnpm audit`, reproducible evaluation |
 | Security review | [`AUDIT.md`](AUDIT.md) |
 
-Run locally:
+**Evaluation** on a labelled lab dataset (428 handshakes from 22 known-good clients, 25 real Chrome builds, impersonation tools):
+
+| Result | |
+|---|---|
+| Known-good clients given a suspicious or malicious verdict | 0 of 22 |
+| Libraries claiming to be a browser, caught by `ua_mismatch` | 16 of 16, no false alarms on 8 honest libraries and 10 real browsers |
+| Windows claims from a Linux host, caught by `os_mismatch` | 14 of 14 |
+| Impersonation tools on default settings, caught by `header_anomaly` | 17 of 17 |
+| Impersonation with defaults stripped and a Unix User-Agent | **Not caught by any rule** |
+| Distinct fingerprints per client, JA3 against JA4 | 5.74 against 1.10 |
+
+These are lab results; accuracy has not been quantified on real-world traffic. Method, full table and limits: [`docs/EVALUATION.md`](docs/EVALUATION.md).
+
+**Performance** (single core): fingerprinting alone about 90,000 TLS handshakes or 80,000 QUIC Initials per second; with matching and detection (SQLite) about 3,000 per second; live capture held about 1,200 new TLS connections per second with none missed on a shared 4-core machine. No figure exists for a physical high-speed interface. Methodology and caveats: [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md).
 
 ```bash
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 cargo fmt --all --check
-cargo audit
-cargo deny check
-cargo bench -p tlsfp-core        # throughput benchmarks
+cargo audit && cargo deny check
 ```
 
-### Evaluation
+## Security and responsible use
 
-`dataset/` holds labeled handshakes from real client builds, curl-impersonate browser profiles and real Chromium builds from version 107 to 143; `eval/` measures fingerprint stability, impersonation fidelity and what the sensor concludes about each client. Everything is reproducible and verified in CI.
+- **Capture rights:** on Linux grant `CAP_NET_RAW` and `CAP_NET_ADMIN` to the binary instead of running as root (`install.sh --live` does exactly this). On Windows install Npcap and run as yourself.
+- **No authentication on the dashboard or API.** It binds to `127.0.0.1` by default, and while bound to loopback it refuses any `Host` header that is not loopback or named with `--allowed-host` (this blocks DNS-rebinding pages). To share it, put it behind a reverse proxy that provides authentication and TLS.
+- **Hardened responses:** strict Content-Security-Policy, `nosniff`, no-referrer; capped event streams; reports built one at a time; internal errors never reach the client.
+- **Webhook URLs are secrets:** supply them through the environment; only the host is ever logged.
+- **Data you collect is personal data:** the database and reports contain IP addresses and server names. Apply your retention and access controls; history is pruned automatically.
+- **Use it only on networks you are authorised to monitor.** A fingerprint is a lead, not proof.
 
-| Measured result | |
-|---|---|
-| Known-good clients receiving a suspicious or malicious verdict | 0 of 22 (428 handshakes) |
-| Known-good clients unseen by the feed that were wrongly vouched for | 0 of 5 (reported unknown) |
-| Real Chromium headless-shell builds whose JA4 equals the nearest-version curl-impersonate profile | 8 of 9 |
-| Real full Chrome builds (25, versions 118 to 143) whose JA4 equals it | 0 of 25: the profiles send ECH, the lab Chrome does not |
-| Distinct JA4 families across 25 real full Chrome builds | 3, plus a resumption variant of each |
-| Lying libraries caught by `ua_mismatch` (a library claiming Chrome or Safari) | 16 of 16, no false alarms on 8 honest libraries and 10 real browsers |
-| Windows claims from a Linux host caught by `os_mismatch` | 14 of 14 |
-| Impersonation tools left on defaults caught by `header_anomaly` | 17 of 17, no false alarms |
-| Impersonation with defaults stripped and a Unix User-Agent | **not caught by any rule** |
-| JA4 sets reproducing across two lab runs | 28 of 28 clients |
-| Distinct fingerprints per client, JA3 against JA4 | 5.74 against 1.10 |
-
-JA3 changes on every connection for any client that randomizes extension order, while JA4 collapses them. Impersonation is where the evaluation changed the most. Against Chromium headless shells the curl-impersonate profile is byte-identical (8 of 9); against full Chrome in the lab it never is (0 of 25), because the profiles send ECH, use a stale ALPS codepoint for Chrome 127 to 131 and lack the trust-anchors extension of Chrome 141 and later. Chrome's ClientHello depends on build flavour and configuration, and the lab could not make Chrome send ECH (feature flag, secure DNS and a non-loopback address all failed), so whether a profile separates from a typical desktop user is not something the lab can settle. The sensor therefore never lists impersonation profiles as tools, because the opposite error would flag real users, and it catches impersonation at other layers: curl-impersonate sends Client Hints, `Sec-Fetch-*` headers and an h2c upgrade over cleartext, which real browsers never do, so `header_anomaly` catches the default configuration. An attacker who removes those headers and claims a Unix User-Agent evades every rule here, and real-browser automation looks like a user at every measured layer. The evaluation also led to fixes in the matcher and label logic and to the `--shared-network` option for NAT gateways. Method, results and limits: [`eval/README.md`](eval/README.md); clients and threats to validity: [`dataset/README.md`](dataset/README.md).
-
-## Deployment and security
-
-- Run live capture with `CAP_NET_RAW` and `CAP_NET_ADMIN` only, never as root (`install.sh --live` grants exactly these). On Windows install Npcap and run as yourself.
-- The HTTP API and dashboard have **no authentication**. The default bind is `127.0.0.1`, and while it is bound to a loopback address the server refuses any request whose `Host` is not `localhost` or a loopback address (or named with `--allowed-host`), which stops a web page from reading it through DNS rebinding. If the dashboard must be reachable by others, put it behind a reverse proxy that provides authentication and TLS.
-- Responses carry a strict Content-Security-Policy (own scripts and styles only, no framing), `nosniff` and no-referrer. Data is never cached; the app is revalidated on every load.
-- Event streams are capped, reports are built one at a time, and a 500 never reveals an internal message.
-- Alert webhooks are sent as you configure them. The URL is usually a secret: use the environment variable, and only its host is ever logged. Delivery is at most once ([`docs/ALERTS.md`](docs/ALERTS.md)).
-- The database is bounded: observations and alerts older than the retention window, and rows beyond the cap, are deleted oldest first (ages count back from the newest record, so a replayed old capture is safe). After the window a returning fingerprint is "first seen" again.
-- Capture files and database contents include IP addresses and SNI values, which can be personal data. Apply your retention and access controls. Reports contain the capture's file name and SHA-256, addresses and server names.
-- A fingerprint identifies a TLS implementation and configuration, not a person. Treat `known_bad` as a lead, not proof.
-
-Threat model, assumptions and responsible use: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md). Findings and fixes: [`AUDIT.md`](AUDIT.md).
+Vulnerability reports: [`SECURITY.md`](SECURITY.md) (GitHub private vulnerability reporting). Threat model and responsible use: [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md). Findings and fixes: [`AUDIT.md`](AUDIT.md).
 
 ## Limitations
 
-- Fingerprints can be spoofed (uTLS, curl-impersonate, custom ClientHello), and a spoofed ClientHello is identical to the real one. The cross-layer rules raise the cost for tools on their defaults; they do not stop a careful attacker, and nothing here detects a real browser driven by automation.
-- Encrypted Client Hello hides the inner ClientHello; detection degrades to the outer one.
-- JA4X needs the certificate in the clear (TLS 1.2 and earlier). JA4H covers cleartext HTTP/1.x only.
-- QUIC support covers client Initial packets; no 0-RTT, Handshake packets, or connection migration.
-- The bundled intelligence (309 fingerprints) is a baseline, not coverage of current malware. Its client entries come from one Linux host (plus Firefox 158 from one Windows machine) and drift as client libraries change. [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) explains how to import ja4db.com and add your own.
-- A tool that reproduces a real browser's ClientHello cannot be separated from it by JA3 or JA4, and whether curl-impersonate does depends on browser configuration the sensor cannot see (see the fidelity results in [`eval/README.md`](eval/README.md)). Curated browser fingerprints are families, not single values: 25 real Chrome builds produced three.
-- Live capture on Windows is verified by hand on a real machine ([`RELEASING.md`](RELEASING.md)): CI cannot install Npcap unattended, so it builds the program and checks that it starts, reads captures and fails clearly without Npcap, but does not capture.
-- The dashboard's "client" for a handshake is an exact feed match or a family guessed from the handshake's shape (Chromium, Firefox, ...). It cannot tell Brave from Chrome from Edge, and a tool that copies a browser's handshake gets the browser's name.
-- Accuracy is measured on lab captures only (see Validation); it has not been quantified on real-world traffic.
+- **Fingerprints can be spoofed.** A tool that reproduces a browser's ClientHello (uTLS, curl-impersonate) is identical to it on the wire. The cross-layer rules raise the cost for tools on their defaults; they do not stop a careful attacker, and nothing here detects a real browser driven by automation.
+- **A fingerprint names a stack, not a program.** The client label is an exact feed match or a family guessed from the handshake's shape; it cannot tell Brave from Chrome from Edge.
+- **Encrypted Client Hello** hides the real server name and inner hello.
+- **JA4X** needs the certificate in the clear (TLS 1.2 and earlier); **JA4H** covers cleartext HTTP/1.x only.
+- **QUIC:** client Initial packets only; no 0-RTT, Handshake packets or connection migration.
+- **Visibility:** it sees what the interface sees. On a switched network, watching other hosts needs a mirror port or tap. A capture point that sees one direction of a flow reads one direction.
+- **Intelligence is a baseline** (309 fingerprints), drifting as client libraries change.
+- **Platform status:** Windows live capture is verified by hand, not by CI; macOS is untested.
+- **Accuracy** is measured on lab captures only.
 
 ## Documentation
 
-| Document | Contents |
+| Topic | Document |
 |---|---|
-| [`learn/02-ARCHITECTURE.md`](learn/02-ARCHITECTURE.md) | Crate structure, pipeline, intelligence store |
-| [`learn/03-IMPLEMENTATION.md`](learn/03-IMPLEMENTATION.md) | Code walkthrough from frame to alert |
-| [`learn/ALGORITHMS.md`](learn/ALGORITHMS.md) | Byte-level definition of each fingerprint and QUIC decryption |
-| [`learn/CONFORMANCE.md`](learn/CONFORMANCE.md) | Published vectors and scope boundaries |
-| [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md) | Threat model and responsible use |
-| [`AUDIT.md`](AUDIT.md) | Security audit findings |
-| [`eval/README.md`](eval/README.md) | Evaluation method and results |
-| [`docs/FIELD_OBSERVATIONS.md`](docs/FIELD_OBSERVATIONS.md) | Fingerprints of real Brave, Edge and Firefox on Windows |
-| [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md) | Capture a real desktop browser and replay it in the dashboard |
-| [`docs/RULES.md`](docs/RULES.md) | Writing your own detection rules |
-| [`docs/ALERTS.md`](docs/ALERTS.md) | Sending alerts to a file, syslog or a webhook |
-| [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md) | Live capture, the Traffic page and their limits |
-| [`docs/CAPTURE_TUNING.md`](docs/CAPTURE_TUNING.md) | Every capture and engine setting, capture health, output detail and accuracy limits |
-| [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured throughput and its limits |
-| [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) | Extending the intelligence feed; licensing |
-| [`dataset/README.md`](dataset/README.md) | Dataset construction and validity |
-| [`RELEASING.md`](RELEASING.md) | Release and signed-tag procedure |
-| [`CHANGES.md`](CHANGES.md) | Changes relative to the upstream base |
+| Install, verify, troubleshoot | [`docs/INSTALL.md`](docs/INSTALL.md) |
+| Every command and option, the HTTP API | [`docs/USAGE.md`](docs/USAGE.md) |
+| Capture settings, health, output detail, accuracy limits | [`docs/CAPTURE_TUNING.md`](docs/CAPTURE_TUNING.md) |
+| Live capture and the Traffic page | [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md) |
+| Dashboard pages | [`docs/DASHBOARD.md`](docs/DASHBOARD.md) |
+| Detection rules, intelligence feed | [`docs/DETECTION.md`](docs/DETECTION.md), [`docs/RULES.md`](docs/RULES.md), [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) |
+| Alert delivery (file, syslog, webhook) | [`docs/ALERTS.md`](docs/ALERTS.md) |
+| Evaluation and dataset | [`docs/EVALUATION.md`](docs/EVALUATION.md), [`eval/README.md`](eval/README.md), [`dataset/README.md`](dataset/README.md) |
+| Performance | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) |
+| Threat model, security audit | [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md), [`AUDIT.md`](AUDIT.md) |
+| How it works (learning path) | [`learn/02-ARCHITECTURE.md`](learn/02-ARCHITECTURE.md), [`learn/03-IMPLEMENTATION.md`](learn/03-IMPLEMENTATION.md), [`learn/ALGORITHMS.md`](learn/ALGORITHMS.md), [`learn/CONFORMANCE.md`](learn/CONFORMANCE.md) |
+| Field observations of real browsers | [`docs/FIELD_OBSERVATIONS.md`](docs/FIELD_OBSERVATIONS.md), [`docs/BROWSER_CAPTURE.md`](docs/BROWSER_CAPTURE.md) |
+| Releasing | [`RELEASING.md`](RELEASING.md), [`CHANGES.md`](CHANGES.md) |
 
 ## Roadmap
 
 | Status | Item |
 |---|---|
-| Done | Security audit, CI, parser fuzz coverage, reproducible fingerprint and detection evaluation, lab-derived client intelligence |
+| Done | Security audit, CI, parser fuzz coverage, reproducible evaluation, lab-derived client intelligence |
+| Done | Cleartext-HTTP rules evaluated on labelled scenarios, including adaptive attackers |
+| Done | Per-host history, alert delivery, HTML reports, custom rules, Windows live capture, capture health |
 | Next | Real Firefox, Safari and Edge captures, and a second operating system, to replace impersonation stand-ins |
-| Done | Cleartext-HTTP rules (`ua_mismatch`, `os_mismatch`, `header_anomaly`) evaluated on labeled scenarios, including adaptive attackers |
-| Next | Real desktop Chrome, Firefox and Safari on more than one operating system; with only one browser family a learned classifier would learn the browser, not the impersonation |
-| Done | Per-host history: which clients each address runs and when each first appeared (the Hosts page). A rule that alerts on the change itself is still planned |
-| Planned | A TLS-to-TCP consistency rule: a browser ClientHello arriving from a TCP SYN fingerprint of the wrong operating system. Needs real captures of the same browsers on several systems; one Windows machine is not enough to set a threshold |
+| Next | Real desktop browsers on several operating systems (with one browser family a learned classifier would learn the browser, not the impersonation) |
+| Planned | A rule that alerts on a host changing client; a TLS-to-TCP consistency rule (needs real multi-OS captures to set a threshold) |
 | Planned | Evasion study (uTLS, curl-impersonate) and Encrypted Client Hello impact |
 
-## Contributing, security reports, citation
+## Contributing, citation, licence
 
-- Contributions: [`CONTRIBUTING.md`](CONTRIBUTING.md)
-- Vulnerability reports: [`SECURITY.md`](SECURITY.md), via GitHub private vulnerability reporting
-- Citation: [`CITATION.cff`](CITATION.cff)
+- Contributions: [`CONTRIBUTING.md`](CONTRIBUTING.md). Citation: [`CITATION.cff`](CITATION.cff).
+- Licensed under the **GNU Affero General Public License v3.0** ([`LICENSE`](LICENSE)). A modified version run as a network service must offer its source to its users.
 
-## License and acknowledgments
+### Credits
 
-Licensed under the GNU Affero General Public License v3.0 ([`LICENSE`](LICENSE)). A modified version run as a network service must offer its source to its users.
-
-`tlsfp` is derived from [ja3-ja4-tls-fingerprinting](https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting) by CarterPerez-dev (AngelaMos), AGPL-3.0, upstream commit `bf9ac5d`. The sensor core, fingerprint implementations, intelligence store and dashboard originate there; copyright headers are retained. Changes are listed in [`CHANGES.md`](CHANGES.md); full provenance is in [`NOTICE.md`](NOTICE.md).
+`tlsfp` is derived from [ja3-ja4-tls-fingerprinting](https://github.com/CarterPerez-dev/Cybersecurity-Projects/tree/main/PROJECTS/intermediate/ja3-ja4-tls-fingerprinting) by CarterPerez-dev (AngelaMos), AGPL-3.0, upstream commit `bf9ac5d`. The sensor core, fingerprint implementations, intelligence store and dashboard originate there; copyright headers are retained. Changes are listed in [`CHANGES.md`](CHANGES.md); provenance is in [`NOTICE.md`](NOTICE.md).
 
 Fingerprint specifications: JA3 and JA3S by John Althouse, Jeff Atkinson and Josh Atkins (Salesforce, BSD-3-Clause); JA4 by FoxIO (BSD-3-Clause). JA4S, JA4H, JA4X and JA4T are licensed by FoxIO under the FoxIO License 1.1 (non-commercial use, patent pending); see [`NOTICE.md`](NOTICE.md) before any commercial use. Threat feeds: abuse.ch SSLBL (CC0-1.0), Salesforce `osx-nix` (BSD-3-Clause), ja4db.com.

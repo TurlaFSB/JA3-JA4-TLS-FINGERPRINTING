@@ -47,6 +47,6 @@ While bound to a loopback address (the default) the dashboard accepts only `loca
 - It sees what the interface sees. On a switched network a laptop sees its own traffic and broadcast; watching other hosts needs a mirror port or a tap.
 - Encrypted traffic is accounted by size and endpoints, not content. The server name appears only when the client sent it in the clear (Encrypted Client Hello hides it).
 - It is a fingerprinting sensor, not a packet analyser: there is no per-packet view, no payload and no capture-to-file. Use Wireshark or tcpdump for that, and feed the file to `tlsfp identify`.
-- Docker on Windows and macOS cannot capture the host's real network interface, and tlsfp has no native Windows capture (it would need Npcap and has not been built or tested there). On Windows, record with `scripts/capture-browser.ps1` and read the files on the Library page.
+- Docker on Windows and macOS cannot capture the host's real network interface; use the native Windows build (Npcap) for live capture there. `scripts/capture-browser.ps1` records browser traffic to a file that the Library page reads.
 - Under the compose stack the dashboard listens on loopback only (`NGINX_BIND=0.0.0.0` changes that).
 - Measured limits of the capture path are in `docs/PERFORMANCE.md`.
