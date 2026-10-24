@@ -1349,7 +1349,7 @@ mod tests {
         let read = read_client(raw, &[]);
         assert_eq!(read.family, "chromium");
         assert!(read.known_as.is_none());
-        assert!(!read.reasons.is_empty());
+        assert!(read.reasons.iter().any(|reason| reason.contains("ALPS")));
         assert!(
             read.caveat.is_some(),
             "an impersonable family carries its caveat"
