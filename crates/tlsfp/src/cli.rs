@@ -200,9 +200,11 @@ pub enum Command {
         #[arg(long)]
         db: Option<PathBuf>,
 
-        /// Directory of built dashboard assets to serve.
-        #[arg(long, default_value = "frontend/dist")]
-        web: PathBuf,
+        /// Directory of built dashboard assets to serve. When omitted, the
+        /// first of `frontend/dist` and `<data dir>/web` (where install.sh
+        /// puts it) that exists is used.
+        #[arg(long)]
+        web: Option<PathBuf>,
 
         /// Label for where this sensor is deployed, shown in the dashboard
         /// header. Free text; never guessed from the network.
@@ -466,7 +468,7 @@ impl Cli {
             } => run_serve(
                 bind,
                 db,
-                web,
+                resolve_web(web),
                 location,
                 shared_network,
                 library,
@@ -1217,6 +1219,26 @@ fn read_input(path: &Path) -> Result<String> {
 
 /// Reads capture files (or every capture under a directory) and prints which
 /// client each handshake came from.
+/// The dashboard folder: the one given, else `frontend/dist` in a checkout,
+/// else the `web` folder beside the database where `install.sh` puts it.
+fn resolve_web(given: Option<PathBuf>) -> PathBuf {
+    if let Some(path) = given {
+        return path;
+    }
+    let checkout = PathBuf::from("frontend/dist");
+    if checkout.join("index.html").exists() {
+        return checkout;
+    }
+    let installed = default_db_path().with_file_name("web");
+    if installed.join("index.html").exists() {
+        return installed;
+    }
+    tracing::warn!(
+        "no dashboard files found; build them with `pnpm build` in frontend/ or run install.sh, or pass --web DIR. The API still works."
+    );
+    checkout
+}
+
 fn run_html(files: &[PathBuf], out: &Path, db: Option<PathBuf>) -> Result<()> {
     let db = resolve_db(db);
     if !db.exists() {

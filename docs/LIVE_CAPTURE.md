@@ -2,20 +2,18 @@
 
 `tlsfp serve --live INTERFACE` captures from a network interface in the same process that serves the dashboard. The Scope page then shows handshakes as they happen, and the **Traffic** page shows every conversation with the bytes and packets each way, the server name it asked for, and which client made it.
 
-## Linux and macOS
+## Linux and macOS: two commands
 
 ```
-cargo build --release
-(cd frontend && pnpm install && pnpm build)
-target/release/tlsfp interfaces                 # lists what can be captured
-tlsfp intel seed
-sudo setcap cap_net_raw,cap_net_admin=eip target/release/tlsfp    # Linux: run without root
-target/release/tlsfp serve 127.0.0.1:8080 --live eth0 --location "my laptop"
+./install.sh --live        # builds tlsfp and the dashboard, seeds the feed, grants capture rights
+tlsfp serve --live auto    # picks the interface you actually use; open http://127.0.0.1:8080
 ```
 
-Open http://127.0.0.1:8080. The server binds to loopback by default; the dashboard has no login, so put your own authentication in front of it before exposing it to a network.
+That is all. `auto` chooses the first interface that is up, has an address and is not loopback; name one (`--live wlan0`) to override, and `tlsfp interfaces` lists them. The dashboard is found without a flag: `install.sh` puts it beside the database. The server binds to loopback; the dashboard has no login, so put your own authentication in front of it before exposing it to a network.
 
-`install.sh --live` does the build, the seed and the capability grant for you.
+Why a permission step exists at all: reading every packet on a network card is a privilege the operating system reserves, and no program can grant it to itself. `install.sh --live` asks once (sudo) to give the tlsfp binary that one capability, so you never run the server as root. Without it, run `sudo tlsfp serve --live auto` instead. On macOS, give your terminal access to the network devices when asked, or use sudo.
+
+Docker on Windows or macOS cannot see the host's network card, so the Docker stack replays a capture instead; use a native install for live traffic.
 
 ## What it shows
 

@@ -52,6 +52,17 @@ if [ -n "$PREFIX" ]; then BIN="$PREFIX/bin/tlsfp"; else BIN="${CARGO_HOME:-$HOME
 echo "seeding the intelligence database" >&2
 "$BIN" intel seed
 
+# The dashboard: built once and put where `tlsfp serve` looks for it, so
+# serving needs no flags. Skipped, with a notice, when pnpm is not available.
+WEB_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/tlsfp/web"
+if command -v pnpm >/dev/null 2>&1; then
+    echo "building the dashboard" >&2
+    (cd frontend && pnpm install --frozen-lockfile && pnpm build) >&2
+    rm -rf "$WEB_DIR" && mkdir -p "$WEB_DIR" && cp -r frontend/dist/. "$WEB_DIR"/
+else
+    echo "pnpm not found: the dashboard was not built (install pnpm and re-run, or use the Docker stack)" >&2
+fi
+
 if [ "$DO_LIVE" -eq 1 ]; then
     echo "granting live-capture capabilities (sudo)" >&2
     sudo setcap cap_net_raw,cap_net_admin=eip "$BIN"

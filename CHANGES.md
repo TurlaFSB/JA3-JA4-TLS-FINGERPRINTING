@@ -105,5 +105,8 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 - The server sends a Content-Security-Policy (own script, style, data only; no framing; no `<base>`), `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` and `nosniff`. The page no longer needs inline or `eval` script: the theme bootstrap moved to `theme-init.js`, and the policy that allowed `unsafe-inline` and `unsafe-eval` script in `index.html` is gone. Checked in a real browser across every page with no policy violations.
 - Alerts show a link to the address's history on the Hosts page.
 
+## Linux setup in two commands
+- `--live auto` picks the interface in use (up, has an address, not loopback). `tlsfp serve` finds the dashboard without `--web`: `frontend/dist` in a checkout, else the `web` folder beside the database, where `install.sh` now builds it (when pnpm is present). `docs/LIVE_CAPTURE.md` explains the one unavoidable permission step.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

@@ -177,6 +177,8 @@ pub struct LiveSource {
 impl LiveSource {
     /// Opens an interface by name and starts capturing immediately.
     pub fn open(interface: &str, config: &LiveConfig) -> Result<Self, LiveError> {
+        let chosen = resolve_interface(interface);
+        let interface = chosen.as_str();
         let inactive = Capture::from_device(interface)
             .map_err(|error| open_error(interface, &error))?
             .promisc(config.promiscuous)
@@ -385,6 +387,33 @@ fn timeval_to_nanos(sec: impl Into<i64>, micros: impl Into<i64>) -> u64 {
 /// Builds the open failure message an operator can act on: the underlying
 /// error, the capability grant when the cause is permissions, and the
 /// interfaces libpcap can actually see.
+/// `auto` means the interface the system would use to reach the internet:
+/// the first one that is up, has an address and is not loopback. Any other name is
+/// used as given.
+fn resolve_interface(name: &str) -> String {
+    if !name.eq_ignore_ascii_case("auto") {
+        return name.to_owned();
+    }
+    // Up, not loopback, not the all-interfaces pseudo-device, and holding an
+    // address: that is the link the machine actually talks through.
+    let usable = Device::list().ok().and_then(|devices| {
+        devices.into_iter().find(|d| {
+            d.flags.is_up()
+                && !d.flags.is_loopback()
+                && d.name != "any"
+                && !d.addresses.is_empty()
+        })
+    });
+    let device = usable.or_else(|| Device::lookup().ok().flatten());
+    match device {
+        Some(device) => {
+            tracing::info!(interface = %device.name, "auto-selected the capture interface");
+            device.name
+        }
+        None => name.to_owned(),
+    }
+}
+
 fn open_error(interface: &str, error: &pcap::Error) -> LiveError {
     use std::fmt::Write as _;
 
