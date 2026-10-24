@@ -41,3 +41,4 @@ etherparse.workspace = true
 smallvec.workspace = true
 thiserror.workspace = true
 rustix.workspace = true
+ureq = { version = "2", default-features = false, features = ["tls"] }

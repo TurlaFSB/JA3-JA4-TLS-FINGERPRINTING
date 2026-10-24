@@ -437,6 +437,16 @@ async fn metrics(State(state): State<Shared>) -> Result<impl IntoResponse, ApiEr
         for (rule, count) in counts {
             let _ = writeln!(out, "tlsfp_alerts_total{{rule=\"{}\"}} {count}", rule.as_str());
         }
+        if let Some(stats) = crate::deliver::stats() {
+            let _ = writeln!(out, "# HELP tlsfp_alert_delivery_total Alerts forwarded to the configured destinations, by outcome.\n# TYPE tlsfp_alert_delivery_total counter");
+            for (outcome, value) in [
+                ("delivered", &stats.delivered),
+                ("failed", &stats.failed),
+                ("dropped", &stats.dropped),
+            ] {
+                let _ = writeln!(out, "tlsfp_alert_delivery_total{{outcome=\"{outcome}\"}} {}", value.load(std::sync::atomic::Ordering::Relaxed));
+            }
+        }
         let _ = writeln!(out, "# HELP tlsfp_intel_fingerprints Fingerprints in the intelligence feed.\n# TYPE tlsfp_intel_fingerprints gauge\ntlsfp_intel_fingerprints {}", intel.total);
         Ok(out)
     })
@@ -967,6 +977,7 @@ fn detect_config(config: &ServeConfig) -> DetectConfig {
     DetectConfig {
         shared_networks: config.shared_networks.clone(),
         custom: crate::extras::rules(),
+        sink: crate::deliver::sink(),
         ..DetectConfig::default()
     }
 }

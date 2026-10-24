@@ -95,5 +95,8 @@ Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://gith
 ## Per-host history
 - `/api/hosts` and `/api/hosts/{ip}` build a profile per address from the stored observations: first and last seen, every client fingerprint with when it appeared and disappeared, servers contacted, User-Agent and OS claims, and alerts raised. A Hosts page in the dashboard shows a timeline per host; a client that appears later is the sign that something on the host changed. Profiles exist only while detection runs, because they are built from the observation table.
 
+## Alert delivery
+- `--alert-file`, `--alert-syslog` (RFC 5424 over UDP or TCP) and `--alert-webhook` (http or https; generic, Slack or Discord body) forward each stored alert, with `--alert-min-severity` as a floor. A bounded queue and one worker thread keep a slow destination from stalling capture; drops and failures are counted on `/metrics`. One-shot commands wait for the queue at exit. Adds the `ureq` HTTP client with rustls (`ring`); `cargo deny check licenses` passes. `docs/ALERTS.md`, tests through the real binary.
+
 ## Planned
 Dataset lab, evaluation harness, impersonation classifier, drift detection, robustness study.

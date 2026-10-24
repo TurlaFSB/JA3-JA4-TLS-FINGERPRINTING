@@ -75,6 +75,20 @@ pub struct DetectConfig {
     pub shared_networks: Vec<Network>,
     /// Rules the operator wrote, evaluated after the built-in ones.
     pub custom: Option<std::sync::Arc<crate::rules::RuleSet>>,
+    /// Called once for each alert after it has been committed, so a caller can
+    /// forward it to a SIEM without polling the database.
+    pub sink: Option<AlertSink>,
+}
+
+/// A callback that receives every alert once it is stored. It must not block:
+/// it runs on the thread that is reading packets.
+#[derive(Clone)]
+pub struct AlertSink(pub std::sync::Arc<dyn Fn(&Alert) + Send + Sync>);
+
+impl std::fmt::Debug for AlertSink {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("AlertSink")
+    }
 }
 
 impl DetectConfig {
@@ -93,6 +107,7 @@ impl Default for DetectConfig {
             monoculture_threshold: DEFAULT_MONOCULTURE_THRESHOLD,
             shared_networks: Vec::new(),
             custom: None,
+            sink: None,
         }
     }
 }

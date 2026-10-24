@@ -2,6 +2,7 @@
 // main.rs
 
 mod cli;
+mod deliver;
 mod extras;
 mod library;
 mod live;
@@ -33,5 +34,7 @@ fn main() -> Result<()> {
 
     let cli = Cli::parse();
     cli.init_tracing();
-    cli.run()
+    let result = cli.run();
+    deliver::flush();
+    result
 }

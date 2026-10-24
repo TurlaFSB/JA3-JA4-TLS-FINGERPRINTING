@@ -39,6 +39,34 @@ pub struct Cli {
     #[arg(long, global = true, env = "TLSFP_RULES", value_name = "FILE")]
     pub rules: Option<PathBuf>,
 
+    /// Append every alert as one line of JSON to this file, for a log shipper.
+    #[arg(long, global = true, env = "TLSFP_ALERT_FILE", value_name = "FILE")]
+    pub alert_file: Option<PathBuf>,
+
+    /// Send every alert as an RFC 5424 syslog message to udp://HOST:PORT or
+    /// tcp://HOST:PORT.
+    #[arg(long, global = true, env = "TLSFP_ALERT_SYSLOG", value_name = "URL")]
+    pub alert_syslog: Option<String>,
+
+    /// POST every alert to this http:// or https:// URL.
+    #[arg(long, global = true, env = "TLSFP_ALERT_WEBHOOK", value_name = "URL")]
+    pub alert_webhook: Option<String>,
+
+    /// The body shape for the webhook.
+    #[arg(long, global = true, value_enum, default_value = "generic")]
+    pub webhook_format: crate::deliver::WebhookFormat,
+
+    /// Deliver only alerts at or above this severity.
+    #[arg(
+        long,
+        global = true,
+        env = "TLSFP_ALERT_MIN_SEVERITY",
+        value_name = "LEVEL",
+        value_parser = crate::deliver::parse_severity,
+        default_value = "info"
+    )]
+    pub alert_min_severity: tlsfp_intel::AlertSeverity,
+
     #[command(subcommand)]
     pub command: Command,
 }
@@ -355,6 +383,17 @@ impl Cli {
 
     pub fn run(self) -> Result<()> {
         crate::extras::init(self.rules.as_ref())?;
+        crate::deliver::init(&crate::deliver::DeliveryConfig {
+            file: self.alert_file.clone(),
+            syslog: self
+                .alert_syslog
+                .as_deref()
+                .map(crate::deliver::parse_syslog)
+                .transpose()?,
+            webhook: self.alert_webhook.clone(),
+            webhook_format: Some(self.webhook_format),
+            min_severity: Some(self.alert_min_severity),
+        })?;
         match self.command {
             Command::Pcap {
                 path,
@@ -968,6 +1007,7 @@ fn with_detect_config(mut store: IntelStore, shared: &[Network]) -> IntelStore {
     store.set_detect_config(DetectConfig {
         shared_networks: shared.to_vec(),
         custom: crate::extras::rules(),
+        sink: crate::deliver::sink(),
         ..DetectConfig::default()
     });
     store

@@ -34,7 +34,7 @@ use rusqlite::{Connection, params};
 use serde::Serialize;
 use tlsfp_core::FingerprintEvent;
 
-pub use detect::{Alert, AlertSeverity, DetectConfig, Rule};
+pub use detect::{Alert, AlertSeverity, AlertSink, DetectConfig, Rule};
 pub use hosts::{ClientSpan, Counted, HostProfile, HostSummary};
 pub use import::ImportSummary;
 pub use infer::{ClientFamily, ClientGuess, Confidence, infer_client};
@@ -144,6 +144,11 @@ impl IntelStore {
         let tx = self.conn.transaction()?;
         let alerts = detect::run(&tx, event, config)?;
         tx.commit()?;
+        if let Some(sink) = &config.sink {
+            for alert in &alerts {
+                (sink.0)(alert);
+            }
+        }
         Ok(alerts)
     }
 
