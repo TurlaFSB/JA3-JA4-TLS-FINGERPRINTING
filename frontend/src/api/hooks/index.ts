@@ -4,7 +4,7 @@
 // ===================
 
 import { type UseQueryResult, useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   API_BASE,
   API_ENDPOINTS,
@@ -322,6 +322,23 @@ export function useCapture(): UseQueryResult<CaptureView> {
     refetchInterval: 3000,
     retry: QUERY_CONFIG.RETRY.NONE,
   })
+}
+
+// A function that names an address this computer owns ("my-laptop") and says
+// nothing about any other. The sensor knows its own interface's addresses and
+// the computer's name; every other host stays an address.
+export function useOwnName(): (host: string) => string | null {
+  const { data: capture } = useCapture()
+  const { data: meta } = useMeta()
+  const own = useMemo(
+    () => new Set(capture?.own_addresses ?? []),
+    [capture?.own_addresses]
+  )
+  const name = meta?.hostname ?? null
+  return useCallback(
+    (host: string) => (name !== null && own.has(host) ? name : null),
+    [own, name]
+  )
 }
 
 async function getDns(): Promise<DnsView> {

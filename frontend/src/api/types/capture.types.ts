@@ -25,6 +25,7 @@ const countersSchema = z.object({
 export const captureViewSchema = z.object({
   mode: z.string(),
   interface: z.string().nullable(),
+  own_addresses: z.array(z.string()).default([]),
   filter: z.string().nullable(),
   promiscuous: z.boolean().nullable(),
   buffer_mib: z.number().nullable(),

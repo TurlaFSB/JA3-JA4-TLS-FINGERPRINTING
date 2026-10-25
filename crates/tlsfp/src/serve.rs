@@ -155,6 +155,7 @@ struct Feed {
 struct CaptureSetup {
     mode: &'static str,
     interface: Option<String>,
+    own_addresses: Vec<String>,
     filter: Option<String>,
     promiscuous: Option<bool>,
     buffer_mib: Option<i32>,
@@ -1057,6 +1058,8 @@ struct LimitsView {
 struct CaptureView {
     mode: String,
     interface: Option<String>,
+    /// The addresses of the capture interface: "this computer" to the dashboard.
+    own_addresses: Vec<String>,
     filter: Option<String>,
     promiscuous: Option<bool>,
     buffer_mib: Option<i32>,
@@ -1257,6 +1260,7 @@ fn build_capture_view(state: &Shared) -> CaptureView {
     CaptureView {
         mode: setup.map_or_else(|| state.meta.source.kind.to_owned(), |s| s.mode.to_owned()),
         interface: setup.and_then(|s| s.interface.clone()),
+        own_addresses: setup.map(|s| s.own_addresses.clone()).unwrap_or_default(),
         filter: setup.and_then(|s| s.filter.clone()),
         promiscuous: setup.and_then(|s| s.promiscuous),
         buffer_mib: setup.and_then(|s| s.buffer_mib),
@@ -1671,6 +1675,7 @@ fn spawn_source(
             let _ = feed.capture.set(CaptureSetup {
                 mode: "replay",
                 interface: None,
+                own_addresses: Vec::new(),
                 filter: None,
                 promiscuous: None,
                 buffer_mib: None,
@@ -1710,7 +1715,12 @@ fn spawn_source(
             let live_stop = source.stop_handle();
             let _ = feed.capture.set(CaptureSetup {
                 mode: "live",
-                interface: Some(interface.clone()),
+                interface: Some(source.interface_name().to_owned()),
+                own_addresses: source
+                    .own_addresses()
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect(),
                 filter: Some(filter.clone()),
                 promiscuous: Some(*promiscuous),
                 buffer_mib: Some(crate::live::effective_buffer_mib(&live_config)),

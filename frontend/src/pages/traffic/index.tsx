@@ -4,33 +4,28 @@
  */
 
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { type RateSample, useTraffic } from '@/api/hooks'
-import type { Talker, TrafficFlow } from '@/api/types'
+import type { Talker } from '@/api/types'
 import { CaptureHealth, CropFrame, cx } from '@/components'
-import { ROUTES } from '@/config'
 import { downloadText, stamp, toCsv } from '@/core/lib/export'
-import { formatBitRate, formatBytes, formatDuration } from '@/core/lib/format'
+import { formatBitRate, formatBytes } from '@/core/lib/format'
+import { Conversations } from './conversations'
 import styles from './traffic.module.scss'
 import {
   chartMax,
-  DIRECTION_ARROW,
-  DIRECTION_NOTE,
   type DirectionFilter,
   FLOW_HEADERS,
   flowRows,
-  identity,
   linePath,
   matchesFlow,
   type ProtoFilter,
   type SortKey,
-  siteName,
   sortFlows,
 } from './traffic-data'
 
 const CHART_W = 600
 const CHART_H = 120
-const SHOWN = 200
 
 function areaPath(values: number[], max: number): string {
   const line = linePath(values, CHART_W, CHART_H, max)
@@ -158,60 +153,6 @@ function Talkers({ talkers }: { talkers: Talker[] }): React.ReactElement {
   )
 }
 
-function FlowDetail({ flow }: { flow: TrafficFlow }): React.ReactElement {
-  return (
-    <div className={styles.detail}>
-      <dl className={styles.facts}>
-        <dt>direction</dt>
-        <dd>
-          {flow.direction}: {DIRECTION_NOTE[flow.direction]}
-        </dd>
-        <dt>client</dt>
-        <dd>{flow.client}</dd>
-        <dt>server</dt>
-        <dd>{flow.server}</dd>
-        <dt>sent / received</dt>
-        <dd>
-          {formatBytes(flow.bytes_up)} in {flow.packets_up.toLocaleString()}{' '}
-          packets / {formatBytes(flow.bytes_down)} in{' '}
-          {flow.packets_down.toLocaleString()} packets
-        </dd>
-        <dt>lasted</dt>
-        <dd>{formatDuration(flow.last_ns - flow.first_ns)}</dd>
-        <dt>state</dt>
-        <dd>{flow.state}</dd>
-        {flow.alpn && (
-          <>
-            <dt>alpn</dt>
-            <dd>{flow.alpn}</dd>
-          </>
-        )}
-        {flow.client_info && (
-          <>
-            <dt>client</dt>
-            <dd>
-              {flow.client_info.known_as
-                ? `${flow.client_info.known_as} (exact intelligence match)`
-                : `${flow.client_info.family} family (inferred from the ClientHello)`}
-            </dd>
-          </>
-        )}
-        {flow.ja4 && (
-          <>
-            <dt>ja4</dt>
-            <dd>
-              {flow.ja4}{' '}
-              <Link to={`${ROUTES.SCOPE}?q=${encodeURIComponent(flow.ja4)}`}>
-                show in the live stream
-              </Link>
-            </dd>
-          </>
-        )}
-      </dl>
-    </div>
-  )
-}
-
 const DIRECTIONS: DirectionFilter[] = [
   'all',
   'outbound',
@@ -231,9 +172,9 @@ export function Component(): React.ReactElement {
   const [direction, setDirection] = useState<DirectionFilter>('all')
   const [proto, setProto] = useState<ProtoFilter>('all')
   const [namedOnly, setNamedOnly] = useState(false)
-  const [query, setQuery] = useState('')
+  const [params] = useSearchParams()
+  const [query, setQuery] = useState(params.get('q') ?? '')
   const [sort, setSort] = useState<SortKey>('recent')
-  const [open, setOpen] = useState<string | null>(null)
 
   const flows = view?.flows ?? []
   const shown = useMemo(
@@ -257,10 +198,14 @@ export function Component(): React.ReactElement {
         <span className={styles.over}>traffic</span>
         <h1 className={styles.title}>Traffic</h1>
         <p className={styles.sub}>
-          Every conversation the sensor sees, with bytes and packets each way,
-          which client made it and which server name it asked for. "Local" means
-          the networks the capture interface sits on plus private, loopback and
-          link-local ranges; add others with --local-network.
+          Every conversation the sensor sees, read left to right: who opened it,
+          who answered, what kind of conversation it was, and how much was sent
+          and received. Names come from the best evidence available: the
+          handshake, the HTTP request, a DNS answer, or a reverse lookup, and each
+          says which. Click a row for the full picture. "Out" means from this
+          network to another, "in" the reverse, "local" within it;{' '}
+          <em>this network</em> is the capture interface's own networks plus
+          private ranges (add others with --local-network).
         </p>
       </section>
 
@@ -408,82 +353,7 @@ export function Component(): React.ReactElement {
         ) : shown.length === 0 ? (
           <p className={styles.idle}>no conversation matches this filter</p>
         ) : (
-          <div className={styles.table}>
-            <div className={styles.head} aria-hidden="true">
-              <span />
-              <span>local → remote</span>
-              <span>server name</span>
-              <span>client</span>
-              <span className={styles.num}>sent</span>
-              <span className={styles.num}>received</span>
-              <span className={styles.num}>lasted</span>
-            </div>
-            {shown.slice(0, SHOWN).map((flow) => {
-              const key = `${flow.proto}-${flow.client}-${flow.server}`
-              const expanded = open === key
-              const site = siteName(flow)
-              const local =
-                flow.direction === 'inbound' ? flow.server : flow.client
-              const remote =
-                flow.direction === 'inbound' ? flow.client : flow.server
-              return (
-                <div key={key} className={styles.item}>
-                  <button
-                    type="button"
-                    className={styles.row}
-                    data-direction={flow.direction}
-                    aria-expanded={expanded}
-                    onClick={() => setOpen(expanded ? null : key)}
-                  >
-                    <span
-                      className={styles.arrow}
-                      title={`${flow.direction}: ${DIRECTION_NOTE[flow.direction]}`}
-                    >
-                      {DIRECTION_ARROW[flow.direction]}
-                    </span>
-                    <span className={styles.route}>
-                      <span className={styles.svc}>
-                        {flow.service ?? flow.proto}
-                      </span>
-                      <span className={styles.addr}>{local}</span>
-                      <span className={styles.to}>→</span>
-                      <span className={styles.addr}>{remote}</span>
-                    </span>
-                    <span
-                      className={styles.name}
-                      title={
-                        site.viaDns
-                          ? `${site.name} (from a DNS answer, not the handshake)`
-                          : site.name
-                      }
-                      data-dns={site.viaDns || undefined}
-                    >
-                      {site.name}
-                    </span>
-                    <span className={styles.who} title={identity(flow)}>
-                      {identity(flow)}
-                    </span>
-                    <span className={styles.num}>
-                      {formatBytes(flow.bytes_up)}
-                    </span>
-                    <span className={styles.num}>
-                      {formatBytes(flow.bytes_down)}
-                    </span>
-                    <span className={styles.num} data-state={flow.state}>
-                      {formatDuration(flow.last_ns - flow.first_ns)}
-                    </span>
-                  </button>
-                  {expanded && <FlowDetail flow={flow} />}
-                </div>
-              )
-            })}
-            {shown.length > SHOWN && (
-              <p className={styles.more}>
-                {(shown.length - SHOWN).toLocaleString()} more match; narrow the
-                filter to see them
-              </p>
-            )}
-          </div>
+          <Conversations flows={shown.slice(0, 200)} total={shown.length} />
         )}
       </CropFrame>
     </div>

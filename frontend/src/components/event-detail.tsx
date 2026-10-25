@@ -5,6 +5,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useOwnName } from '@/api/hooks'
 import {
   type Alert,
   type ClientRead,
@@ -120,12 +121,22 @@ function fieldsOf(event: StreamEvent): Field[] {
   }
 }
 
-function details(event: StreamEvent, conn?: Connection): Field[] {
+// An address with this computer's name beside it when it is ours.
+function withName(host: string, own: (host: string) => string | null): string {
+  const name = own(host)
+  return name ? `${name} (${host}, this computer)` : host
+}
+
+function details(
+  event: StreamEvent,
+  conn: Connection | undefined,
+  own: (host: string) => string | null
+): Field[] {
   const src = splitAddr(event.src)
   const dst = splitAddr(event.dst)
   const rows: Field[] = [
-    { label: 'from', value: `${src.host} port ${src.port}` },
-    { label: 'to', value: `${dst.host} port ${dst.port}` },
+    { label: 'from', value: `${withName(src.host, own)} port ${src.port}` },
+    { label: 'to', value: `${withName(dst.host, own)} port ${dst.port}` },
   ]
   const site =
     (event.kind === 'client_hello' ? event.sni : undefined) ?? conn?.sni
@@ -377,9 +388,10 @@ export function EventDetail({
   position?: string
 }): React.ReactElement {
   const clock = useClock()
+  const own = useOwnName()
   const closeRef = useRef<HTMLButtonElement>(null)
   const fields = fieldsOf(event)
-  const facts = details(event, conn)
+  const facts = details(event, conn, own)
   const anatomy = event.kind === 'client_hello' ? decodeJa4(event.ja4.hash) : null
   const verdict = worstVerdict(intel)
   const shownClient = client ?? conn?.client

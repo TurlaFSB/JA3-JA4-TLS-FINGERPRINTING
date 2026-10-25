@@ -217,6 +217,7 @@ pub struct LiveSource {
     link_type: i32,
     local: Vec<Network>,
     addresses: Vec<std::net::IpAddr>,
+    interface: String,
     stop: Arc<AtomicBool>,
     failure: Arc<OnceLock<String>>,
     kernel: KernelStats,
@@ -275,6 +276,7 @@ impl LiveSource {
             link_type,
             local: interface_networks(interface),
             addresses: interface_addresses(interface),
+            interface: interface.to_owned(),
             stop,
             failure,
             kernel,
@@ -296,6 +298,13 @@ impl LiveSource {
     #[must_use]
     pub fn kernel_stats(&self) -> KernelStats {
         self.kernel.clone()
+    }
+
+    /// The interface actually being captured: what `auto` or a description
+    /// resolved to, not what was typed.
+    #[must_use]
+    pub fn interface_name(&self) -> &str {
+        &self.interface
     }
 
     /// The addresses of the capture interface itself.
@@ -776,6 +785,7 @@ mod tests {
             link_type: 1,
             local: Vec::new(),
             addresses: Vec::new(),
+            interface: String::new(),
             stop: Arc::new(AtomicBool::new(false)),
             failure,
             kernel: super::KernelStats::default(),

@@ -7,11 +7,15 @@ import { describe, expect, it } from 'vitest'
 import type { TrafficFlow } from '@/api/types'
 import {
   chartMax,
+  clientEndpoint,
+  describeFlow,
   FLOW_HEADERS,
   type FlowFilter,
   flowRows,
   linePath,
   matchesFlow,
+  protocolWords,
+  serverEndpoint,
   sortFlows,
 } from './traffic-data'
 
@@ -30,6 +34,16 @@ const flow = (over: Partial<TrafficFlow>): TrafficFlow => ({
   packets_down: 3,
   sni: 'example.com',
   dns_name: null,
+  client_host: null,
+  server_host: null,
+  tls_version: null,
+  cipher: null,
+  ja4s: null,
+  http_method: null,
+  http_host: null,
+  user_agent: null,
+  ssh_banner: null,
+  hassh: null,
   alpn: 'h2',
   ja4: 't13d1516h2_x',
   client_info: { known_as: 'Firefox 158', family: 'firefox' },
@@ -115,5 +129,67 @@ describe('flowRows', () => {
     for (const row of rows) expect(row).toHaveLength(FLOW_HEADERS.length)
     const source = FLOW_HEADERS.indexOf('name_source')
     expect(rows.map((r) => r[source])).toEqual(['handshake', 'dns', ''])
+  })
+})
+
+describe('naming the two ends', () => {
+  it('names the server from the handshake first, then http, then dns, then reverse dns', () => {
+    expect(serverEndpoint(flow({})).tag).toBe('tls handshake')
+    const bare = { sni: null, dns_name: null }
+    expect(serverEndpoint(flow({ ...bare, http_host: 'h.example' })).tag).toBe(
+      'http request'
+    )
+    expect(serverEndpoint(flow({ ...bare, dns_name: 'd.example' })).primary).toBe(
+      'd.example'
+    )
+    const reverse = serverEndpoint(
+      flow({ ...bare, server_host: { name: 'r.example', source: 'reverse dns' } })
+    )
+    expect(reverse).toMatchObject({ primary: 'r.example', tag: 'reverse dns' })
+  })
+
+  it('falls back to the address and says so with no tag', () => {
+    const end = serverEndpoint(flow({ sni: null }))
+    expect(end.primary).toBe('93.184.216.34')
+    expect(end.tag).toBe('')
+    expect(end.secondary).toBe('port 443')
+  })
+
+  it('calls this computer by its name', () => {
+    const me = clientEndpoint(
+      flow({ client_host: { name: 'my-laptop', source: 'this computer' } })
+    )
+    expect(me).toMatchObject({
+      primary: 'my-laptop',
+      secondary: '192.168.1.5:50000',
+      tag: 'this computer',
+    })
+  })
+})
+
+describe('describing a conversation', () => {
+  it('names the protocol from what the handshake revealed', () => {
+    expect(protocolWords(flow({ tls_version: 'TLS 1.3', alpn: 'h2' }))).toBe(
+      'HTTPS · TLS 1.3 · h2'
+    )
+    expect(
+      protocolWords(
+        flow({
+          service: 'ssh',
+          alpn: null,
+          ja4: null,
+          ssh_banner: 'SSH-2.0-OpenSSH_9.6',
+        })
+      )
+    ).toBe('SSH · OpenSSH_9.6')
+  })
+
+  it('writes one sentence with both ends, the port and the volume', () => {
+    const text = describeFlow(
+      flow({ client_host: { name: 'my-laptop', source: 'this computer' } })
+    )
+    expect(text).toContain('my-laptop (192.168.1.5) opened an HTTPS connection')
+    expect(text).toContain('example.com (93.184.216.34) on port 443')
+    expect(text).toContain('sent 100 B and received 900 B')
   })
 })

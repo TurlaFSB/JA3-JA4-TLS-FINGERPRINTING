@@ -346,9 +346,9 @@ Each fingerprint is pinned to published vectors in the test suite: [`learn/CONFO
 | Page | Purpose |
 |---|---|
 | **Scope** | Live handshakes with site, client and verdict; a By site view; a detail drawer for any event; CSV and JSON export of what is listed. |
-| **Traffic** | Conversations with direction and bytes each way, a 15-minute throughput chart, and the **capture health** panel. Server names come from the handshake, or from DNS (marked). |
+| **Traffic** | Every conversation read left to right: who opened it (name and address), who answered (the domain, its address and port, and how the name is known: handshake, HTTP, DNS answer or reverse lookup), what it was (service, TLS version, ALPN, SSH banner), the client software, bytes each way and duration. Click a row for a plain-English sentence and every fact. A 15-minute throughput chart and the **capture health** panel sit above. |
 | **Hosts** | Per-machine history: which clients each address runs and when a new one appears. |
-| **DNS** | The names being asked for, who asks, which fail ("no such name"), and random-looking names; recent lookups; CSV export. |
+| **DNS** | A "what is happening" summary, then the names being asked for, who asked, which DNS server they asked and how fast it answered, reverse lookups decoded to the address, names that failed, and the connections that followed each name. Plain-English explanations throughout. |
 | **Alerts** | Every alert with a plain explanation and what to verify; filters and export. |
 | **Library** | Capture files in a watched folder, identified and downloadable as HTML reports. |
 | **Intel** | What this sensor has seen against what the feed knows; name unknown fingerprints yourself. |

@@ -17,6 +17,14 @@ export const totalsSchema = z.object({
   flows_shed: z.number(),
 })
 
+// A host name and where it came from.
+export const nameRefSchema = z.object({
+  name: z.string(),
+  source: z.string(),
+})
+
+export type NameRef = z.infer<typeof nameRefSchema>
+
 export const trafficFlowSchema = z.object({
   proto: z.enum(['tcp', 'udp']),
   client: z.string(),
@@ -32,6 +40,16 @@ export const trafficFlowSchema = z.object({
   packets_down: z.number(),
   sni: z.string().nullable(),
   dns_name: z.string().nullable().default(null),
+  client_host: nameRefSchema.nullable().default(null),
+  server_host: nameRefSchema.nullable().default(null),
+  tls_version: z.string().nullable().default(null),
+  cipher: z.string().nullable().default(null),
+  ja4s: z.string().nullable().default(null),
+  http_method: z.string().nullable().default(null),
+  http_host: z.string().nullable().default(null),
+  user_agent: z.string().nullable().default(null),
+  ssh_banner: z.string().nullable().default(null),
+  hassh: z.string().nullable().default(null),
   alpn: z.string().nullable(),
   ja4: z.string().nullable(),
   client_info: z

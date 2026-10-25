@@ -3,7 +3,8 @@
  * traffic-data.ts
  */
 
-import type { TrafficFlow } from '@/api/types'
+import { splitAddr, type TrafficFlow } from '@/api/types'
+import { formatBytes, formatDuration } from '@/core/lib/format'
 
 export type DirectionFilter = 'all' | TrafficFlow['direction']
 export type ProtoFilter = 'all' | TrafficFlow['proto']
@@ -48,6 +49,9 @@ export function matchesFlow(flow: TrafficFlow, filter: FlowFilter): boolean {
     flow.server,
     flow.sni ?? '',
     flow.dns_name ?? '',
+    flow.http_host ?? '',
+    flow.client_host?.name ?? '',
+    flow.server_host?.name ?? '',
     flow.service ?? '',
     flow.ja4 ?? '',
     identity(flow),
@@ -148,4 +152,113 @@ export function flowRows(flows: TrafficFlow[]): (string | number)[][] {
       flow.state,
     ]
   })
+}
+
+export interface Endpoint {
+  /** What to show first: a name when one is known, else the address. */
+  primary: string
+  /** The address and port. */
+  secondary: string
+  /** How the name is known, so a reader can judge it. */
+  tag: string
+}
+
+function portOf(addr: string): string {
+  return splitAddr(addr).port
+}
+
+function hostOf(addr: string): string {
+  return splitAddr(addr).host
+}
+
+// The side that opened the conversation.
+export function clientEndpoint(flow: TrafficFlow): Endpoint {
+  const host = flow.client_host
+  return {
+    primary: host?.name ?? hostOf(flow.client),
+    secondary: `${hostOf(flow.client)}:${portOf(flow.client)}`,
+    tag: host?.source ?? '',
+  }
+}
+
+// The side that answered, named from the best evidence there is: the name the
+// handshake asked for, the HTTP Host header, a DNS answer, a reverse lookup.
+export function serverEndpoint(flow: TrafficFlow): Endpoint {
+  const secondary = `${hostOf(flow.server)}:${portOf(flow.server)}`
+  if (flow.sni) {
+    return { primary: flow.sni, secondary, tag: 'tls handshake' }
+  }
+  if (flow.http_host) {
+    return { primary: flow.http_host, secondary, tag: 'http request' }
+  }
+  if (flow.dns_name) {
+    return { primary: flow.dns_name, secondary, tag: 'dns answer' }
+  }
+  if (flow.server_host) {
+    return {
+      primary: flow.server_host.name,
+      secondary,
+      tag: flow.server_host.source,
+    }
+  }
+  return {
+    primary: hostOf(flow.server),
+    secondary: `port ${portOf(flow.server)}`,
+    tag: '',
+  }
+}
+
+const SERVICE_WORDS: Record<string, string> = {
+  https: 'an HTTPS connection',
+  http: 'an HTTP connection',
+  quic: 'a QUIC (HTTP/3) session',
+  dns: 'a DNS exchange',
+  ssh: 'an SSH session',
+  'dns-over-tls': 'an encrypted DNS connection',
+  imaps: 'a secure mail connection',
+  smtp: 'a mail connection',
+  rdp: 'a remote desktop session',
+  smb: 'a file-sharing connection',
+  ntp: 'a time-sync exchange',
+  mdns: 'a local name-discovery exchange',
+  ssdp: 'a local device-discovery exchange',
+  dhcp: 'an address-lease exchange',
+  wireguard: 'a WireGuard tunnel',
+}
+
+// What kind of conversation this is, in a few words: the service, then what the
+// handshake revealed about the protocol.
+export function protocolWords(flow: TrafficFlow): string {
+  const parts: string[] = [(flow.service ?? flow.proto).toUpperCase()]
+  if (flow.tls_version) parts.push(flow.tls_version)
+  else if (flow.ja4) parts.push('TLS')
+  if (flow.alpn) parts.push(flow.alpn)
+  if (flow.ssh_banner) parts.push(flow.ssh_banner.replace(/^SSH-[0-9.]+-/, ''))
+  if (flow.http_method) parts.push(flow.http_method)
+  return parts.join(' · ')
+}
+
+// One plain sentence about the conversation.
+export function describeFlow(flow: TrafficFlow): string {
+  const from = clientEndpoint(flow)
+  const to = serverEndpoint(flow)
+  const fromText =
+    from.primary === hostOf(flow.client)
+      ? from.primary
+      : `${from.primary} (${hostOf(flow.client)})`
+  const toText =
+    to.primary === hostOf(flow.server)
+      ? to.primary
+      : `${to.primary} (${hostOf(flow.server)})`
+  const what =
+    (flow.service ? SERVICE_WORDS[flow.service] : undefined) ??
+    `a ${flow.proto.toUpperCase()} conversation`
+  const who = flow.client_info
+    ? flow.client_info.known_as
+      ? ` The client is ${flow.client_info.known_as}.`
+      : flow.client_info.family !== 'unknown'
+        ? ` The client looks like ${flow.client_info.family} (inferred from its handshake).`
+        : ''
+    : ''
+  return `${fromText} opened ${what} to ${toText} on port ${portOf(flow.server)}. It sent ${formatBytes(flow.bytes_up)} and received ${formatBytes(flow.bytes_down)} over ${formatDuration(flow.last_ns - flow.first_ns)}.${who}`
 }

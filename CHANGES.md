@@ -5,6 +5,12 @@ The first tagged release. Since the audited import it adds: capture library and 
 
 Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. See `NOTICE.md`.
 
+## Readable conversations and DNS (after 0.2.0)
+- Traffic rows are written as who opened it, who answered, what it was and how much; each end shows a name when one is known and says how it is known (TLS handshake, HTTP request, DNS answer, reverse DNS, or "this computer"). The detail view adds a plain sentence, TLS version and cipher, JA4S, HTTP host and User-Agent, SSH banner, timing.
+- Engine: reverse DNS (PTR) answers are decoded and name addresses; the capture interface's addresses and this computer's name label this computer's side; server hellos, HTTP requests and SSH hellos annotate their conversation.
+- DNS page: a generated "what is happening" summary, DNS servers and answer times, reverse lookups shown as the address, local and blocked names recognised, one line per question, and the connections that followed each name. Names are explained in words; a legend says how to read the page.
+- The Sensor page shows the interface actually being captured (what `auto` chose) and marks it.
+
 ## SSH, DNS, Sensor page, exports (after 0.2.0)
 - SSH: banner and key-exchange offer read from the first packets of each side; HASSH and HASSHServer (Salesforce, BSD-3-Clause) with the algorithm lists; the side is decided by who opened the connection, then by port 22, else both hashes are reported. Observation only.
 - Plain DNS on UDP 53: queries, answers and failures. Summarised in memory (bounded) and shown on a new DNS page and `/api/dns`; answers name servers whose handshake carries no name, marked as DNS-derived on Traffic. The default kernel filter now keeps UDP 53.

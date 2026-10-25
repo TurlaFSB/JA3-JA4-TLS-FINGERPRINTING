@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { LiveItem } from '@/api/hooks'
+import { type LiveItem, useOwnName } from '@/api/hooks'
 import {
   type Alert,
   type ClientRead,
@@ -124,6 +124,25 @@ function topSeverity(alerts: Alert[]): Severity | undefined {
   )
 }
 
+// Where the event went: the two addresses, with this computer's name in place
+// of its own address.
+function Route({ src, dst }: { src: string; dst: string }): React.ReactElement {
+  const ownHost = useOwnName()
+  const from = splitAddr(src).host
+  const to = splitAddr(dst).host
+  return (
+    <span className={styles.route} title={`${src} -> ${dst}`}>
+      <span className={styles.host} title={from}>
+        {ownHost(from) ?? from}
+      </span>
+      <span className={styles.arrow}>-&gt;</span>
+      <span className={styles.host} title={to}>
+        {ownHost(to) ?? to}
+      </span>
+    </span>
+  )
+}
+
 function FlowRow({
   event,
   intel,
@@ -145,8 +164,6 @@ function FlowRow({
 }): React.ReactElement {
   const clock = useClock()
   const fingerprint = fingerprintOf(event)
-  const src = splitAddr(event.src)
-  const dst = splitAddr(event.dst)
   const verdict = worstVerdict(intel)
   const lead = leadAlert(alerts)
   const severity = topSeverity(alerts ?? [])
@@ -170,11 +187,7 @@ function FlowRow({
     >
       <span className={styles.time}>{clock(event.ts_nanos)}</span>
       <span className={styles.code}>{KIND_CODE[event.kind]}</span>
-      <span className={styles.route} title={`${event.src} -> ${event.dst}`}>
-        <span className={styles.host}>{src.host}</span>
-        <span className={styles.arrow}>-&gt;</span>
-        <span className={styles.host}>{dst.host}</span>
-      </span>
+      <Route src={event.src} dst={event.dst} />
       <span
         className={cx(styles.sni, borrowed && styles.borrowed)}
         title={

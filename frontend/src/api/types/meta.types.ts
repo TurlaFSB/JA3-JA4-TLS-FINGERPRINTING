@@ -16,6 +16,7 @@ export const metaSchema = z.object({
   }),
   started_unix_ms: z.number(),
   location: z.string().nullable(),
+  hostname: z.string().nullable().default(null),
 })
 
 export type MetaResponse = z.infer<typeof metaSchema>
