@@ -3,18 +3,17 @@
  * live-stream.tsx
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { type LiveItem, useOwnName } from '@/api/hooks'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { LiveItem } from '@/api/hooks'
 import {
   type Alert,
-  type ClientRead,
   fingerprintOf,
-  type MatchReport,
   type Severity,
   type StreamEvent,
   splitAddr,
   worstVerdict,
 } from '@/api/types'
+import { useOwnName } from '@/core/app/own-name'
 import { downloadText, stamp, toCsv } from '@/core/lib/export'
 import { useClock } from '@/core/lib/use-clock'
 import { SeverityTag } from './atoms'
@@ -143,26 +142,37 @@ function Route({ src, dst }: { src: string; dst: string }): React.ReactElement {
   )
 }
 
-function FlowRow({
-  event,
-  intel,
-  alerts,
-  client,
-  conn,
-  selected,
-  animate,
-  onSelect,
-}: {
-  animate: boolean
-  event: StreamEvent
-  intel?: MatchReport[]
-  alerts?: Alert[]
-  client?: ClientRead
+interface FlowRowProps {
+  item: LiveItem
   conn?: Connection
   selected: boolean
-  onSelect: () => void
-}): React.ReactElement {
+  onSelect: (item: LiveItem) => void
+}
+
+// A row is redrawn only when its own item, its selection, or the two things it
+// borrows from its connection (the site and the client) change. Without this,
+// every event arriving re-rendered every row on the page.
+function sameRow(a: FlowRowProps, b: FlowRowProps): boolean {
+  return (
+    a.item === b.item &&
+    a.selected === b.selected &&
+    a.onSelect === b.onSelect &&
+    a.conn?.sni === b.conn?.sni &&
+    a.conn?.client === b.conn?.client
+  )
+}
+
+const FlowRow = memo(function FlowRow({
+  item,
+  conn,
+  selected,
+  onSelect,
+}: FlowRowProps): React.ReactElement | null {
   const clock = useClock()
+  const message = item.message
+  if (message.type !== 'flow') return null
+  const { event, intel, alerts, client } = message
+  const animate = item.animate
   const fingerprint = fingerprintOf(event)
   const verdict = worstVerdict(intel)
   const lead = leadAlert(alerts)
@@ -181,7 +191,7 @@ function FlowRow({
       className={cx(styles.row, animate && styles.enter, hot && styles.rowHot)}
       data-verdict={verdict ?? 'unknown'}
       data-selected={selected}
-      onClick={onSelect}
+      onClick={() => onSelect(item)}
       aria-pressed={selected}
       aria-label={`${KIND_CODE[event.kind]} ${sni ?? event.dst}, open details`}
     >
@@ -236,7 +246,7 @@ function FlowRow({
       </span>
     </button>
   )
-}
+}, sameRow)
 
 function SiteTable({
   rows,
@@ -341,6 +351,11 @@ function StreamBody({
   onSelect: (item: LiveItem) => void
   onPickSite: (site: string) => void
 }): React.ReactElement {
+  // A callback whose identity never changes, so memoised rows are not redrawn
+  // just because the parent was.
+  const latest = useRef(onSelect)
+  latest.current = onSelect
+  const select = useCallback((item: LiveItem) => latest.current(item), [])
   if (view === 'sites') {
     return (
       <div className={styles.scroll}>
@@ -381,14 +396,10 @@ function StreamBody({
         item.message.type === 'flow' ? (
           <FlowRow
             key={item.seq}
-            event={item.message.event}
-            intel={item.message.intel}
-            alerts={item.message.alerts}
-            client={item.message.client}
+            item={item}
             conn={connections.get(connectionKey(item.message.event))}
-            animate={item.animate}
             selected={selectedSeq === item.seq}
-            onSelect={() => onSelect(item)}
+            onSelect={select}
           />
         ) : (
           <AlertRow

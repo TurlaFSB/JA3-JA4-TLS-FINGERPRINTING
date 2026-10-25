@@ -4,7 +4,7 @@
 // ===================
 
 import { type UseQueryResult, useQuery } from '@tanstack/react-query'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   API_BASE,
   API_ENDPOINTS,
@@ -234,29 +234,47 @@ export function useLiveStream(maxItems: number = LIVE.STREAM_BUFFER): LiveState 
       }))
     })
 
+    // Messages are queued and applied together a few times a second. One
+    // state update per message re-rendered the whole page for every handshake,
+    // which is what made a busy link feel stuck.
+    const queue: LiveItem[] = []
+    const flush = (): void => {
+      if (queue.length === 0) return
+      const batch = queue.splice(0)
+      setState((prev) => {
+        let flows = 0
+        let alerts = 0
+        for (const item of batch) {
+          if (item.message.type === 'flow') {
+            flows += 1
+            alerts += item.message.alerts?.length ?? 0
+          } else {
+            alerts += 1
+          }
+        }
+        return {
+          feed: [...batch.reverse(), ...prev.feed].slice(0, max.current),
+          connected: true,
+          flowCount: prev.flowCount + flows,
+          alertCount: prev.alertCount + alerts,
+          rate: prev.rate,
+        }
+      })
+    }
+    const flusher = setInterval(flush, LIVE.FLUSH_MS)
+
     source.onmessage = (event) => {
       const message = parseMessage(event.data)
       if (!message) return
       seq.current += 1
       if (message.type === 'flow') bucket.current += 1
-      const item: LiveItem = { seq: seq.current, message, animate: true }
-      setState((prev) => {
-        const feed = [item, ...prev.feed].slice(0, max.current)
-        const flowCount = prev.flowCount + (message.type === 'flow' ? 1 : 0)
-        const inlineAlerts =
-          message.type === 'flow' ? (message.alerts?.length ?? 0) : 0
-        const standalone = message.type === 'alert' ? 1 : 0
-        return {
-          feed,
-          connected: true,
-          flowCount,
-          alertCount: prev.alertCount + inlineAlerts + standalone,
-          rate: prev.rate,
-        }
-      })
+      queue.push({ seq: seq.current, message, animate: true })
+      // Never let a stalled tab grow the queue without bound.
+      if (queue.length > max.current) queue.splice(0, queue.length - max.current)
     }
 
     return () => {
+      clearInterval(flusher)
       source.close()
     }
   }, [])
@@ -322,23 +340,6 @@ export function useCapture(): UseQueryResult<CaptureView> {
     refetchInterval: 3000,
     retry: QUERY_CONFIG.RETRY.NONE,
   })
-}
-
-// A function that names an address this computer owns ("my-laptop") and says
-// nothing about any other. The sensor knows its own interface's addresses and
-// the computer's name; every other host stays an address.
-export function useOwnName(): (host: string) => string | null {
-  const { data: capture } = useCapture()
-  const { data: meta } = useMeta()
-  const own = useMemo(
-    () => new Set(capture?.own_addresses ?? []),
-    [capture?.own_addresses]
-  )
-  const name = meta?.hostname ?? null
-  return useCallback(
-    (host: string) => (name !== null && own.has(host) ? name : null),
-    [own, name]
-  )
 }
 
 async function getDns(): Promise<DnsView> {

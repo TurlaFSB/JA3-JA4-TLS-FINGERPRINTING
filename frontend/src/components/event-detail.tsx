@@ -5,7 +5,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useOwnName } from '@/api/hooks'
 import {
   type Alert,
   type ClientRead,
@@ -17,6 +16,7 @@ import {
   worstVerdict,
 } from '@/api/types'
 import { ROUTES } from '@/config'
+import { useOwnName } from '@/core/app/own-name'
 import { useClock } from '@/core/lib/use-clock'
 import { SeverityTag, VerdictBadge } from './atoms'
 import styles from './event-detail.module.scss'

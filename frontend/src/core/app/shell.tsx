@@ -16,6 +16,7 @@ import {
   useTheme,
   useUIStore,
 } from '@/core/lib/shell.ui.store'
+import { OwnNameProvider } from './own-name'
 import styles from './shell.module.scss'
 
 const NAV = [
@@ -203,7 +204,9 @@ export function Shell(): React.ReactElement {
       <main className={styles.main}>
         <ErrorBoundary FallbackComponent={ShellError}>
           <Suspense fallback={<ShellLoading />}>
-            <Outlet />
+            <OwnNameProvider>
+              <Outlet />
+            </OwnNameProvider>
           </Suspense>
         </ErrorBoundary>
       </main>

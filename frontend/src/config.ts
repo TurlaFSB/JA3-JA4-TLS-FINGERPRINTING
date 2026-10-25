@@ -78,6 +78,8 @@ export const QUERY_CONFIG = {
 // how many alerts the feed and export pull by default.
 export const LIVE = {
   STREAM_BUFFER: 500,
+  // How often queued stream messages are applied to the page, in milliseconds.
+  FLUSH_MS: 250,
   ALERT_PAGE: 60,
   SEARCH_PAGE: 40,
   RATE_WINDOW: 60,
