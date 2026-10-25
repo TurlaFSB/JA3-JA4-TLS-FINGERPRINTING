@@ -5,6 +5,13 @@ The first tagged release. Since the audited import it adds: capture library and 
 
 Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. See `NOTICE.md`.
 
+## SSH, DNS, Sensor page, exports (after 0.2.0)
+- SSH: banner and key-exchange offer read from the first packets of each side; HASSH and HASSHServer (Salesforce, BSD-3-Clause) with the algorithm lists; the side is decided by who opened the connection, then by port 22, else both hashes are reported. Observation only.
+- Plain DNS on UDP 53: queries, answers and failures. Summarised in memory (bounded) and shown on a new DNS page and `/api/dns`; answers name servers whose handshake carries no name, marked as DNS-derived on Traffic. The default kernel filter now keeps UDP 53.
+- A Sensor page (`/api/interfaces`), display preferences (time zone, text size), CSV and JSON export of the Scope stream, CSV export of conversations and DNS names (spreadsheet formulas neutralised).
+- `testdata/synthetic/`: a reproducible, clearly synthetic capture (`scripts/make-demo-capture.py`) for DNS and SSH.
+- README restructured with complete step-by-step installation per platform, a first-run walkthrough, configuration, FAQ and troubleshooting.
+
 ## Capture tuning, health and detail (after 0.2.0)
 - Engine limits as flags (`--max-flows`, `--idle-timeout`, `--stream-limit-kib`, environment variables too) for every command, and `--buffer-mib` for the kernel capture buffer on `live` and `serve`.
 - Capture health: the engine publishes its counters while it runs and the live reader refreshes the kernel's drop counts each second. `GET /api/capture`, Prometheus metrics and a panel on the Traffic page say what may have been missed and which flag fixes it.

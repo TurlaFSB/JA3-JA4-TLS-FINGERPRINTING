@@ -17,8 +17,8 @@ flowchart TB
     direction LR
     D["Decode<br/>Ethernet · SLL<br/>raw IP · 802.11"]
     S["Reassemble<br/>TCP streams<br/>QUIC Initial decrypt"]
-    P["Parse<br/>TLS · certificates<br/>HTTP/1.x · TCP options"]
-    FP["Fingerprint<br/>JA3 JA3S JA4 JA4S<br/>JA4H JA4X JA4T JA4TS"]
+    P["Parse<br/>TLS · certificates · SSH<br/>DNS · HTTP/1.x · TCP options"]
+    FP["Fingerprint<br/>JA3 JA3S JA4 JA4S JA4H<br/>JA4X JA4T JA4TS HASSH"]
     TT["Traffic table<br/>conversations<br/>direction · bytes"]
     D --> S --> P --> FP
     FP ~~~ TT
@@ -47,7 +47,7 @@ flowchart TB
 
   subgraph OUT["5 · What you use"]
     direction LR
-    UI["Dashboard<br/>Scope · Traffic · Hosts<br/>Alerts · Library · Intel"]
+    UI["Dashboard<br/>Scope · Traffic · Hosts · DNS<br/>Alerts · Library · Intel · Sensor"]
     PROM["Prometheus"]
     SIEM["SIEM · log shipper · chat"]
     UI ~~~ PROM ~~~ SIEM

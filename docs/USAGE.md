@@ -75,7 +75,7 @@ tlsfp intel prune --keep-days 30               # delete old history now
 
 ## JSON output
 
-One object per line. Fields common to all events: `ts_nanos`, `src`, `dst`, `kind`.
+One object per line. Fields common to all events: `ts_nanos`, `src`, `dst`, `kind`. SSH and DNS events are observations: they are not matched against the feed and raise no alerts.
 
 | `kind` | Extra fields |
 |---|---|
@@ -84,6 +84,8 @@ One object per line. Fields common to all events: `ts_nanos`, `src`, `dst`, `kin
 | `certificate` | `ja4x` |
 | `http_request` | `ja4h{hash,raw}`, `method`, `host`, `user_agent` |
 | `tcp_syn` / `tcp_syn_ack` | `ja4t` / `ja4ts` |
+| `ssh` | `role` (`client`, `server`, `unknown`), `banner`, `hassh` / `hassh_raw` (client) or `hassh_server` / `hassh_server_raw` (server), `algorithms` |
+| `dns` | `id`, `response`, `name`, `qtype`, `rcode`, `answers[{rtype,data,ttl}]` |
 
 `detail` is the readable account of the hello (versions, ciphers, extensions, groups, signature algorithms, ALPN, features); see [`CAPTURE_TUNING.md`](CAPTURE_TUNING.md#how-detailed-is-the-output).
 
@@ -91,4 +93,4 @@ One object per line. Fields common to all events: `ts_nanos`, `src`, `dst`, `kin
 
 Served by `tlsfp serve` on the same port as the dashboard; no authentication (see [`THREAT_MODEL.md`](THREAT_MODEL.md)).
 
-`/api/stats`, `/api/alerts`, `/api/search`, `/api/export`, `/api/observed`, `/api/hosts`, `/api/hosts/{ip}`, `/api/traffic`, `/api/capture`, `/api/library`, `/api/library/{id}/report`, `/api/meta`, `/api/health`, `/api/stream` (Server-Sent Events, at most 64 open) and `/metrics` (Prometheus). Errors never carry internal detail.
+`/api/stats`, `/api/alerts`, `/api/search`, `/api/export`, `/api/observed`, `/api/hosts`, `/api/hosts/{ip}`, `/api/traffic`, `/api/capture`, `/api/dns`, `/api/interfaces`, `/api/library`, `/api/library/{id}/report`, `/api/meta`, `/api/health`, `/api/stream` (Server-Sent Events, at most 64 open) and `/metrics` (Prometheus). Errors never carry internal detail.

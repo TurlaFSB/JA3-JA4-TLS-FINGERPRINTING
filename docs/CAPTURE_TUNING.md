@@ -8,8 +8,9 @@ Not at all. tlsfp is passive: it opens the interface read-only, sends no packet,
 
 By default a live capture asks the kernel for:
 
-- all TCP (TLS runs on any port, and JA4T needs the SYNs),
+- all TCP (TLS and SSH run on any port, and JA4T needs the SYNs),
 - UDP port 443 (QUIC),
+- UDP port 53 (plain DNS),
 
 and drops everything else (DNS, ARP, ICMP, mDNS) inside the kernel, before it costs a context switch. Frames are never clipped (snap length 65,535), because a clipped segment would silently end fingerprinting for that stream.
 
@@ -17,7 +18,7 @@ and drops everything else (DNS, ARP, ICMP, mDNS) inside the kernel, before it co
 
 | Flag | Environment | Default | What it does |
 |---|---|---|---|
-| `--filter EXPR` | | `tcp or (udp and port 443)` | The BPF filter applied in the kernel. Tighten on a busy link, for example `tcp port 443`, or widen it to read QUIC on another port. |
+| `--filter EXPR` | | `tcp or (udp and (port 443 or port 53))` | The BPF filter applied in the kernel. Tighten on a busy link, for example `tcp port 443`, or widen it to read QUIC on another port. |
 | `--no-promisc` | | promiscuous on | Capture only traffic addressed to this interface. Use it where promiscuous mode is not allowed, or when you only care about this host. |
 | `--buffer-mib N` | `TLSFP_CAPTURE_BUFFER_MIB` | 32 (1 to 1024) | Kernel capture buffer. Bursts queue here; when it overflows the kernel drops frames, and the drop is counted and shown. |
 | `--max-flows N` | `TLSFP_MAX_FLOWS` | 65,536 | Conversations tracked at once. When full, the stalest are shed (and counted). Raise it on a busy link. |
