@@ -27,6 +27,7 @@ const flow = (over: Partial<TrafficFlow>): TrafficFlow => ({
   packets_up: 2,
   packets_down: 3,
   sni: 'example.com',
+  dns_name: null,
   alpn: 'h2',
   ja4: 't13d1516h2_x',
   client_info: { known_as: 'Firefox 158', family: 'firefox' },

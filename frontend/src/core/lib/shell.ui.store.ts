@@ -7,11 +7,17 @@ import { create } from 'zustand'
 import { devtools, persist } from 'zustand/middleware'
 
 type Theme = 'light' | 'dark' | 'system'
+export type TimeMode = 'local' | 'utc'
+export type TextSize = 'small' | 'normal' | 'large'
 
 interface UIState {
   theme: Theme
   sidebarOpen: boolean
   sidebarCollapsed: boolean
+  timeMode: TimeMode
+  textSize: TextSize
+  setTimeMode: (mode: TimeMode) => void
+  setTextSize: (size: TextSize) => void
   setTheme: (theme: Theme) => void
   toggleSidebar: () => void
   setSidebarOpen: (open: boolean) => void
@@ -25,6 +31,12 @@ export const useUIStore = create<UIState>()(
         theme: 'dark',
         sidebarOpen: false,
         sidebarCollapsed: false,
+        timeMode: 'local',
+        textSize: 'normal',
+
+        setTimeMode: (timeMode) => set({ timeMode }, false, 'ui/setTimeMode'),
+
+        setTextSize: (textSize) => set({ textSize }, false, 'ui/setTextSize'),
 
         setTheme: (theme) => set({ theme }, false, 'ui/setTheme'),
 
@@ -50,6 +62,8 @@ export const useUIStore = create<UIState>()(
         partialize: (state) => ({
           theme: state.theme,
           sidebarCollapsed: state.sidebarCollapsed,
+          timeMode: state.timeMode,
+          textSize: state.textSize,
         }),
       }
     ),
@@ -58,6 +72,8 @@ export const useUIStore = create<UIState>()(
 )
 
 export const useTheme = (): Theme => useUIStore((s) => s.theme)
+export const useTimeMode = (): TimeMode => useUIStore((s) => s.timeMode)
+export const useTextSize = (): TextSize => useUIStore((s) => s.textSize)
 export const useSidebarOpen = (): boolean => useUIStore((s) => s.sidebarOpen)
 export const useSidebarCollapsed = (): boolean =>
   useUIStore((s) => s.sidebarCollapsed)

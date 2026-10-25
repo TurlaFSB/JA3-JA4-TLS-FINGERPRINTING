@@ -10,13 +10,13 @@ import {
   type ClientRead,
   decodeJa4,
   fingerprintOf,
-  formatClock,
   type MatchReport,
   type StreamEvent,
   splitAddr,
   worstVerdict,
 } from '@/api/types'
 import { ROUTES } from '@/config'
+import { useClock } from '@/core/lib/use-clock'
 import { SeverityTag, VerdictBadge } from './atoms'
 import styles from './event-detail.module.scss'
 import {
@@ -40,6 +40,7 @@ const KIND_TITLE: Record<StreamEvent['kind'], string> = {
   http_request: 'http request',
   tcp_syn: 'tcp syn',
   tcp_syn_ack: 'tcp syn-ack',
+  ssh: 'ssh hello',
 }
 
 const KIND_CODE: Record<StreamEvent['kind'], string> = {
@@ -49,6 +50,7 @@ const KIND_CODE: Record<StreamEvent['kind'], string> = {
   http_request: 'HTP',
   tcp_syn: 'SYN',
   tcp_syn_ack: 'SYK',
+  ssh: 'SSH',
 }
 
 // What each fingerprint is, in a line, so a value is never just a hash.
@@ -63,6 +65,9 @@ const NOTE = {
   ja4h: 'The shape of the HTTP request: method, version, header order and cookies.',
   ja4t: "The client operating system's TCP settings.",
   ja4ts: "The server's TCP settings.",
+  hassh:
+    'How an SSH client offers to set up the connection: key exchange, cipher, MAC and compression lists, hashed. Stable per SSH library and configuration.',
+  hasshServer: 'The same, for an SSH server.',
 } as const
 
 function fieldsOf(event: StreamEvent): Field[] {
@@ -92,6 +97,26 @@ function fieldsOf(event: StreamEvent): Field[] {
       return [{ label: 'ja4t', value: event.ja4t, note: NOTE.ja4t }]
     case 'tcp_syn_ack':
       return [{ label: 'ja4ts', value: event.ja4ts, note: NOTE.ja4ts }]
+    case 'ssh': {
+      const rows: Field[] = []
+      if (event.hassh) {
+        rows.push({ label: 'hassh', value: event.hassh, note: NOTE.hassh })
+        if (event.hassh_raw) {
+          rows.push({ label: 'hassh raw', value: event.hassh_raw })
+        }
+      }
+      if (event.hassh_server) {
+        rows.push({
+          label: 'hassh server',
+          value: event.hassh_server,
+          note: NOTE.hasshServer,
+        })
+        if (event.hassh_server_raw) {
+          rows.push({ label: 'hassh server raw', value: event.hassh_server_raw })
+        }
+      }
+      return rows
+    }
   }
 }
 
@@ -110,6 +135,13 @@ function details(event: StreamEvent, conn?: Connection): Field[] {
       label: 'protocol',
       value: event.alpn,
       note: 'The application protocol the client offered: h2 is HTTP/2, h3 is HTTP/3 over QUIC.',
+    })
+  }
+  if (event.kind === 'ssh') {
+    rows.push({ label: 'banner', value: event.banner })
+    rows.push({
+      label: 'side',
+      value: event.role === 'unknown' ? 'not determined' : `ssh ${event.role}`,
     })
   }
   if (event.kind === 'http_request') {
@@ -183,7 +215,6 @@ function NamedList({
     <span className={styles.chips}>
       {shown.map((item, index) => (
         <span
-          // The same value can appear twice in a hello, so position is part of the key.
           key={`${item.id}-${index}`}
           className={styles.chip}
           title={`0x${item.id.toString(16).padStart(4, '0')}`}
@@ -195,6 +226,47 @@ function NamedList({
         <span className={styles.chip}>+{items.length - limit} more</span>
       )}
     </span>
+  )
+}
+
+// The algorithm lists an SSH side offered, in preference order.
+function SshContents({
+  event,
+}: {
+  event: StreamEvent
+}): React.ReactElement | null {
+  if (event.kind !== 'ssh') return null
+  const a = event.algorithms
+  const rows: { label: string; items: string[] }[] = [
+    { label: 'key exchange', items: a.kex },
+    { label: 'host key', items: a.host_key },
+    { label: 'cipher c→s', items: a.encryption_c2s },
+    { label: 'cipher s→c', items: a.encryption_s2c },
+    { label: 'mac c→s', items: a.mac_c2s },
+    { label: 'mac s→c', items: a.mac_s2c },
+    { label: 'compression', items: a.compression_c2s },
+  ].filter((row) => row.items.length > 0)
+  return (
+    <section className={styles.block}>
+      <h3 className={styles.title}>ssh offered</h3>
+      <dl className={styles.facts}>
+        {rows.map((row) => (
+          <div key={row.label} className={styles.fact}>
+            <dt>{row.label}</dt>
+            <dd>
+              <span className={styles.chips}>
+                {row.items.map((item, index) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: an algorithm can repeat within a list, so its position is part of the key
+                  <span key={`${item}-${index}`} className={styles.chip}>
+                    {item}
+                  </span>
+                ))}
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   )
 }
 
@@ -304,6 +376,7 @@ export function EventDetail({
   onNext?: () => void
   position?: string
 }): React.ReactElement {
+  const clock = useClock()
   const closeRef = useRef<HTMLButtonElement>(null)
   const fields = fieldsOf(event)
   const facts = details(event, conn)
@@ -348,7 +421,7 @@ export function EventDetail({
         <div className={styles.headText}>
           <span className={styles.code}>{KIND_CODE[event.kind]}</span>
           <span className={styles.kind}>{KIND_TITLE[event.kind]}</span>
-          <span className={styles.time}>{formatClock(event.ts_nanos)}</span>
+          <span className={styles.time}>{clock(event.ts_nanos)}</span>
         </div>
         <div className={styles.nav}>
           {position && <span className={styles.position}>{position}</span>}
@@ -449,6 +522,7 @@ export function EventDetail({
       </section>
 
       <HelloContents event={event} />
+      <SshContents event={event} />
 
       {anatomy && (
         <section className={styles.block}>

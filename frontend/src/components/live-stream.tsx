@@ -9,13 +9,13 @@ import {
   type Alert,
   type ClientRead,
   fingerprintOf,
-  formatClock,
   type MatchReport,
   type Severity,
   type StreamEvent,
   splitAddr,
   worstVerdict,
 } from '@/api/types'
+import { useClock } from '@/core/lib/use-clock'
 import { SeverityTag } from './atoms'
 import { cx } from './cx'
 import { EventDetail } from './event-detail'
@@ -50,6 +50,7 @@ const KIND_CODE: Record<StreamEvent['kind'], string> = {
   http_request: 'HTP',
   tcp_syn: 'SYN',
   tcp_syn_ack: 'SYK',
+  ssh: 'SSH',
 }
 
 type FilterId =
@@ -60,6 +61,7 @@ type FilterId =
   | 'cert'
   | 'http'
   | 'tcp'
+  | 'ssh'
   | 'alert'
 
 const FILTERS: { id: FilterId; label: string }[] = [
@@ -69,6 +71,7 @@ const FILTERS: { id: FilterId; label: string }[] = [
   { id: 'cert', label: 'cert' },
   { id: 'http', label: 'http' },
   { id: 'tcp', label: 'tcp' },
+  { id: 'ssh', label: 'ssh' },
   { id: 'alert', label: 'alerts' },
   { id: 'all', label: 'everything' },
 ]
@@ -80,6 +83,7 @@ const KIND_FILTER: Record<StreamEvent['kind'], FilterId> = {
   http_request: 'http',
   tcp_syn: 'tcp',
   tcp_syn_ack: 'tcp',
+  ssh: 'ssh',
 }
 
 function searchText(item: LiveItem): string {
@@ -135,6 +139,7 @@ function FlowRow({
   selected: boolean
   onSelect: () => void
 }): React.ReactElement {
+  const clock = useClock()
   const fingerprint = fingerprintOf(event)
   const src = splitAddr(event.src)
   const dst = splitAddr(event.dst)
@@ -142,7 +147,12 @@ function FlowRow({
   const lead = leadAlert(alerts)
   const severity = topSeverity(alerts ?? [])
   const hot = severity === 'high' || severity === 'critical'
-  const own = 'sni' in event ? event.sni : undefined
+  const own =
+    event.kind === 'ssh'
+      ? event.banner.replace(/^SSH-[0-9.]+-/, '')
+      : 'sni' in event
+        ? event.sni
+        : undefined
   // A server's reply carries no name of its own; take it from the connection
   // it answers, and say so by dimming it.
   const borrowed = own === undefined && event.kind !== 'client_hello'
@@ -159,7 +169,7 @@ function FlowRow({
       aria-pressed={selected}
       aria-label={`${KIND_CODE[event.kind]} ${sni ?? event.dst}, open details`}
     >
-      <span className={styles.time}>{formatClock(event.ts_nanos)}</span>
+      <span className={styles.time}>{clock(event.ts_nanos)}</span>
       <span className={styles.code}>{KIND_CODE[event.kind]}</span>
       <span className={styles.route} title={`${event.src} -> ${event.dst}`}>
         <span className={styles.host}>{src.host}</span>
@@ -190,7 +200,9 @@ function FlowRow({
         {who.text}
       </span>
       <span className={styles.fp} title={fingerprint.value}>
-        <span className={styles.fpKind}>{fingerprint.kind}</span>
+        <span className={styles.fpKind}>
+          {fingerprint.kind.replace('_', ' ')}
+        </span>
         <span className={styles.fpValue}>{fingerprint.value}</span>
       </span>
       <span className={styles.marks}>
@@ -221,6 +233,7 @@ function SiteTable({
   rows: SiteRow[]
   onPick: (site: string) => void
 }): React.ReactElement {
+  const clock = useClock()
   return (
     <div className={styles.sites}>
       <div className={cx(styles.siteRow, styles.siteHead)} aria-hidden="true">
@@ -267,9 +280,7 @@ function SiteTable({
           </span>
           <span className={styles.num}>{row.connections}</span>
           <span className={styles.num}>{row.quic}</span>
-          <span className={styles.num}>
-            {formatClock(row.lastTs).slice(0, 8)}
-          </span>
+          <span className={styles.num}>{clock(row.lastTs).slice(0, 8)}</span>
         </button>
       ))}
     </div>
@@ -283,12 +294,13 @@ function AlertRow({
   alert: Alert
   animate: boolean
 }): React.ReactElement {
+  const clock = useClock()
   return (
     <div
       className={cx(styles.row, animate && styles.enter, styles.alertRow)}
       data-sev={alert.severity}
     >
-      <span className={styles.time}>{formatClock(alert.ts_nanos)}</span>
+      <span className={styles.time}>{clock(alert.ts_nanos)}</span>
       <span className={cx(styles.code, styles.codeAlert)}>ALR</span>
       <span className={styles.alertTitle}>{alert.title}</span>
       <span className={styles.marks}>

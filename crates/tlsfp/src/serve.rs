@@ -147,6 +147,8 @@ struct Feed {
     counters: tlsfp_core::CountersHandle,
     /// How the capture was set up, filled in once it starts.
     capture: Arc<std::sync::OnceLock<CaptureSetup>>,
+    /// DNS seen on the wire, summarised (see `dnsbook`).
+    dns: Arc<Mutex<crate::dnsbook::DnsBook>>,
 }
 
 /// How the feed is captured, for the capture health panel.
@@ -170,6 +172,7 @@ impl Feed {
             traffic: TrafficHandle::default(),
             counters: tlsfp_core::CountersHandle::default(),
             capture: Arc::new(std::sync::OnceLock::new()),
+            dns: Arc::new(Mutex::new(crate::dnsbook::DnsBook::default())),
         }
     }
 
@@ -473,6 +476,8 @@ fn router(web: &std::path::Path, state: Shared, allowed: &[String]) -> Router {
 
     let ops = Router::new()
         .route("/api/capture", get(capture_health))
+        .route("/api/dns", get(dns_view))
+        .route("/api/interfaces", get(interfaces))
         .route("/metrics", get(metrics))
         .with_state(Arc::clone(&state_for_metrics));
 
@@ -727,6 +732,18 @@ async fn metrics(State(state): State<Shared>) -> Result<impl IntoResponse, ApiEr
                 ("tlsfp_frames_malformed_total", "Frames skipped as malformed.", c.skipped_malformed),
                 ("tlsfp_quic_initials_total", "QUIC Initial packets seen.", c.quic_initials),
                 ("tlsfp_quic_decrypted_total", "QUIC client Initials decrypted.", c.quic_decrypted),
+            ] {
+                let _ = writeln!(out, "# HELP {name} {help}\n# TYPE {name} counter\n{name} {value}");
+            }
+            let dns = state
+                .feed
+                .dns
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .totals();
+            for (name, help, value) in [
+                ("tlsfp_dns_queries_total", "DNS queries seen on UDP 53.", dns.queries),
+                ("tlsfp_dns_nxdomain_total", "DNS responses reporting a name that does not exist.", dns.nxdomain),
             ] {
                 let _ = writeln!(out, "# HELP {name} {help}\n# TYPE {name} counter\n{name} {value}");
             }
@@ -1160,6 +1177,56 @@ fn assess(
         })
         .collect();
     (status, notes)
+}
+
+#[derive(Deserialize)]
+struct DnsQuery {
+    limit: Option<usize>,
+}
+
+async fn dns_view(
+    State(state): State<Shared>,
+    Query(query): Query<DnsQuery>,
+) -> Json<crate::dnsbook::DnsView> {
+    let top = query.limit.unwrap_or(25).clamp(1, 200);
+    Json(
+        state
+            .feed
+            .dns
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .view(top),
+    )
+}
+
+#[derive(Serialize)]
+struct InterfacesView {
+    /// False when the capture library is not usable (for example Npcap is not
+    /// installed); `reason` says why.
+    available: bool,
+    reason: Option<String>,
+    /// The interface this server is capturing from, when it is capturing.
+    current: Option<String>,
+    interfaces: Vec<crate::live::InterfaceInfo>,
+}
+
+async fn interfaces(State(state): State<Shared>) -> Result<Json<InterfacesView>, ApiError> {
+    let listed = tokio::task::spawn_blocking(crate::live::list_interfaces).await?;
+    let current = state.feed.capture.get().and_then(|c| c.interface.clone());
+    Ok(Json(match listed {
+        Ok(interfaces) => InterfacesView {
+            available: true,
+            reason: None,
+            current,
+            interfaces,
+        },
+        Err(reason) => InterfacesView {
+            available: false,
+            reason: Some(reason),
+            current,
+            interfaces: Vec::new(),
+        },
+    }))
 }
 
 async fn capture_health(State(state): State<Shared>) -> Json<CaptureView> {
@@ -1814,6 +1881,14 @@ fn spawn_tail(state: Shared, feed: Feed, shutdown: Arc<AtomicBool>) {
 /// result as a single line. A serialisation failure is dropped rather than
 /// allowed to end the capture, since one bad line is not worth a dark stream.
 fn broadcast_flow(store: &mut IntelStore, feed: &Feed, event: FingerprintEvent) {
+    // DNS is summarised, not streamed: it would drown the handshakes.
+    if let StreamEvent::Dns(message) = &event.event {
+        feed.dns
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .record(event.ts_nanos, event.src, event.dst, message);
+        return;
+    }
     let intel = store.match_event(&event).unwrap_or_default();
     let alerts = store.detect(&event).unwrap_or_default();
     let client = match &event.event {

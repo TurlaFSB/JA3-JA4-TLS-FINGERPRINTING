@@ -23,6 +23,8 @@ export const API_ENDPOINTS = {
   HOSTS: '/hosts',
   OBSERVED: '/observed',
   CAPTURE: '/capture',
+  DNS: '/dns',
+  INTERFACES: '/interfaces',
 } as const
 
 export const QUERY_KEYS = {
@@ -33,6 +35,8 @@ export const QUERY_KEYS = {
   HOSTS: ['hosts'] as const,
   OBSERVED: ['observed'] as const,
   CAPTURE: ['capture'] as const,
+  DNS: ['dns'] as const,
+  INTERFACES: ['interfaces'] as const,
   HOST: (ip: string) => ['host', ip] as const,
   ALERTS: (limit: number) => ['alerts', limit] as const,
   SEARCH: (query: string, kind: string) => ['search', query, kind] as const,
@@ -46,6 +50,8 @@ export const ROUTES = {
   LIBRARY: '/library',
   TRAFFIC: '/traffic',
   HOSTS: '/hosts',
+  DNS: '/dns',
+  SENSOR: '/sensor',
 } as const
 
 export const STORAGE_KEYS = {

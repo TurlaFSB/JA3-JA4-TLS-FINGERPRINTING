@@ -1,0 +1,342 @@
+// ===================
+// © Pranav Verma | 2026
+// sensor.module.scss
+// ===================
+
+@use 'index' as *;
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+  padding: clamp($space-4, 3vw, $space-8);
+  max-width: 1640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.masthead {
+  padding-bottom: $space-4;
+  border-bottom: 1px solid $line;
+}
+
+.over {
+  display: block;
+  margin-bottom: $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: $fire;
+}
+
+.title {
+  margin: 0 0 $space-2;
+  font-family: $font-display;
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  line-height: 1;
+  color: $bone;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sub {
+  max-width: 72ch;
+  margin: 0;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $ash;
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: $space-4;
+  align-items: start;
+
+  @include breakpoint-down('lg') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.col {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+  min-width: 0;
+}
+
+.facts {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  margin: 0;
+  padding: $space-3 $space-4;
+}
+
+.fact {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: $space-3;
+  font-size: $font-size-2xs;
+
+  dt {
+    font-family: $font-mono;
+    font-size: $font-size-3xs;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: $dust;
+  }
+
+  dd {
+    margin: 0;
+    font-family: $font-mono;
+    color: $paper;
+    overflow-wrap: anywhere;
+  }
+}
+
+.note {
+  margin: 0;
+  padding: 0 $space-4 $space-3;
+  font-size: $font-size-2xs;
+  line-height: 1.5;
+  color: $ash;
+}
+
+.ifaces {
+  display: flex;
+  flex-direction: column;
+}
+
+.iface {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-3 $space-4;
+  border-top: 1px solid $line-faint;
+
+  &[data-kind='loopback'],
+  &[data-kind='virtual'] {
+    opacity: 0.7;
+  }
+}
+
+.ifaceHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $space-2;
+}
+
+.ifaceName {
+  font-size: $font-size-xs;
+  color: $bone;
+  overflow-wrap: anywhere;
+}
+
+.ifaceAddr {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  color: $ash;
+  overflow-wrap: anywhere;
+}
+
+.ifaceCmd {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+
+  code {
+    flex: 1;
+    min-width: 0;
+    padding: 3px $space-2;
+    font-family: $font-mono;
+    font-size: $font-size-3xs;
+    color: $paper;
+    background: $ink-1000;
+    border: 1px solid $line-faint;
+    overflow-wrap: anywhere;
+  }
+}
+
+.tag,
+.tagOn,
+.tagQuiet {
+  padding: 0 5px;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid $line;
+  color: $ash;
+}
+
+.tag {
+  color: $volt;
+  border-color: $volt;
+}
+
+.tagOn {
+  color: $ink-1000;
+  background: $fire;
+  border-color: $fire;
+}
+
+.copy {
+  flex: none;
+  height: 22px;
+  padding: 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    border-color: $line-strong;
+    outline: none;
+  }
+}
+
+.prefs {
+  display: flex;
+  flex-direction: column;
+}
+
+.pref {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  border-top: 1px solid $line-faint;
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.prefText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 180px;
+  flex: 1;
+}
+
+.prefLabel {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: $bone;
+}
+
+.prefNote {
+  font-size: $font-size-2xs;
+  color: $ash;
+}
+
+.seg {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.legend {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.segBtn {
+  height: 26px;
+  padding: 0 $space-3;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  margin-left: -1px;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    outline: none;
+  }
+
+  &[data-on] {
+    color: $ink-1000;
+    background: $fire;
+    border-color: $fire;
+    position: relative;
+  }
+}
+
+.recipes {
+  display: flex;
+  flex-direction: column;
+}
+
+.recipe {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-3 $space-4;
+  border-top: 1px solid $line-faint;
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.recipeLabel {
+  font-size: $font-size-2xs;
+  color: $ash;
+}
+
+.links {
+  margin: 0;
+  padding: $space-2 $space-4 $space-3;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  li {
+    display: grid;
+    grid-template-columns: 190px minmax(0, 1fr);
+    gap: $space-3;
+    align-items: baseline;
+    font-size: $font-size-2xs;
+
+    @include breakpoint-down('sm') {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  a {
+    font-family: $font-mono;
+    color: $volt;
+  }
+
+  span {
+    color: $ash;
+  }
+}

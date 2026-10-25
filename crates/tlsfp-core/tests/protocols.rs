@@ -208,3 +208,38 @@ fn port_53_noise_is_counted_not_fatal() {
     assert!(events.is_empty());
     assert_eq!(pipeline.counters().dns_unparsed, 1);
 }
+
+#[test]
+fn the_synthetic_capture_yields_dns_and_both_ssh_hellos() {
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../testdata/synthetic/synthetic-dns-ssh.pcap");
+    let mut source = tlsfp_core::PcapFileSource::open(path).unwrap();
+    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    let mut events = Vec::new();
+    pipeline.run(&mut source, |e| events.push(e)).unwrap();
+
+    let nxdomain = events
+        .iter()
+        .filter(|e| matches!(&e.event, StreamEvent::Dns(m) if m.rcode == "NXDOMAIN"))
+        .count();
+    assert!(nxdomain >= 2, "{nxdomain}");
+    assert_eq!(pipeline.counters().dns_unparsed, 0);
+
+    let client = events
+        .iter()
+        .find_map(|e| match &e.event {
+            StreamEvent::Ssh(h) if h.hassh.is_some() => Some(h),
+            _ => None,
+        })
+        .expect("an SSH client hello");
+    // Recomputed outside this program: md5 of the HASSH string.
+    assert_eq!(
+        client.hassh.as_deref(),
+        Some("7adf13cfc3ae0f0120a3fd06b3fa07e8")
+    );
+    assert!(
+        events
+            .iter()
+            .any(|e| matches!(&e.event, StreamEvent::Ssh(h) if h.hassh_server.is_some()))
+    );
+}

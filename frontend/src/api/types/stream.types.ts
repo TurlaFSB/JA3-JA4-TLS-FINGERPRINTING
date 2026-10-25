@@ -34,6 +34,21 @@ export const serverDetailSchema = z.object({
 export type ClientDetail = z.infer<typeof clientDetailSchema>
 export type ServerDetail = z.infer<typeof serverDetailSchema>
 
+const sshListSchema = z.array(z.string())
+
+export const sshAlgorithmsSchema = z.object({
+  kex: sshListSchema,
+  host_key: sshListSchema,
+  encryption_c2s: sshListSchema,
+  encryption_s2c: sshListSchema,
+  mac_c2s: sshListSchema,
+  mac_s2c: sshListSchema,
+  compression_c2s: sshListSchema,
+  compression_s2c: sshListSchema,
+})
+
+export type SshAlgorithms = z.infer<typeof sshAlgorithmsSchema>
+
 const baseEventSchema = z.object({
   ts_nanos: z.number(),
   src: z.string(),
@@ -76,6 +91,16 @@ export const streamEventSchema = z.discriminatedUnion('kind', [
     kind: z.literal('tcp_syn_ack'),
     ja4ts: z.string(),
   }),
+  baseEventSchema.extend({
+    kind: z.literal('ssh'),
+    role: z.enum(['client', 'server', 'unknown']),
+    banner: z.string(),
+    hassh: z.string().optional(),
+    hassh_raw: z.string().optional(),
+    hassh_server: z.string().optional(),
+    hassh_server_raw: z.string().optional(),
+    algorithms: sshAlgorithmsSchema,
+  }),
 ])
 
 export type StreamEvent = z.infer<typeof streamEventSchema>
@@ -112,7 +137,7 @@ export const liveMessageSchema = z.discriminatedUnion('type', [
 export type LiveMessage = z.infer<typeof liveMessageSchema>
 
 export type NamedFingerprint = {
-  kind: FpKind
+  kind: FpKind | 'hassh' | 'hassh_server'
   value: string
 }
 

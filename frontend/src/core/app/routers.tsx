@@ -31,6 +31,10 @@ const routes: RouteObject[] = [
         lazy: () => import('@/pages/hosts'),
       },
       {
+        path: ROUTES.DNS,
+        lazy: () => import('@/pages/dns'),
+      },
+      {
         path: ROUTES.ALERTS,
         lazy: () => import('@/pages/alerts'),
       },
@@ -41,6 +45,10 @@ const routes: RouteObject[] = [
       {
         path: ROUTES.INTEL,
         lazy: () => import('@/pages/intel'),
+      },
+      {
+        path: ROUTES.SENSOR,
+        lazy: () => import('@/pages/sensor'),
       },
     ],
   },

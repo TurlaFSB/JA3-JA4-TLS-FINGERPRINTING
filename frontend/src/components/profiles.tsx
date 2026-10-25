@@ -5,7 +5,8 @@
 
 import { useMemo, useState } from 'react'
 import type { LiveItem } from '@/api/hooks'
-import { decodeJa4, formatClock } from '@/api/types'
+import { decodeJa4 } from '@/api/types'
+import { useClock } from '@/core/lib/use-clock'
 import { VerdictBadge } from './atoms'
 import { cx } from './cx'
 import { CropFrame } from './marks'
@@ -33,6 +34,7 @@ function plural(count: number, word: string): string {
 }
 
 function Timeline({ times }: { times: number[] }): React.ReactElement {
+  const clock = useClock()
   const bars = timeline(times)
   const peak = Math.max(1, ...bars.map((bar) => bar.count))
   const width = 240
@@ -60,8 +62,8 @@ function Timeline({ times }: { times: number[] }): React.ReactElement {
         })}
       </svg>
       <figcaption>
-        <span>{formatClock(Math.min(...times))}</span>
-        <span>{formatClock(Math.max(...times))}</span>
+        <span>{clock(Math.min(...times))}</span>
+        <span>{clock(Math.max(...times))}</span>
       </figcaption>
     </figure>
   )
@@ -74,6 +76,7 @@ function FingerprintDetail({
   fp: FingerprintProfile
   onShow: (value: string) => void
 }): React.ReactElement {
+  const clock = useClock()
   const anatomy = decodeJa4(fp.ja4)
   return (
     <div className={styles.detail}>
@@ -94,9 +97,9 @@ function FingerprintDetail({
             <dt>connections</dt>
             <dd>{fp.connections.toLocaleString()}</dd>
             <dt>first</dt>
-            <dd>{formatClock(fp.firstNanos)}</dd>
+            <dd>{clock(fp.firstNanos)}</dd>
             <dt>last</dt>
-            <dd>{formatClock(fp.lastNanos)}</dd>
+            <dd>{clock(fp.lastNanos)}</dd>
             <dt>sources</dt>
             <dd>
               {topEntries(fp.sources, 4)
@@ -170,6 +173,7 @@ function DestinationDetail({
   dest: DestinationProfile
   onShow: (value: string) => void
 }): React.ReactElement {
+  const clock = useClock()
   return (
     <div className={styles.detail}>
       <div className={styles.actions}>
@@ -204,7 +208,7 @@ function DestinationDetail({
             <dt>connections</dt>
             <dd>{dest.connections.toLocaleString()}</dd>
             <dt>last</dt>
-            <dd>{formatClock(dest.lastNanos)}</dd>
+            <dd>{clock(dest.lastNanos)}</dd>
             <dt>sources</dt>
             <dd>{[...dest.sources].slice(0, 4).join(', ')}</dd>
           </dl>

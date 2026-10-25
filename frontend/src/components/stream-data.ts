@@ -45,9 +45,10 @@ const SERVER_SIDE: StreamEvent['kind'][] = [
 // Both directions of one connection share a key: server-side events are keyed
 // by their addresses reversed.
 export function connectionKey(event: StreamEvent): string {
-  return SERVER_SIDE.includes(event.kind)
-    ? `${event.dst}>${event.src}`
-    : `${event.src}>${event.dst}`
+  const serverSide =
+    SERVER_SIDE.includes(event.kind) ||
+    (event.kind === 'ssh' && event.role === 'server')
+  return serverSide ? `${event.dst}>${event.src}` : `${event.src}>${event.dst}`
 }
 
 function isFlow(item: LiveItem): item is LiveItem & { message: FlowMessage } {
@@ -267,6 +268,10 @@ export function explain(event: StreamEvent, conn?: Connection): string {
       return `${src} opened a TCP connection to ${dst}. The fingerprint describes the operating system's TCP settings.`
     case 'tcp_syn_ack':
       return `${src} accepted the TCP connection from ${dst}. The fingerprint describes the server's TCP settings.`
+    case 'ssh':
+      return event.role === 'server'
+        ? `${src} is an SSH server (${event.banner}). It offered its key exchange, cipher and MAC choices in the clear; HASSH hashes them.`
+        : `${src} opened an SSH connection to ${dst} (${event.banner}). Its key exchange, cipher and MAC offer is sent in the clear and is hashed as HASSH${event.role === 'unknown' ? '. The capture did not show which side opened the connection, so both hashes are given' : ''}.`
   }
 }
 

@@ -485,6 +485,11 @@
   color: $ash;
 }
 
+.name[data-dns] {
+  font-style: italic;
+  color: $dust;
+}
+
 .who {
   color: $thermal;
 }

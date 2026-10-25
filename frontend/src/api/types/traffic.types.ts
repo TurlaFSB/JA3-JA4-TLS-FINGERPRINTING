@@ -31,6 +31,7 @@ export const trafficFlowSchema = z.object({
   packets_up: z.number(),
   packets_down: z.number(),
   sni: z.string().nullable(),
+  dns_name: z.string().nullable().default(null),
   alpn: z.string().nullable(),
   ja4: z.string().nullable(),
   client_info: z

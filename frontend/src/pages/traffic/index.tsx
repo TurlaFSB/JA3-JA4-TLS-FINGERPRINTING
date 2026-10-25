@@ -21,6 +21,7 @@ import {
   matchesFlow,
   type ProtoFilter,
   type SortKey,
+  siteName,
   sortFlows,
 } from './traffic-data'
 
@@ -402,6 +403,7 @@ export function Component(): React.ReactElement {
             {shown.slice(0, SHOWN).map((flow) => {
               const key = `${flow.proto}-${flow.client}-${flow.server}`
               const expanded = open === key
+              const site = siteName(flow)
               const local =
                 flow.direction === 'inbound' ? flow.server : flow.client
               const remote =
@@ -429,8 +431,16 @@ export function Component(): React.ReactElement {
                       <span className={styles.to}>→</span>
                       <span className={styles.addr}>{remote}</span>
                     </span>
-                    <span className={styles.name} title={flow.sni ?? ''}>
-                      {flow.sni ?? ''}
+                    <span
+                      className={styles.name}
+                      title={
+                        site.viaDns
+                          ? `${site.name} (from a DNS answer, not the handshake)`
+                          : site.name
+                      }
+                      data-dns={site.viaDns || undefined}
+                    >
+                      {site.name}
                     </span>
                     <span className={styles.who} title={identity(flow)}>
                       {identity(flow)}

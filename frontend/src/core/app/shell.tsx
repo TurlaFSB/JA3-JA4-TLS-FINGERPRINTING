@@ -10,16 +10,23 @@ import { useMeta, useStats } from '@/api/hooks'
 import { describeSource } from '@/api/types'
 import { cx, RegMark } from '@/components'
 import { ROUTES } from '@/config'
-import { resolveTheme, useTheme, useUIStore } from '@/core/lib/shell.ui.store'
+import {
+  resolveTheme,
+  useTextSize,
+  useTheme,
+  useUIStore,
+} from '@/core/lib/shell.ui.store'
 import styles from './shell.module.scss'
 
 const NAV = [
   { to: ROUTES.SCOPE, label: 'scope' },
   { to: ROUTES.TRAFFIC, label: 'traffic' },
   { to: ROUTES.HOSTS, label: 'hosts' },
+  { to: ROUTES.DNS, label: 'dns' },
   { to: ROUTES.ALERTS, label: 'alerts' },
   { to: ROUTES.LIBRARY, label: 'library' },
   { to: ROUTES.INTEL, label: 'intel' },
+  { to: ROUTES.SENSOR, label: 'sensor' },
 ]
 
 function pad(value: number): string {
@@ -118,10 +125,19 @@ const TITLES: Record<string, string> = {
   [ROUTES.ALERTS]: 'Alerts',
   [ROUTES.LIBRARY]: 'Capture library',
   [ROUTES.INTEL]: 'Intelligence',
+  [ROUTES.DNS]: 'DNS',
+  [ROUTES.SENSOR]: 'Sensor',
 }
+
+// Text size scales every rem-based size on the page at once.
+const TEXT_SCALE = { small: '87.5%', normal: '100%', large: '115%' } as const
 
 export function Shell(): React.ReactElement {
   const { pathname } = useLocation()
+  const textSize = useTextSize()
+  useEffect(() => {
+    document.documentElement.style.fontSize = TEXT_SCALE[textSize]
+  }, [textSize])
   const { data: stats } = useStats()
   // Only alerts above informational count toward the badge: a new fingerprint
   // is worth knowing about, not worth a red number.

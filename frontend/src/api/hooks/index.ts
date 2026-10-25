@@ -21,11 +21,15 @@ import {
   type CatalogEntry,
   captureViewSchema,
   catalogEntrySchema,
+  type DnsView,
+  dnsViewSchema,
   type FpKind,
   type HostProfile,
   type HostSummary,
   hostProfileSchema,
   hostSummarySchema,
+  type InterfacesView,
+  interfacesViewSchema,
   isLiveMessage,
   type LibraryView,
   type LiveMessage,
@@ -316,6 +320,38 @@ export function useCapture(): UseQueryResult<CaptureView> {
     queryKey: QUERY_KEYS.CAPTURE,
     queryFn: getCapture,
     refetchInterval: 3000,
+    retry: QUERY_CONFIG.RETRY.NONE,
+  })
+}
+
+async function getDns(): Promise<DnsView> {
+  const { data } = await apiClient.get(API_ENDPOINTS.DNS, {
+    params: { limit: 100 },
+  })
+  return dnsViewSchema.parse(data)
+}
+
+// Plain DNS the sensor has heard: which names are asked for, by whom, and
+// which fail.
+export function useDns(): UseQueryResult<DnsView> {
+  return useQuery({
+    queryKey: QUERY_KEYS.DNS,
+    queryFn: getDns,
+    refetchInterval: 3000,
+    retry: QUERY_CONFIG.RETRY.NONE,
+  })
+}
+
+async function getInterfaces(): Promise<InterfacesView> {
+  const { data } = await apiClient.get(API_ENDPOINTS.INTERFACES)
+  return interfacesViewSchema.parse(data)
+}
+
+export function useInterfaces(): UseQueryResult<InterfacesView> {
+  return useQuery({
+    queryKey: QUERY_KEYS.INTERFACES,
+    queryFn: getInterfaces,
+    staleTime: 30_000,
     retry: QUERY_CONFIG.RETRY.NONE,
   })
 }

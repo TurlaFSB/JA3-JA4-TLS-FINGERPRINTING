@@ -1,0 +1,283 @@
+// ===================
+// © Pranav Verma | 2026
+// dns.module.scss
+// ===================
+
+@use 'index' as *;
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $space-5;
+  padding: clamp($space-4, 3vw, $space-8);
+  max-width: 1640px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.masthead {
+  padding-bottom: $space-4;
+  border-bottom: 1px solid $line;
+}
+
+.over {
+  display: block;
+  margin-bottom: $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: $fire;
+}
+
+.title {
+  margin: 0 0 $space-2;
+  font-family: $font-display;
+  font-size: clamp(1.8rem, 3.2vw, 2.4rem);
+  line-height: 1;
+  color: $bone;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.sub {
+  max-width: 72ch;
+  margin: 0;
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  color: $ash;
+}
+
+.notice {
+  margin: 0;
+  padding: $space-3;
+  font-size: $font-size-xs;
+  color: $paper;
+  border-left: 2px solid $magma;
+  background: $ink-800;
+
+  a {
+    color: $volt;
+  }
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $space-2;
+
+  @include breakpoint-down('md') {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: $space-1;
+  padding: $space-3 $space-4;
+  background: linear-gradient(180deg, $ink-900, $ink-1000);
+  border: 1px solid $line;
+  border-left: 3px solid $line-strong;
+
+  &[data-bad] {
+    border-left-color: $magma;
+  }
+}
+
+.value {
+  font-family: $font-display;
+  font-size: $font-size-2xl;
+  line-height: 1;
+  color: $bone;
+  font-feature-settings: 'tnum' 1;
+}
+
+.label {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $ash;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $space-2;
+  align-items: center;
+}
+
+.search {
+  flex: 1;
+  min-width: 220px;
+  height: 28px;
+  padding: 0 $space-2;
+  font-family: $font-mono;
+  font-size: $font-size-2xs;
+  color: $bone;
+  background: $ink-1000;
+  border: 1px solid $line;
+
+  &::placeholder {
+    color: $dust;
+  }
+
+  &:focus-visible {
+    border-color: $fire;
+    outline: none;
+  }
+}
+
+.chip {
+  height: 28px;
+  padding: 0 $space-3;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $ash;
+  background: transparent;
+  border: 1px solid $line;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    color: $bone;
+    border-color: $line-strong;
+    outline: none;
+  }
+
+  &[data-on] {
+    color: $ink-1000;
+    background: $fire;
+    border-color: $fire;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  gap: $space-4;
+  align-items: start;
+
+  @include breakpoint-down('lg') {
+    grid-template-columns: 1fr;
+  }
+}
+
+.wide {
+  min-width: 0;
+}
+
+.table {
+  display: flex;
+  flex-direction: column;
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+.head,
+.row {
+  display: grid;
+  align-items: center;
+  gap: $space-3;
+  padding: 5px $space-3;
+  font-size: $font-size-2xs;
+
+  &[data-cols='names'] {
+    grid-template-columns: minmax(180px, 2.2fr) 56px 56px 84px minmax(100px, 1.4fr);
+  }
+
+  &[data-cols='clients'] {
+    grid-template-columns: minmax(110px, 1.4fr) 70px 90px;
+  }
+
+  &[data-cols='recent'] {
+    grid-template-columns: 92px minmax(100px, 0.9fr) minmax(160px, 2fr) 56px minmax(120px, 1.6fr);
+
+    @include breakpoint-down('md') {
+      grid-template-columns: 80px minmax(0, 1fr) 50px;
+
+      > :nth-child(2),
+      > :nth-child(5) {
+        display: none;
+      }
+    }
+  }
+}
+
+.head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $dust;
+  background: $ink-900;
+  border-bottom: 1px solid $line-faint;
+}
+
+.row {
+  border-bottom: 1px solid $line-faint;
+  color: $paper;
+  font-family: $font-mono;
+}
+
+.num {
+  text-align: right;
+  font-feature-settings: 'tnum' 1;
+
+  &[data-bad] {
+    color: $magma;
+  }
+}
+
+.name,
+.addrs {
+  @include truncate;
+
+  color: $ash;
+
+  &[data-bad] {
+    color: $magma;
+  }
+}
+
+.name {
+  color: $bone;
+}
+
+.time {
+  color: $dust;
+}
+
+.flag {
+  margin-left: $space-2;
+  padding: 0 4px;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $fire-soft;
+  border: 1px solid $fire-soft;
+}
+
+.link {
+  color: $volt;
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+.empty {
+  margin: 0;
+  padding: $space-4;
+  font-size: $font-size-xs;
+  color: $dust;
+}

@@ -20,6 +20,17 @@ export function flowBytes(flow: TrafficFlow): number {
   return flow.bytes_up + flow.bytes_down
 }
 
+// The name to show for a conversation's server: the one its handshake asked
+// for, else the one DNS gave its address.
+export function siteName(flow: TrafficFlow): {
+  name: string
+  viaDns: boolean
+} {
+  if (flow.sni) return { name: flow.sni, viaDns: false }
+  if (flow.dns_name) return { name: flow.dns_name, viaDns: true }
+  return { name: '', viaDns: false }
+}
+
 export function identity(flow: TrafficFlow): string {
   return flow.client_info?.known_as ?? flow.client_info?.family ?? ''
 }
@@ -29,13 +40,14 @@ export function matchesFlow(flow: TrafficFlow, filter: FlowFilter): boolean {
     return false
   }
   if (filter.proto !== 'all' && flow.proto !== filter.proto) return false
-  if (filter.namedOnly && !flow.sni) return false
+  if (filter.namedOnly && !flow.sni && !flow.dns_name) return false
   const needle = filter.query.trim().toLowerCase()
   if (needle === '') return true
   const haystack = [
     flow.client,
     flow.server,
     flow.sni ?? '',
+    flow.dns_name ?? '',
     flow.service ?? '',
     flow.ja4 ?? '',
     identity(flow),

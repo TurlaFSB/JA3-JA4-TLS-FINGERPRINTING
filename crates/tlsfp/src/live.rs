@@ -526,15 +526,7 @@ fn resolve_interface(name: &str) -> String {
             _ => name.to_owned(),
         };
     }
-    // Up, not loopback, not the all-interfaces pseudo-device, not a virtual
-    // adapter, and holding an address.
-    let usable = devices.into_iter().find(|d| {
-        d.flags.is_up()
-            && !d.flags.is_loopback()
-            && d.name != "any"
-            && !d.addresses.is_empty()
-            && !is_virtual(d.desc.as_deref())
-    });
+    let usable = devices.into_iter().find(is_auto_candidate);
     let device = usable.or_else(|| Device::lookup().ok().flatten());
     match device {
         Some(device) => {
@@ -543,6 +535,59 @@ fn resolve_interface(name: &str) -> String {
         }
         None => name.to_owned(),
     }
+}
+
+/// What `--live auto` accepts: up, not loopback, not the all-interfaces
+/// pseudo-device, not a virtual adapter, and holding an address.
+fn is_auto_candidate(device: &Device) -> bool {
+    device.flags.is_up()
+        && !device.flags.is_loopback()
+        && device.name != "any"
+        && !device.addresses.is_empty()
+        && !is_virtual(device.desc.as_deref())
+}
+
+/// One capturable interface, as the dashboard lists it.
+#[derive(Debug, serde::Serialize)]
+pub struct InterfaceInfo {
+    pub name: String,
+    pub description: Option<String>,
+    pub up: bool,
+    /// `loopback`, `pseudo` (the all-interfaces device), `virtual` (a VMware,
+    /// Hyper-V or VPN adapter, judged by its description) or `physical`.
+    pub kind: &'static str,
+    pub addresses: Vec<String>,
+    /// The one `--live auto` would pick.
+    pub auto: bool,
+}
+
+/// Lists the interfaces libpcap can see, marking the one `auto` would choose.
+pub fn list_interfaces() -> Result<Vec<InterfaceInfo>, String> {
+    crate::npcap::ensure()?;
+    let devices = Device::list().map_err(|error| error.to_string())?;
+    let auto = devices
+        .iter()
+        .find(|d| is_auto_candidate(d))
+        .map(|d| d.name.clone());
+    Ok(devices
+        .into_iter()
+        .map(|d| InterfaceInfo {
+            auto: auto.as_deref() == Some(d.name.as_str()),
+            up: d.flags.is_up(),
+            kind: if d.flags.is_loopback() {
+                "loopback"
+            } else if d.name == "any" {
+                "pseudo"
+            } else if is_virtual(d.desc.as_deref()) {
+                "virtual"
+            } else {
+                "physical"
+            },
+            addresses: d.addresses.iter().map(|a| a.addr.to_string()).collect(),
+            description: d.desc,
+            name: d.name,
+        })
+        .collect())
 }
 
 /// The networks one interface (or, for `any`, every real interface) is on.

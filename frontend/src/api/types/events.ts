@@ -21,6 +21,10 @@ export function fingerprintOf(event: StreamEvent): NamedFingerprint {
       return { kind: 'ja4t', value: event.ja4t }
     case 'tcp_syn_ack':
       return { kind: 'ja4ts', value: event.ja4ts }
+    case 'ssh':
+      return event.hassh
+        ? { kind: 'hassh', value: event.hassh }
+        : { kind: 'hassh_server', value: event.hassh_server ?? event.banner }
   }
 }
 
@@ -49,12 +53,14 @@ export function splitAddr(addr: string): { host: string; port: string } {
   return { host: addr.slice(0, colon), port: addr.slice(colon + 1) }
 }
 
-export function formatClock(tsNanos: number): string {
+export function formatClock(tsNanos: number, utc = false): string {
   const date = new Date(tsNanos / 1_000_000)
   const pad = (n: number, width = 2): string => String(n).padStart(width, '0')
-  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(
-    date.getSeconds()
-  )}.${pad(date.getMilliseconds(), 3)}`
+  const h = utc ? date.getUTCHours() : date.getHours()
+  const m = utc ? date.getUTCMinutes() : date.getMinutes()
+  const s = utc ? date.getUTCSeconds() : date.getSeconds()
+  const ms = utc ? date.getUTCMilliseconds() : date.getMilliseconds()
+  return `${pad(h)}:${pad(m)}:${pad(s)}.${pad(ms, 3)}`
 }
 
 export interface Ja4Part {

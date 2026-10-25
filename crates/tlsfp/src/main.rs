@@ -4,6 +4,7 @@
 mod case_report;
 mod cli;
 mod deliver;
+mod dnsbook;
 mod engine;
 mod extras;
 mod library;
