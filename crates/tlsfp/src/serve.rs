@@ -232,6 +232,8 @@ struct Meta {
     source: SourceMeta,
     started_unix_ms: u64,
     location: Option<String>,
+    /// The name of the computer this server runs on.
+    hostname: Option<String>,
 }
 
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
@@ -276,6 +278,7 @@ impl Meta {
             source,
             started_unix_ms,
             location,
+            hostname: crate::live::local_hostname(),
         }
     }
 }
@@ -1720,6 +1723,10 @@ fn spawn_source(
                 "treating these networks as this sensor's own, besides the private ranges"
             );
             feed.traffic.with(|table| table.set_local_networks(local));
+            if let Some(name) = crate::live::local_hostname() {
+                let own = source.own_addresses();
+                feed.traffic.with(|table| table.set_own(name, own));
+            }
             let db = config.db.clone();
             let stop = Arc::clone(&shutdown);
             let interface = interface.clone();

@@ -22,6 +22,8 @@ const MAX_CLIENTS: usize = 5_000;
 const MAX_RECENT: usize = 500;
 /// Clients remembered per name, enough to say "several machines ask for this".
 const MAX_CLIENTS_PER_NAME: usize = 16;
+const MAX_PENDING: usize = 4_096;
+const MAX_RESOLVERS: usize = 256;
 
 #[derive(Default)]
 struct NameStat {
@@ -29,9 +31,25 @@ struct NameStat {
     answered: u64,
     nxdomain: u64,
     failures: u64,
+    first_ts: u64,
     last_ts: u64,
     clients: HashSet<IpAddr>,
+    resolvers: Vec<String>,
+    qtypes: Vec<String>,
+    /// What the name resolved to, most recent last.
     addresses: Vec<String>,
+    reverse_of: Option<String>,
+    latency_total_ms: f64,
+    latency_count: u64,
+    ttl: Option<u32>,
+}
+
+/// One answer record as shown.
+#[derive(Debug, Clone, Serialize)]
+pub struct AnswerRow {
+    pub rtype: String,
+    pub data: String,
+    pub ttl: u32,
 }
 
 /// One lookup as shown in the recent list.
@@ -44,20 +62,39 @@ pub struct Lookup {
     pub qtype: String,
     /// Empty for a query that has no response yet.
     pub rcode: String,
-    pub answers: Vec<String>,
+    pub answers: Vec<AnswerRow>,
+    /// For a reverse lookup, the address it asks about.
+    pub reverse_of: Option<String>,
+    /// Milliseconds from the query to this response, when both were seen.
+    pub latency_ms: Option<f64>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct NameRow {
     pub name: String,
+    /// `internet`, `local` (a name that only makes sense inside a network:
+    /// `.local`, `.lan`, a single label) or `reverse` (an address looked up).
+    pub kind: &'static str,
+    pub reverse_of: Option<String>,
     pub queries: u64,
     pub answered: u64,
     pub nxdomain: u64,
     pub failures: u64,
     pub clients: usize,
+    pub first_ts: u64,
     pub last_ts: u64,
+    /// The record types asked for.
+    pub qtypes: Vec<String>,
+    /// The DNS servers that were asked.
+    pub resolvers: Vec<String>,
     /// Addresses the name resolved to, most recent last.
     pub addresses: Vec<String>,
+    /// Average milliseconds to answer.
+    pub latency_ms: Option<f64>,
+    pub ttl: Option<u32>,
+    /// The resolver answered with an unroutable address (0.0.0.0 or ::), the
+    /// way a blocklist does.
+    pub blocked: bool,
     /// The first label is long and looks random. A hint, not a verdict: content
     /// networks and trackers generate such names legitimately.
     pub random_looking: bool,
@@ -68,6 +105,17 @@ pub struct ClientRow {
     pub client: String,
     pub queries: u64,
     pub nxdomain: u64,
+    /// The DNS servers this host asked.
+    pub resolvers: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ResolverRow {
+    pub resolver: String,
+    pub queries: u64,
+    pub nxdomain: u64,
+    pub latency_ms: Option<f64>,
+    pub clients: usize,
 }
 
 #[derive(Debug, Default, Serialize, Clone, Copy)]
@@ -76,6 +124,9 @@ pub struct DnsTotals {
     pub responses: u64,
     pub nxdomain: u64,
     pub failures: u64,
+    /// When the first message was seen, so "so far" has a start.
+    pub since_ts: u64,
+    pub last_ts: u64,
 }
 
 #[derive(Debug, Serialize)]
@@ -84,15 +135,67 @@ pub struct DnsView {
     pub top_names: Vec<NameRow>,
     pub top_failing: Vec<NameRow>,
     pub top_clients: Vec<ClientRow>,
+    pub resolvers: Vec<ResolverRow>,
     pub recent: Vec<Lookup>,
+}
+
+#[derive(Default)]
+struct ClientStat {
+    queries: u64,
+    nxdomain: u64,
+    resolvers: Vec<String>,
+}
+
+#[derive(Default)]
+struct ResolverStat {
+    queries: u64,
+    nxdomain: u64,
+    latency_total_ms: f64,
+    latency_count: u64,
+    clients: HashSet<IpAddr>,
 }
 
 #[derive(Default)]
 pub struct DnsBook {
     names: HashMap<String, NameStat>,
-    clients: HashMap<IpAddr, (u64, u64)>,
+    clients: HashMap<IpAddr, ClientStat>,
+    resolvers: HashMap<String, ResolverStat>,
+    /// Queries waiting for their response, to time the answer.
+    pending: HashMap<(IpAddr, u16, String), u64>,
     recent: VecDeque<Lookup>,
     totals: DnsTotals,
+}
+
+/// Names that only mean something inside a network.
+const LOCAL_SUFFIXES: [&str; 9] = [
+    ".local",
+    ".localdomain",
+    ".lan",
+    ".home",
+    ".internal",
+    ".corp",
+    ".intranet",
+    ".home.arpa",
+    ".localhost",
+];
+
+fn kind_of(name: &str, reverse_of: Option<&String>) -> &'static str {
+    if reverse_of.is_some() || name.rsplit('.').next() == Some("arpa") {
+        "reverse"
+    } else if !name.contains('.') || LOCAL_SUFFIXES.iter().any(|s| name.ends_with(s)) {
+        "local"
+    } else {
+        "internet"
+    }
+}
+
+fn push_unique(list: &mut Vec<String>, value: &str, cap: usize) {
+    if !value.is_empty() && !list.iter().any(|v| v == value) {
+        if list.len() >= cap {
+            list.remove(0);
+        }
+        list.push(value.to_owned());
+    }
 }
 
 /// Shannon entropy of the characters, in bits each.
@@ -135,6 +238,11 @@ impl DnsBook {
         } else {
             (src, dst)
         };
+        let resolver_text = resolver.ip().to_string();
+        if self.totals.since_ts == 0 || ts_nanos < self.totals.since_ts {
+            self.totals.since_ts = ts_nanos;
+        }
+        self.totals.last_ts = self.totals.last_ts.max(ts_nanos);
         if message.response {
             self.totals.responses += 1;
         } else {
@@ -149,39 +257,33 @@ impl DnsBook {
             self.totals.failures += 1;
         }
 
-        if self.names.len() >= MAX_NAMES && !self.names.contains_key(&message.name) {
-            self.drop_stalest_names();
-        }
-        let stat = self.names.entry(message.name.clone()).or_default();
-        stat.last_ts = stat.last_ts.max(ts_nanos);
-        if stat.clients.len() < MAX_CLIENTS_PER_NAME {
-            stat.clients.insert(client.ip());
-        }
-        if message.response {
-            stat.answered += 1;
-            stat.nxdomain += u64::from(nx);
-            stat.failures += u64::from(failed);
-            for answer in &message.answers {
-                let is_address = answer.rtype == "A" || answer.rtype == "AAAA";
-                if is_address && !stat.addresses.contains(&answer.data) {
-                    if stat.addresses.len() >= 8 {
-                        stat.addresses.remove(0);
-                    }
-                    stat.addresses.push(answer.data.clone());
-                }
-            }
+        // Time the answer: a response closes the query with the same id, name
+        // and asking host.
+        let pending_key = (client.ip(), message.id, message.name.clone());
+        let latency_ms = if message.response {
+            self.pending.remove(&pending_key).map(|asked| {
+                #[allow(clippy::cast_precision_loss)]
+                let ms = ts_nanos.saturating_sub(asked) as f64 / 1e6;
+                ms
+            })
         } else {
-            stat.queries += 1;
-        }
+            if self.pending.len() >= MAX_PENDING {
+                self.pending.clear();
+            }
+            self.pending.insert(pending_key, ts_nanos);
+            None
+        };
 
-        if self.clients.len() >= MAX_CLIENTS && !self.clients.contains_key(&client.ip()) {
-            self.clients.clear();
-        }
-        let who = self.clients.entry(client.ip()).or_default();
-        if !message.response {
-            who.0 += 1;
-        }
-        who.1 += u64::from(nx);
+        let seen = Seen {
+            ts_nanos,
+            client: client.ip(),
+            resolver: resolver_text.clone(),
+            nx,
+            failed,
+            latency_ms,
+        };
+        self.update_name(message, &seen);
+        self.update_client_and_resolver(message, &seen);
 
         if self.recent.len() >= MAX_RECENT {
             self.recent.pop_front();
@@ -189,16 +291,21 @@ impl DnsBook {
         self.recent.push_back(Lookup {
             ts_nanos,
             client: client.ip().to_string(),
-            resolver: resolver.ip().to_string(),
+            resolver: resolver_text,
             name: message.name.clone(),
             qtype: message.qtype.clone(),
             rcode: message.rcode.clone(),
             answers: message
                 .answers
                 .iter()
-                .filter(|a| !a.data.is_empty())
-                .map(|a| a.data.clone())
+                .map(|a| AnswerRow {
+                    rtype: a.rtype.clone(),
+                    data: a.data.clone(),
+                    ttl: a.ttl,
+                })
                 .collect(),
+            reverse_of: message.reverse_of.clone(),
+            latency_ms,
         });
     }
 
@@ -219,25 +326,30 @@ impl DnsBook {
     pub fn view(&self, top: usize) -> DnsView {
         let row = |(name, s): (&String, &NameStat)| NameRow {
             name: name.clone(),
+            kind: kind_of(name, s.reverse_of.as_ref()),
+            reverse_of: s.reverse_of.clone(),
             queries: s.queries.max(s.answered),
             answered: s.answered,
             nxdomain: s.nxdomain,
             failures: s.failures,
             clients: s.clients.len(),
+            first_ts: s.first_ts,
             last_ts: s.last_ts,
+            qtypes: s.qtypes.clone(),
+            resolvers: s.resolvers.clone(),
             addresses: s.addresses.clone(),
+            latency_ms: average(s.latency_total_ms, s.latency_count),
+            ttl: s.ttl,
+            blocked: s.addresses.iter().any(|a| a == "0.0.0.0" || a == "::"),
             random_looking: looks_random(name),
         };
         let mut names: Vec<NameRow> = self.names.iter().map(row).collect();
         names.sort_by(|a, b| b.queries.cmp(&a.queries).then_with(|| a.name.cmp(&b.name)));
-        let mut failing: Vec<NameRow> = names
+        let mut failing: Vec<NameRow> = self
+            .names
             .iter()
-            .filter(|n| n.nxdomain + n.failures > 0)
-            .map(|n| NameRow {
-                name: n.name.clone(),
-                addresses: Vec::new(),
-                ..*n
-            })
+            .filter(|(_, s)| s.nxdomain + s.failures > 0)
+            .map(row)
             .collect();
         failing.sort_by(|a, b| {
             (b.nxdomain + b.failures)
@@ -250,10 +362,11 @@ impl DnsBook {
         let mut clients: Vec<ClientRow> = self
             .clients
             .iter()
-            .map(|(ip, (queries, nxdomain))| ClientRow {
+            .map(|(ip, s)| ClientRow {
                 client: ip.to_string(),
-                queries: *queries,
-                nxdomain: *nxdomain,
+                queries: s.queries,
+                nxdomain: s.nxdomain,
+                resolvers: s.resolvers.clone(),
             })
             .collect();
         clients.sort_by(|a, b| {
@@ -263,11 +376,29 @@ impl DnsBook {
         });
         clients.truncate(top);
 
+        let mut resolvers: Vec<ResolverRow> = self
+            .resolvers
+            .iter()
+            .map(|(resolver, s)| ResolverRow {
+                resolver: resolver.clone(),
+                queries: s.queries,
+                nxdomain: s.nxdomain,
+                latency_ms: average(s.latency_total_ms, s.latency_count),
+                clients: s.clients.len(),
+            })
+            .collect();
+        resolvers.sort_by(|a, b| {
+            b.queries
+                .cmp(&a.queries)
+                .then_with(|| a.resolver.cmp(&b.resolver))
+        });
+
         DnsView {
             totals: self.totals,
             top_names: names,
             top_failing: failing,
             top_clients: clients,
+            resolvers,
             recent: self
                 .recent
                 .iter()
@@ -279,6 +410,88 @@ impl DnsBook {
     }
 }
 
+/// What one DNS message adds to the books, beyond the message itself.
+struct Seen {
+    ts_nanos: u64,
+    client: IpAddr,
+    resolver: String,
+    nx: bool,
+    failed: bool,
+    latency_ms: Option<f64>,
+}
+
+impl DnsBook {
+    fn update_name(&mut self, message: &DnsMessage, seen: &Seen) {
+        if self.names.len() >= MAX_NAMES && !self.names.contains_key(&message.name) {
+            self.drop_stalest_names();
+        }
+        let stat = self.names.entry(message.name.clone()).or_default();
+        if stat.first_ts == 0 {
+            stat.first_ts = seen.ts_nanos;
+        }
+        stat.first_ts = stat.first_ts.min(seen.ts_nanos);
+        stat.last_ts = stat.last_ts.max(seen.ts_nanos);
+        if stat.clients.len() < MAX_CLIENTS_PER_NAME {
+            stat.clients.insert(seen.client);
+        }
+        push_unique(&mut stat.resolvers, &seen.resolver, 8);
+        push_unique(&mut stat.qtypes, &message.qtype, 8);
+        if stat.reverse_of.is_none() {
+            stat.reverse_of.clone_from(&message.reverse_of);
+        }
+        if message.response {
+            stat.answered += 1;
+            stat.nxdomain += u64::from(seen.nx);
+            stat.failures += u64::from(seen.failed);
+            for answer in &message.answers {
+                if answer.rtype == "A" || answer.rtype == "AAAA" || answer.rtype == "PTR" {
+                    push_unique(&mut stat.addresses, &answer.data, 8);
+                }
+                stat.ttl = Some(answer.ttl);
+            }
+            if let Some(ms) = seen.latency_ms {
+                stat.latency_total_ms += ms;
+                stat.latency_count += 1;
+            }
+        } else {
+            stat.queries += 1;
+        }
+    }
+
+    fn update_client_and_resolver(&mut self, message: &DnsMessage, seen: &Seen) {
+        if self.clients.len() >= MAX_CLIENTS && !self.clients.contains_key(&seen.client) {
+            self.clients.clear();
+        }
+        let who = self.clients.entry(seen.client).or_default();
+        if !message.response {
+            who.queries += 1;
+        }
+        who.nxdomain += u64::from(seen.nx);
+        push_unique(&mut who.resolvers, &seen.resolver, 4);
+
+        if self.resolvers.len() >= MAX_RESOLVERS && !self.resolvers.contains_key(&seen.resolver) {
+            self.resolvers.clear();
+        }
+        let server = self.resolvers.entry(seen.resolver.clone()).or_default();
+        if !message.response {
+            server.queries += 1;
+        }
+        server.nxdomain += u64::from(seen.nx);
+        if let Some(ms) = seen.latency_ms {
+            server.latency_total_ms += ms;
+            server.latency_count += 1;
+        }
+        if server.clients.len() < MAX_CLIENTS_PER_NAME {
+            server.clients.insert(seen.client);
+        }
+    }
+}
+
+#[allow(clippy::cast_precision_loss)]
+fn average(total_ms: f64, count: u64) -> Option<f64> {
+    (count > 0).then(|| total_ms / count as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -286,6 +499,7 @@ mod tests {
 
     fn msg(name: &str, response: bool, rcode: &str, answers: &[&str]) -> DnsMessage {
         DnsMessage {
+            reverse_of: None,
             id: 1,
             response,
             name: name.to_owned(),

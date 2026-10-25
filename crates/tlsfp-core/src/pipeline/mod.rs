@@ -33,7 +33,7 @@ use crate::pipeline::event::{FingerprintEvent, StreamEvent};
 use crate::pipeline::flow::{FlowKey, PushOutcome, ReassemblyLimits, StreamReassembler};
 use crate::pipeline::source::{PacketSource, RawFrame, SourceError};
 use crate::pipeline::tls::StreamProtocol;
-use crate::pipeline::traffic::{HelloNote, Proto, TcpBits, TrafficHandle};
+use crate::pipeline::traffic::{ExtraNote, HelloNote, Proto, TcpBits, TrafficHandle};
 use crate::quic::{
     ClientHelloState, CryptoAssembler, InitialKeys, InitialPacket, walk_crypto_frames,
 };
@@ -247,6 +247,42 @@ impl QuicFlow {
     }
 }
 
+/// What a server hello, an HTTP request or an SSH hello says about the
+/// conversation that carried it.
+fn extra_note(event: &FingerprintEvent) -> Option<ExtraNote> {
+    match &event.event {
+        StreamEvent::ServerHello { ja4s, detail, .. } => {
+            let detail = detail.as_ref()?;
+            Some(ExtraNote::Server {
+                src: event.src,
+                dst: event.dst,
+                version: detail.version.clone(),
+                cipher: detail.cipher.name.clone(),
+                ja4s: ja4s.hash.clone(),
+            })
+        }
+        StreamEvent::HttpRequest {
+            method,
+            host,
+            user_agent,
+            ..
+        } => Some(ExtraNote::Http {
+            src: event.src,
+            dst: event.dst,
+            method: method.clone(),
+            host: host.clone(),
+            user_agent: user_agent.clone(),
+        }),
+        StreamEvent::Ssh(hello) => Some(ExtraNote::Ssh {
+            src: event.src,
+            dst: event.dst,
+            banner: hello.banner.clone(),
+            hassh: hello.hassh.clone().or_else(|| hello.hassh_server.clone()),
+        }),
+        _ => None,
+    }
+}
+
 /// The passive fingerprinting engine.
 ///
 /// Feed it frames, take events out through the sink closure. The pipeline is
@@ -319,6 +355,7 @@ impl Pipeline {
         // What a client hello reveals is attached to its conversation after the
         // packet is handled, so the traffic table is locked once per frame.
         let mut note: Option<HelloNote> = None;
+        let mut extras: Vec<ExtraNote> = Vec::new();
         let tracking = self.traffic.is_some();
         let mut tap = |event: FingerprintEvent| {
             if tracking {
@@ -337,6 +374,9 @@ impl Pipeline {
                         ja4: ja4.hash.clone(),
                         ja4_raw: ja4.raw.clone(),
                     });
+                }
+                if let Some(extra) = extra_note(&event) {
+                    extras.push(extra);
                 }
             }
             sink(event);
@@ -394,6 +434,13 @@ impl Pipeline {
 
         if let (Some(handle), Some(note)) = (&self.traffic, note) {
             handle.with(|t| t.annotate(&note));
+        }
+        if let (Some(handle), false) = (&self.traffic, extras.is_empty()) {
+            handle.with(|t| {
+                for extra in &extras {
+                    t.annotate_extra(extra);
+                }
+            });
         }
     }
 
@@ -539,6 +586,20 @@ impl Pipeline {
                     .collect();
                 if !addresses.is_empty() {
                     handle.with(|t| t.note_dns(&message.name, &addresses));
+                }
+                // A reverse lookup's answer is the name the address has.
+                if let Some(ip) = message
+                    .reverse_of
+                    .as_deref()
+                    .and_then(|text| text.parse::<std::net::IpAddr>().ok())
+                {
+                    if let Some(host) = message
+                        .answers
+                        .iter()
+                        .find(|a| a.rtype == "PTR" && !a.data.is_empty())
+                    {
+                        handle.with(|t| t.note_reverse(ip, &host.data));
+                    }
                 }
             }
         }

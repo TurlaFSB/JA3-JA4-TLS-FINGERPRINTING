@@ -216,6 +216,7 @@ pub struct LiveSource {
     staged: CapturedFrame,
     link_type: i32,
     local: Vec<Network>,
+    addresses: Vec<std::net::IpAddr>,
     stop: Arc<AtomicBool>,
     failure: Arc<OnceLock<String>>,
     kernel: KernelStats,
@@ -273,6 +274,7 @@ impl LiveSource {
             },
             link_type,
             local: interface_networks(interface),
+            addresses: interface_addresses(interface),
             stop,
             failure,
             kernel,
@@ -294,6 +296,12 @@ impl LiveSource {
     #[must_use]
     pub fn kernel_stats(&self) -> KernelStats {
         self.kernel.clone()
+    }
+
+    /// The addresses of the capture interface itself.
+    #[must_use]
+    pub fn own_addresses(&self) -> Vec<std::net::IpAddr> {
+        self.addresses.clone()
     }
 
     /// Returns a handle that requests a graceful stop of the capture.
@@ -621,6 +629,41 @@ fn interface_networks(name: &str) -> Vec<Network> {
     out
 }
 
+/// The addresses of one interface (or, for `any`, every real interface).
+fn interface_addresses(name: &str) -> Vec<std::net::IpAddr> {
+    Device::list()
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|device| {
+            if name == "any" {
+                !device.flags.is_loopback() && device.flags.is_up()
+            } else {
+                device.name == name
+            }
+        })
+        .flat_map(|device| device.addresses.into_iter().map(|a| a.addr))
+        .collect()
+}
+
+/// This computer's name, from the environment or the operating system's own
+/// record of it. `None` when neither says.
+#[must_use]
+pub fn local_hostname() -> Option<String> {
+    let from_env = ["COMPUTERNAME", "HOSTNAME"]
+        .iter()
+        .find_map(|key| std::env::var(key).ok());
+    let text = from_env
+        .or_else(|| std::fs::read_to_string("/proc/sys/kernel/hostname").ok())
+        .or_else(|| std::fs::read_to_string("/etc/hostname").ok())?;
+    let name: String = text
+        .trim()
+        .chars()
+        .filter(char::is_ascii_graphic)
+        .take(63)
+        .collect();
+    (!name.is_empty()).then_some(name)
+}
+
 /// Adapters that exist to carry traffic between virtual machines, tunnels and
 /// loopback, which a person looking at their own traffic does not mean.
 fn is_virtual(description: Option<&str>) -> bool {
@@ -732,6 +775,7 @@ mod tests {
             },
             link_type: 1,
             local: Vec::new(),
+            addresses: Vec::new(),
             stop: Arc::new(AtomicBool::new(false)),
             failure,
             kernel: super::KernelStats::default(),

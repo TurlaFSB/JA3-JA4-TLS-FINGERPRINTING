@@ -53,6 +53,50 @@ pub struct DnsMessage {
     /// Response code (`NOERROR`, `NXDOMAIN`, `SERVFAIL`, ...); empty for a query.
     pub rcode: String,
     pub answers: Vec<DnsAnswer>,
+    /// For a reverse lookup (a name under `in-addr.arpa` or `ip6.arpa`), the
+    /// address it asks about, so a person reads an address, not 64 nibbles.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub reverse_of: Option<String>,
+}
+
+/// Turns a reverse-lookup name back into the address it asks about:
+/// `34.216.184.93.in-addr.arpa` is 93.184.216.34, and a 32-nibble `ip6.arpa`
+/// name is the IPv6 address. Anything else (or a malformed name) is `None`.
+#[must_use]
+pub fn reverse_to_address(name: &str) -> Option<String> {
+    let lower = name.to_ascii_lowercase();
+    if let Some(rest) = lower.strip_suffix(".in-addr.arpa") {
+        let octets: Vec<u8> = rest
+            .split('.')
+            .map(str::parse)
+            .collect::<Result<_, _>>()
+            .ok()?;
+        let octets: [u8; 4] = octets.try_into().ok()?;
+        let [d, c, b, a] = octets;
+        return Some(Ipv4Addr::new(a, b, c, d).to_string());
+    }
+    let rest = lower.strip_suffix(".ip6.arpa")?;
+    let nibbles: Vec<u8> = rest
+        .split('.')
+        .map(|n| {
+            let mut chars = n.chars();
+            match (chars.next(), chars.next()) {
+                (Some(c), None) => c.to_digit(16).and_then(|d| u8::try_from(d).ok()),
+                _ => None,
+            }
+        })
+        .collect::<Option<_>>()?;
+    if nibbles.len() != 32 {
+        return None;
+    }
+    // The name lists the address's last nibble first.
+    let mut bytes = [0u8; 16];
+    for (i, byte) in bytes.iter_mut().enumerate() {
+        let high = nibbles[31 - 2 * i];
+        let low = nibbles[30 - 2 * i];
+        *byte = (high << 4) | low;
+    }
+    Some(Ipv6Addr::from(bytes).to_string())
 }
 
 #[must_use]
@@ -206,7 +250,7 @@ pub fn parse(msg: &[u8]) -> Option<DnsMessage> {
                     octets.copy_from_slice(bytes);
                     Ipv6Addr::from(octets).to_string()
                 }
-                (5, _) => read_name(msg, rdata).map(|(n, _)| n).unwrap_or_default(),
+                (5 | 12, _) => read_name(msg, rdata).map(|(n, _)| n).unwrap_or_default(),
                 _ => String::new(),
             };
             records.push(DnsAnswer {
@@ -218,6 +262,7 @@ pub fn parse(msg: &[u8]) -> Option<DnsMessage> {
         }
     }
 
+    let reverse_of = reverse_to_address(&name);
     Some(DnsMessage {
         id,
         response,
@@ -229,6 +274,7 @@ pub fn parse(msg: &[u8]) -> Option<DnsMessage> {
             String::new()
         },
         answers: records,
+        reverse_of,
     })
 }
 
@@ -320,5 +366,43 @@ mod tests {
         m.extend([3, b'a', 0x07, b'<', 0, 0, 1, 0, 1]);
         let parsed = parse(&m).unwrap();
         assert_eq!(parsed.name, "a\\x07<");
+    }
+}
+
+#[cfg(test)]
+mod reverse_tests {
+    use super::*;
+
+    #[test]
+    fn an_ipv4_reverse_name_is_read_back_as_the_address() {
+        assert_eq!(
+            reverse_to_address("34.216.184.93.in-addr.arpa").as_deref(),
+            Some("93.184.216.34")
+        );
+        assert_eq!(reverse_to_address("1.2.3.in-addr.arpa"), None);
+        assert_eq!(reverse_to_address("300.1.1.1.in-addr.arpa"), None);
+    }
+
+    #[test]
+    fn an_ipv6_reverse_name_is_read_back_as_the_address() {
+        // 2001:db8::1
+        let name = "1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa";
+        assert_eq!(reverse_to_address(name).as_deref(), Some("2001:db8::1"));
+        assert_eq!(reverse_to_address("1.0.ip6.arpa"), None);
+        assert_eq!(reverse_to_address("example.com"), None);
+    }
+
+    #[test]
+    fn a_ptr_answer_carries_the_host_name() {
+        let mut m = vec![0, 1, 0x81, 0x80, 0, 1, 0, 1, 0, 0, 0, 0];
+        m.extend(b"\x0234\x03216\x03184\x0293\x07in-addr\x04arpa\x00\x00\x0c\x00\x01");
+        m.extend([0xC0, 0x0C, 0, 12, 0, 1, 0, 0, 0, 60]);
+        let target = b"\x03www\x07example\x03com\x00";
+        m.extend(u16::try_from(target.len()).unwrap().to_be_bytes());
+        m.extend(target);
+        let parsed = parse(&m).unwrap();
+        assert_eq!(parsed.reverse_of.as_deref(), Some("93.184.216.34"));
+        assert_eq!(parsed.answers[0].rtype, "PTR");
+        assert_eq!(parsed.answers[0].data, "www.example.com");
     }
 }

@@ -134,6 +134,23 @@ struct Entry {
     alpn: Option<String>,
     ja4: Option<String>,
     ja4_raw: Option<String>,
+    /// What the rest of the conversation revealed, when it was readable.
+    detail: FlowDetail,
+}
+
+/// Facts learned from a conversation's other readable messages.
+#[derive(Debug, Clone, Default, Serialize)]
+pub struct FlowDetail {
+    /// The TLS version the server chose, for example `TLS 1.3`.
+    pub tls_version: Option<String>,
+    /// The cipher suite the server chose.
+    pub cipher: Option<String>,
+    pub ja4s: Option<String>,
+    pub http_method: Option<String>,
+    pub http_host: Option<String>,
+    pub user_agent: Option<String>,
+    pub ssh_banner: Option<String>,
+    pub hassh: Option<String>,
 }
 
 /// The TCP flag bits the table cares about.
@@ -186,6 +203,21 @@ pub struct FlowRow {
     /// The name DNS gave this server's address, when the handshake did not
     /// name it. Learned from responses the sensor saw, so it can be stale.
     pub dns_name: Option<String>,
+    /// A name for the client's address: this computer's own name, or a reverse
+    /// DNS (PTR) answer the sensor saw.
+    pub client_host: Option<NameRef>,
+    /// The same for the server's address.
+    pub server_host: Option<NameRef>,
+    #[serde(flatten)]
+    pub detail: FlowDetail,
+}
+
+/// A host name and where it came from, so a reader can judge it.
+#[derive(Debug, Clone, Serialize)]
+pub struct NameRef {
+    pub name: String,
+    /// `this computer` or `reverse dns`.
+    pub source: &'static str,
 }
 
 /// What a client hello reveals about the conversation that carried it.
@@ -200,6 +232,34 @@ pub struct HelloNote {
     pub ja4_raw: String,
 }
 
+/// What the other readable messages of a conversation reveal.
+#[derive(Debug, Clone)]
+pub enum ExtraNote {
+    /// The server's hello: the version and cipher it chose.
+    Server {
+        src: SocketAddr,
+        dst: SocketAddr,
+        version: String,
+        cipher: String,
+        ja4s: String,
+    },
+    /// A cleartext HTTP request.
+    Http {
+        src: SocketAddr,
+        dst: SocketAddr,
+        method: String,
+        host: Option<String>,
+        user_agent: Option<String>,
+    },
+    /// An SSH hello.
+    Ssh {
+        src: SocketAddr,
+        dst: SocketAddr,
+        banner: String,
+        hassh: Option<String>,
+    },
+}
+
 /// The table itself.
 pub struct TrafficTable {
     max: usize,
@@ -210,6 +270,10 @@ pub struct TrafficTable {
     local: Vec<Network>,
     /// Names DNS responses gave addresses, bounded.
     names: HashMap<IpAddr, String>,
+    /// Reverse DNS (PTR) answers: the name an address says it has.
+    reverse: HashMap<IpAddr, String>,
+    /// This computer's name and the addresses of the capture interface.
+    own: Option<(String, Vec<IpAddr>)>,
 }
 
 /// Addresses remembered from DNS. The table is cleared when it fills, which
@@ -231,6 +295,8 @@ impl TrafficTable {
             totals: Totals::default(),
             local: Vec::new(),
             names: HashMap::new(),
+            reverse: HashMap::new(),
+            own: None,
         }
     }
 
@@ -242,6 +308,36 @@ impl TrafficTable {
         for ip in addresses {
             self.names.insert(*ip, name.to_owned());
         }
+    }
+
+    /// Remembers a reverse DNS answer: `ip` is called `name`.
+    pub fn note_reverse(&mut self, ip: IpAddr, name: &str) {
+        if self.reverse.len() >= MAX_DNS_NAMES {
+            self.reverse.clear();
+        }
+        self.reverse.insert(ip, name.to_owned());
+    }
+
+    /// Declares this computer's own name and the addresses it captures on, so
+    /// its conversations are named "this computer" rather than left as bare
+    /// addresses.
+    pub fn set_own(&mut self, name: String, addresses: Vec<IpAddr>) {
+        self.own = Some((name, addresses));
+    }
+
+    fn host_name(&self, ip: IpAddr) -> Option<NameRef> {
+        if let Some((name, addresses)) = &self.own {
+            if addresses.contains(&ip) {
+                return Some(NameRef {
+                    name: name.clone(),
+                    source: "this computer",
+                });
+            }
+        }
+        self.reverse.get(&ip).map(|name| NameRef {
+            name: name.clone(),
+            source: "reverse dns",
+        })
     }
 
     /// Declares the networks this sensor sits on. Without them only private
@@ -313,6 +409,7 @@ impl TrafficTable {
             alpn: None,
             ja4: None,
             ja4_raw: None,
+            detail: FlowDetail::default(),
         });
         let side = usize::from(src != entry.initiator);
         entry.packets[side] += 1;
@@ -341,6 +438,50 @@ impl TrafficTable {
             entry.alpn.clone_from(&note.alpn);
             entry.ja4 = Some(note.ja4.clone());
             entry.ja4_raw = Some(note.ja4_raw.clone());
+        }
+    }
+
+    /// Attaches what a server hello, an HTTP request or an SSH hello revealed.
+    pub fn annotate_extra(&mut self, note: &ExtraNote) {
+        let (src, dst) = match note {
+            ExtraNote::Server { src, dst, .. }
+            | ExtraNote::Http { src, dst, .. }
+            | ExtraNote::Ssh { src, dst, .. } => (*src, *dst),
+        };
+        let Some(entry) = self.flows.get_mut(&Key::new(Proto::Tcp, src, dst)) else {
+            return;
+        };
+        match note {
+            ExtraNote::Server {
+                version,
+                cipher,
+                ja4s,
+                ..
+            } => {
+                entry.detail.tls_version = Some(version.clone());
+                entry.detail.cipher = Some(cipher.clone());
+                entry.detail.ja4s = Some(ja4s.clone());
+            }
+            ExtraNote::Http {
+                method,
+                host,
+                user_agent,
+                ..
+            } => {
+                entry.detail.http_method = Some(method.clone());
+                entry.detail.http_host.clone_from(host);
+                entry.detail.user_agent.clone_from(user_agent);
+            }
+            ExtraNote::Ssh { banner, hassh, .. } => {
+                // Both sides send a banner; keep the server's, the one a
+                // reader wants to know, and take the client's only if none.
+                if entry.detail.ssh_banner.is_none() || src.port() == 22 {
+                    entry.detail.ssh_banner = Some(banner.clone());
+                }
+                if hassh.is_some() {
+                    entry.detail.hassh.clone_from(hassh);
+                }
+            }
         }
     }
 
@@ -406,6 +547,7 @@ impl TrafficTable {
             e,
             |ip| self.is_ours(ip),
             |ip| self.names.get(&ip).cloned(),
+            |ip| self.host_name(ip),
         )
     }
 }
@@ -415,6 +557,7 @@ fn row(
     e: &Entry,
     local: impl Fn(IpAddr) -> bool,
     dns: impl Fn(IpAddr) -> Option<String>,
+    host: impl Fn(IpAddr) -> Option<NameRef>,
 ) -> FlowRow {
     let responder = if e.initiator == key.a { key.b } else { key.a };
     let direction = match (local(e.initiator.ip()), local(responder.ip())) {
@@ -447,6 +590,9 @@ fn row(
         } else {
             None
         },
+        client_host: host(e.initiator.ip()),
+        server_host: host(responder.ip()),
+        detail: e.detail.clone(),
     }
 }
 

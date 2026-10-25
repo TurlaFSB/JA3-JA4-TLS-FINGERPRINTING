@@ -243,3 +243,78 @@ fn the_synthetic_capture_yields_dns_and_both_ssh_hellos() {
             .any(|e| matches!(&e.event, StreamEvent::Ssh(h) if h.hassh_server.is_some()))
     );
 }
+
+#[test]
+fn a_reverse_lookup_names_the_address_in_the_traffic_table() {
+    let traffic = TrafficHandle::default();
+    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    pipeline.track_traffic(traffic.clone());
+    let mut events = Vec::new();
+
+    // PTR for 192.0.2.22, answered with a host name.
+    let question = b"\x0222\x012\x010\x03192\x07in-addr\x04arpa\x00\x00\x0c\x00\x01";
+    let mut response = vec![0x00, 0x09, 0x81, 0x80, 0, 1, 0, 1, 0, 0, 0, 0];
+    response.extend(question);
+    let target = b"\x04host\x07example\x03org\x00";
+    response.extend([0xC0, 0x0C, 0, 12, 0, 1, 0, 0, 0, 60]);
+    response.extend(u16::try_from(target.len()).unwrap().to_be_bytes());
+    response.extend(target);
+    feed(
+        &mut pipeline,
+        1,
+        &udp(RESOLVER, CLIENT, 53, 40001, &response),
+        &mut events,
+    );
+    feed(
+        &mut pipeline,
+        2,
+        &tcp((CLIENT, 50002), (SERVER, 8443), 5, "S", b""),
+        &mut events,
+    );
+
+    let rows = traffic.with(|t| t.all_rows());
+    let row = rows
+        .iter()
+        .find(|r| r.server.port() == 8443)
+        .expect("conversation");
+    let host = row.server_host.as_ref().expect("a reverse DNS name");
+    assert_eq!(host.name, "host.example.org");
+    assert_eq!(host.source, "reverse dns");
+    assert!(row.client_host.is_none());
+}
+
+#[test]
+fn this_computers_conversations_are_named_and_tls_details_reach_the_row() {
+    let traffic = TrafficHandle::default();
+    traffic.with(|t| {
+        t.set_own("my-laptop".to_owned(), vec!["172.27.7.31".parse().unwrap()]);
+    });
+    let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("../../testdata/pcap/browsers-x509.pcapng");
+    let mut source = tlsfp_core::PcapFileSource::open(path).unwrap();
+    let mut pipeline = Pipeline::new(PipelineConfig::default());
+    pipeline.track_traffic(traffic.clone());
+    pipeline.run(&mut source, |_| {}).unwrap();
+
+    let rows = traffic.with(|t| t.all_rows());
+    let row = rows
+        .iter()
+        .find(|r| r.sni.as_deref() == Some("edge.microsoft.com"))
+        .expect("the edge.microsoft.com conversation");
+    let me = row.client_host.as_ref().expect("this computer is named");
+    assert_eq!(
+        (me.name.as_str(), me.source),
+        ("my-laptop", "this computer")
+    );
+    assert_eq!(row.detail.tls_version.as_deref(), Some("TLS 1.2"));
+    assert_eq!(
+        row.detail.cipher.as_deref(),
+        Some("ECDHE_RSA_AES_256_GCM_SHA384")
+    );
+    assert!(
+        row.detail
+            .ja4s
+            .as_deref()
+            .is_some_and(|j| j.starts_with("t12"))
+    );
+}
