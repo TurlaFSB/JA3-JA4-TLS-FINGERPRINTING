@@ -12,6 +12,7 @@ const STATUS_TEXT: Record<CaptureView['status'], string> = {
   ok: 'reading cleanly',
   degraded: 'reading with limits',
   lossy: 'losing frames',
+  offline: 'capture not running',
 }
 
 function percent(part: number, whole: number): string {

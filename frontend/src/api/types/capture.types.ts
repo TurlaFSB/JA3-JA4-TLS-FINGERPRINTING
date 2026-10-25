@@ -43,7 +43,20 @@ export const captureViewSchema = z.object({
     })
     .nullable(),
   tls_miss_rate: z.number(),
-  status: z.enum(['ok', 'degraded', 'lossy']),
+  status: z.enum(['ok', 'degraded', 'lossy', 'offline']),
+  supervision: z
+    .object({
+      state: z.enum(['running', 'reconnecting', 'stopped']),
+      restarts: z.number(),
+      last_error: z.string().nullable(),
+      retry_in_secs: z.number().nullable(),
+    })
+    .default({
+      state: 'running',
+      restarts: 0,
+      last_error: null,
+      retry_in_secs: null,
+    }),
   notes: z.array(z.object({ level: z.enum(['warn', 'info']), text: z.string() })),
 })
 

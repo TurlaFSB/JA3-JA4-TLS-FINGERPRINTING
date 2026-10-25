@@ -149,17 +149,21 @@ struct Feed {
     capture: Arc<std::sync::OnceLock<CaptureSetup>>,
     /// DNS seen on the wire, summarised (see `dnsbook`).
     dns: Arc<Mutex<crate::dnsbook::DnsBook>>,
+    /// Whether the live capture is running, reconnecting or stopped.
+    supervision: crate::supervisor::StatusHandle,
+    /// How to wake the capture that is running now (it changes on reconnect).
+    live_stop: Arc<Mutex<Option<StopHandle>>>,
 }
 
 /// How the feed is captured, for the capture health panel.
 struct CaptureSetup {
     mode: &'static str,
     interface: Option<String>,
-    own_addresses: Vec<String>,
+    own_addresses: Mutex<Vec<String>>,
     filter: Option<String>,
     promiscuous: Option<bool>,
     buffer_mib: Option<i32>,
-    kernel: Option<crate::live::KernelStats>,
+    kernel: Mutex<Option<crate::live::KernelStats>>,
 }
 
 impl Feed {
@@ -174,6 +178,8 @@ impl Feed {
             counters: tlsfp_core::CountersHandle::default(),
             capture: Arc::new(std::sync::OnceLock::new()),
             dns: Arc::new(Mutex::new(crate::dnsbook::DnsBook::default())),
+            supervision: crate::supervisor::StatusHandle::default(),
+            live_stop: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -1072,9 +1078,12 @@ struct CaptureView {
     /// Share of recognised TLS streams that ended before a full handshake
     /// message was read.
     tls_miss_rate: f64,
-    /// `ok`, `degraded` (limits hit) or `lossy` (frames lost).
+    /// `ok`, `degraded` (limits hit), `lossy` (frames lost) or `offline` (the
+    /// capture is not running).
     status: &'static str,
     notes: Vec<HealthNote>,
+    /// Whether the live capture is running or being reopened.
+    supervision: crate::supervisor::CaptureStatus,
 }
 
 /// How much a finding matters to the results.
@@ -1251,7 +1260,13 @@ fn build_capture_view(state: &Shared) -> CaptureView {
     };
     let counters = state.feed.counters.get();
     let setup = state.feed.capture.get();
-    let kernel = setup.and_then(|s| s.kernel.as_ref()).map(|k| {
+    let kernel_stats = setup.and_then(|s| {
+        s.kernel
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    });
+    let kernel = kernel_stats.as_ref().map(|k| {
         let counts = k.get();
         KernelView {
             received: counts.received,
@@ -1259,11 +1274,23 @@ fn build_capture_view(state: &Shared) -> CaptureView {
             interface_dropped: counts.interface_dropped,
         }
     });
-    let (status, notes) = assess(&counters, kernel.as_ref(), &limits);
+    let (mut status, mut notes) = assess(&counters, kernel.as_ref(), &limits);
+    let supervision = state.feed.supervision.get();
+    if let Some(note) = offline_note(&supervision) {
+        status = "offline";
+        notes.insert(0, note);
+    }
     CaptureView {
         mode: setup.map_or_else(|| state.meta.source.kind.to_owned(), |s| s.mode.to_owned()),
         interface: setup.and_then(|s| s.interface.clone()),
-        own_addresses: setup.map(|s| s.own_addresses.clone()).unwrap_or_default(),
+        own_addresses: setup
+            .map(|s| {
+                s.own_addresses
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .clone()
+            })
+            .unwrap_or_default(),
         filter: setup.and_then(|s| s.filter.clone()),
         promiscuous: setup.and_then(|s| s.promiscuous),
         buffer_mib: setup.and_then(|s| s.buffer_mib),
@@ -1273,6 +1300,34 @@ fn build_capture_view(state: &Shared) -> CaptureView {
         kernel,
         status,
         notes,
+        supervision,
+    }
+}
+
+/// A warning when the capture is not running, with why and when it retries.
+fn offline_note(supervision: &crate::supervisor::CaptureStatus) -> Option<HealthNote> {
+    use crate::supervisor::CaptureState;
+    let why = supervision
+        .last_error
+        .as_deref()
+        .unwrap_or("no reason was reported");
+    match supervision.state {
+        CaptureState::Running => None,
+        CaptureState::Reconnecting => Some(HealthNote {
+            level: "warn",
+            text: format!(
+                "The capture stopped ({why}) and is being reopened{}. Nothing is being read meanwhile; reopened {} time{} so far.",
+                supervision
+                    .retry_in_secs
+                    .map_or_else(String::new, |s| format!(", next try in {s} s")),
+                supervision.restarts,
+                if supervision.restarts == 1 { "" } else { "s" }
+            ),
+        }),
+        CaptureState::Stopped => Some(HealthNote {
+            level: "warn",
+            text: format!("The capture has stopped ({why})."),
+        }),
     }
 }
 
@@ -1631,7 +1686,7 @@ fn alerts_to_csv(alerts: &[Alert]) -> Result<Vec<u8>> {
 /// also needs its blocking read woken, which is what the stop handle does.
 struct Capture {
     shutdown: Arc<AtomicBool>,
-    live_stop: Option<StopHandle>,
+    live_stop: Option<Arc<Mutex<Option<StopHandle>>>>,
     handle: Option<JoinHandle<()>>,
 }
 
@@ -1639,7 +1694,13 @@ impl Capture {
     fn stop(&mut self) {
         self.shutdown.store(true, Ordering::Relaxed);
         if let Some(stop) = &self.live_stop {
-            stop.stop();
+            if let Some(handle) = stop
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .as_ref()
+            {
+                handle.stop();
+            }
         }
         if let Some(handle) = self.handle.take() {
             let _ = handle.join();
@@ -1678,11 +1739,11 @@ fn spawn_source(
             let _ = feed.capture.set(CaptureSetup {
                 mode: "replay",
                 interface: None,
-                own_addresses: Vec::new(),
+                own_addresses: Mutex::new(Vec::new()),
                 filter: None,
                 promiscuous: None,
                 buffer_mib: None,
-                kernel: None,
+                kernel: Mutex::new(None),
             });
             let path = path.clone();
             let db = config.db.clone();
@@ -1715,31 +1776,18 @@ fn spawn_source(
             };
             let source = LiveSource::open(interface, &live_config)
                 .with_context(|| format!("opening live capture on {interface}"))?;
-            let live_stop = source.stop_handle();
             let _ = feed.capture.set(CaptureSetup {
                 mode: "live",
                 interface: Some(source.interface_name().to_owned()),
-                own_addresses: source
-                    .own_addresses()
-                    .iter()
-                    .map(ToString::to_string)
-                    .collect(),
+                own_addresses: Mutex::new(Vec::new()),
                 filter: Some(filter.clone()),
                 promiscuous: Some(*promiscuous),
                 buffer_mib: Some(crate::live::effective_buffer_mib(&live_config)),
-                kernel: Some(source.kernel_stats()),
+                kernel: Mutex::new(None),
             });
-            let mut local = config.local_networks.clone();
-            local.extend(source.local_networks());
-            tracing::info!(
-                networks = %local.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
-                "treating these networks as this sensor's own, besides the private ranges"
-            );
-            feed.traffic.with(|table| table.set_local_networks(local));
-            if let Some(name) = crate::live::local_hostname() {
-                let own = source.own_addresses();
-                feed.traffic.with(|table| table.set_own(name, own));
-            }
+            let extra_local = config.local_networks.clone();
+            adopt_source(&feed, &source, &extra_local);
+            let live_stop = Arc::clone(&feed.live_stop);
             let db = config.db.clone();
             let stop = Arc::clone(&shutdown);
             let interface = interface.clone();
@@ -1747,7 +1795,20 @@ fn spawn_source(
             tracing::info!(interface, filter = %live_config.filter, "serving live capture");
             let handle = std::thread::Builder::new()
                 .name("tlsfp-live".to_owned())
-                .spawn(move || live_loop(source, &db, &feed, &stop, detect))
+                .spawn(move || {
+                    live_loop(
+                        source,
+                        &LiveTarget {
+                            interface,
+                            config: live_config,
+                            extra_local,
+                        },
+                        &db,
+                        &feed,
+                        &stop,
+                        detect,
+                    );
+                })
                 .context("starting the live capture thread")?;
             Ok(Capture {
                 shutdown,
@@ -1830,8 +1891,55 @@ fn replay_loop(
 /// Drives a live capture through the same pipeline the file path uses, on this
 /// dedicated thread, detecting and broadcasting until the stop handle wakes the
 /// blocking read.
+/// Where a live capture reads from, kept so it can be reopened.
+struct LiveTarget {
+    interface: String,
+    config: LiveConfig,
+    /// Networks the operator declared as inside, besides the interface's own.
+    extra_local: Vec<Network>,
+}
+
+/// Points the dashboard at a (re)opened capture: the way to stop it, its drop
+/// counters, and the networks and addresses that make a conversation "ours".
+fn adopt_source(feed: &Feed, source: &LiveSource, extra_local: &[Network]) {
+    *feed
+        .live_stop
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(source.stop_handle());
+    if let Some(setup) = feed.capture.get() {
+        *setup
+            .kernel
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(source.kernel_stats());
+        *setup
+            .own_addresses
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = source
+            .own_addresses()
+            .iter()
+            .map(ToString::to_string)
+            .collect();
+    }
+    let mut local = extra_local.to_vec();
+    local.extend(source.local_networks());
+    tracing::info!(
+        networks = %local.iter().map(ToString::to_string).collect::<Vec<_>>().join(", "),
+        "treating these networks as this sensor's own, besides the private ranges"
+    );
+    feed.traffic.with(|table| table.set_local_networks(local));
+    if let Some(name) = crate::live::local_hostname() {
+        let own = source.own_addresses();
+        feed.traffic.with(|table| table.set_own(name, own));
+    }
+}
+
+/// Drives a live capture through the same pipeline the file path uses, on this
+/// dedicated thread, detecting and broadcasting. If the capture fails (an
+/// adapter unplugged, Wi-Fi switched off) it is reopened with growing pauses
+/// until it works or the server stops; the state is published for the dashboard.
 fn live_loop(
-    mut source: LiveSource,
+    first: LiveSource,
+    target: &LiveTarget,
     db: &std::path::Path,
     feed: &Feed,
     shutdown: &AtomicBool,
@@ -1848,15 +1956,30 @@ fn live_loop(
     let mut pipeline = Pipeline::new(crate::engine::config());
     pipeline.track_traffic(feed.traffic.clone());
     pipeline.publish_counters(feed.counters.clone());
-    let run = pipeline.run(&mut source, |event| {
-        if shutdown.load(Ordering::Relaxed) {
-            return;
-        }
-        broadcast_flow(&mut store, feed, event);
-    });
-    if let Err(error) = run {
-        tracing::warn!(%error, "live capture ended");
-    }
+    crate::supervisor::supervise(
+        first,
+        || {
+            let source = LiveSource::open(&target.interface, &target.config)
+                .map_err(|error| error.to_string())?;
+            adopt_source(feed, &source, &target.extra_local);
+            Ok(source)
+        },
+        |source| {
+            // A stop requested while the capture was being reopened.
+            if shutdown.load(Ordering::Relaxed) {
+                return Ok(());
+            }
+            pipeline.run(source, |event| {
+                if shutdown.load(Ordering::Relaxed) {
+                    return;
+                }
+                broadcast_flow(&mut store, feed, event);
+            })
+        },
+        shutdown,
+        &feed.supervision,
+        |delay| crate::supervisor::sleep_unless(shutdown, delay),
+    );
 }
 
 /// Tails the database for alerts written by an external sensor and broadcasts
@@ -2101,6 +2224,23 @@ mod tests {
             idle_timeout_secs: 60,
             stream_limit_kib: 256,
         }
+    }
+
+    #[test]
+    fn a_capture_that_is_being_reopened_says_why_and_when() {
+        use crate::supervisor::{CaptureState, CaptureStatus};
+        assert!(super::offline_note(&CaptureStatus::default()).is_none());
+        let reconnecting = CaptureStatus {
+            state: CaptureState::Reconnecting,
+            restarts: 2,
+            last_error: Some("the adapter went away".to_owned()),
+            retry_in_secs: Some(4),
+        };
+        let note = super::offline_note(&reconnecting).unwrap();
+        assert_eq!(note.level, "warn");
+        assert!(note.text.contains("the adapter went away"), "{}", note.text);
+        assert!(note.text.contains("next try in 4 s"));
+        assert!(note.text.contains("2 times"));
     }
 
     #[test]

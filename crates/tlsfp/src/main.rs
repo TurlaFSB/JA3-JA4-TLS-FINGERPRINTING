@@ -13,6 +13,7 @@ mod live;
 mod npcap;
 mod report;
 mod serve;
+mod supervisor;
 
 use anyhow::Result;
 use clap::Parser;

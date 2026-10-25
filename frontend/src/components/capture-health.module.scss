@@ -18,7 +18,8 @@
     border-left-color: $fire-soft;
   }
 
-  &[data-status='lossy'] {
+  &[data-status='lossy'],
+  &[data-status='offline'] {
     border-left-color: $magma;
   }
 }
@@ -37,7 +38,8 @@
   text-transform: uppercase;
   color: $fire-soft;
 
-  [data-status='lossy'] & {
+  [data-status='lossy'] &,
+  [data-status='offline'] & {
     color: $magma;
   }
 }

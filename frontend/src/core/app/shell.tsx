@@ -6,7 +6,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { ErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { useMeta, useStats } from '@/api/hooks'
+import { useCapture, useMeta, useStats } from '@/api/hooks'
 import { describeSource } from '@/api/types'
 import { cx, RegMark } from '@/components'
 import { ROUTES } from '@/config'
@@ -56,6 +56,9 @@ function formatUptime(ms: number): string {
 // when one was set. Nothing here is guessed or hardcoded.
 function SensorStatus(): React.ReactElement {
   const { data, isSuccess } = useMeta()
+  const { data: capture } = useCapture()
+  const offline =
+    capture?.mode === 'live' && capture.supervision.state !== 'running'
   const now = useNow()
   const date = new Date(now)
   return (
@@ -69,6 +72,14 @@ function SensorStatus(): React.ReactElement {
           title={`tlsfp ${data.version}${data.build ? `, build ${data.build}` : ''}`}
         >
           {describeSource(data)}
+        </span>
+      )}
+      {offline && (
+        <span
+          className={styles.where}
+          title={capture.supervision.last_error ?? 'the capture is not running'}
+        >
+          capture {capture.supervision.state}
         </span>
       )}
       {data?.location && <span className={styles.where}>{data.location}</span>}
