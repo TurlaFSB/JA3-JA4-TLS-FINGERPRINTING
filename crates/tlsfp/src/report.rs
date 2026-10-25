@@ -133,7 +133,7 @@ impl ReportBuilder {
             StreamEvent::TcpSyn { ja4t } => {
                 endpoint.ja4t.insert(ja4t.clone());
             }
-            StreamEvent::TcpSynAck { .. } => {}
+            StreamEvent::TcpSynAck { .. } | StreamEvent::Ssh(_) | StreamEvent::Dns(_) => {}
         }
 
         for report in reports {
@@ -578,6 +578,8 @@ fn kind_label(event: &StreamEvent) -> &'static str {
         StreamEvent::HttpRequest { .. } => "http_request",
         StreamEvent::TcpSyn { .. } => "tcp_syn",
         StreamEvent::TcpSynAck { .. } => "tcp_syn_ack",
+        StreamEvent::Ssh(_) => "ssh",
+        StreamEvent::Dns(_) => "dns",
     }
 }
 

@@ -15,6 +15,7 @@ use crate::parse::{
 };
 use crate::pipeline::event::StreamEvent;
 use crate::registry::{content_type, handshake_type, version};
+use crate::ssh::{Ssh, parse as parse_ssh};
 
 /// How many bytes the sniffer needs before it gives up on classifying a
 /// stream. Every protocol this pipeline recognizes shows its hand within the
@@ -54,6 +55,8 @@ pub enum StreamProtocol {
     Tls(TlsFlight),
     /// A cleartext HTTP/1.x request head is being accumulated.
     Http,
+    /// An SSH banner and key exchange offer is being read.
+    Ssh,
     /// Recognized and fully harvested; the stream needs no more buffering.
     Done,
     /// Unrecognized or unparseable; the stream is ignored.
@@ -110,6 +113,7 @@ pub fn advance(proto: &mut StreamProtocol, stream: &[u8], sink: &mut impl FnMut(
         StreamProtocol::Undecided | StreamProtocol::Done | StreamProtocol::Ignored => {}
         StreamProtocol::Tls(_) => advance_tls(proto, stream, sink),
         StreamProtocol::Http => advance_http(proto, stream, sink),
+        StreamProtocol::Ssh => advance_ssh(proto, stream, sink),
     }
 }
 
@@ -123,6 +127,9 @@ fn sniff(stream: &[u8]) -> StreamProtocol {
             return StreamProtocol::Tls(TlsFlight::default());
         }
     }
+    if stream.starts_with(b"SSH-") {
+        return StreamProtocol::Ssh;
+    }
     if stream.len() >= SNIFF_DECISION_LEN {
         if HTTP_METHOD_PREFIXES.iter().any(|m| stream.starts_with(m)) {
             return StreamProtocol::Http;
@@ -130,6 +137,17 @@ fn sniff(stream: &[u8]) -> StreamProtocol {
         return StreamProtocol::Ignored;
     }
     StreamProtocol::Undecided
+}
+
+fn advance_ssh(proto: &mut StreamProtocol, stream: &[u8], sink: &mut impl FnMut(StreamEvent)) {
+    match parse_ssh(stream) {
+        Ssh::Incomplete => {}
+        Ssh::Rejected => *proto = StreamProtocol::Ignored,
+        Ssh::Hello(hello) => {
+            sink(StreamEvent::Ssh(hello));
+            *proto = StreamProtocol::Done;
+        }
+    }
 }
 
 fn advance_http(proto: &mut StreamProtocol, stream: &[u8], sink: &mut impl FnMut(StreamEvent)) {
@@ -358,8 +376,9 @@ mod tests {
             StreamProtocol::Tls(_)
         ));
         assert!(matches!(sniff(b"GET / HTTP/1.1\r\n"), StreamProtocol::Http));
+        assert!(matches!(sniff(b"SSH-2.0-OpenSSH_9.7"), StreamProtocol::Ssh));
         assert!(matches!(
-            sniff(b"SSH-2.0-OpenSSH_9.7"),
+            sniff(b"\x00\x01binary junk"),
             StreamProtocol::Ignored
         ));
         assert!(matches!(sniff(b"GE"), StreamProtocol::Undecided));

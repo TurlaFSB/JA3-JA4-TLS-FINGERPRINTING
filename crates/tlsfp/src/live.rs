@@ -42,10 +42,10 @@ use tlsfp_core::{PacketSource, RawFrame, SourceError};
 /// Kernel side prefilter applied before frames ever reach userspace.
 ///
 /// Every TCP segment stays: TLS runs on any port, JA4T wants the SYNs, and
-/// JA4H wants cleartext HTTP wherever it appears. UDP narrows to 443,
-/// where QUIC lives. Everything else, ARP, ICMP, DNS, mDNS, DHCP, drops in
+/// JA4H wants cleartext HTTP wherever it appears. UDP narrows to 443
+/// (QUIC) and 53 (plain DNS). Everything else, ARP, ICMP, DNS, mDNS, DHCP, drops in
 /// the kernel for the cost of a BPF program, not a context switch.
-pub const DEFAULT_BPF_FILTER: &str = "tcp or (udp and port 443)";
+pub const DEFAULT_BPF_FILTER: &str = "tcp or (udp and (port 443 or port 53))";
 
 /// Full frames, never clipped. A truncated segment would punch a hole in
 /// TCP reassembly and silently end fingerprinting for that stream, and

@@ -7,7 +7,9 @@ use std::net::SocketAddr;
 use serde::Serialize;
 
 use crate::detail::{ClientDetail, ServerDetail};
+use crate::dns::DnsMessage;
 use crate::fingerprint::{Ja3, Ja4Family};
+use crate::ssh::SshHello;
 
 /// A fingerprint produced by one direction of one flow, without addressing.
 ///
@@ -52,6 +54,20 @@ pub enum StreamEvent {
     TcpSynAck {
         ja4ts: String,
     },
+    /// An SSH version banner and key exchange offer (HASSH).
+    Ssh(Box<SshHello>),
+    /// A plain DNS query or response. Observed and reported, not fingerprinted.
+    Dns(Box<DnsMessage>),
+}
+
+impl StreamEvent {
+    /// True for events that carry a fingerprint the intelligence store can
+    /// match and the detection rules can reason about. SSH and DNS events are
+    /// observations only.
+    #[must_use]
+    pub fn is_fingerprinted(&self) -> bool {
+        !matches!(self, StreamEvent::Ssh(_) | StreamEvent::Dns(_))
+    }
 }
 
 /// One fingerprint observation, addressed and timestamped.
@@ -110,6 +126,33 @@ impl fmt::Display for FingerprintEvent {
             }
             StreamEvent::TcpSyn { ja4t } => write!(f, "tcp_syn ja4t={ja4t}"),
             StreamEvent::TcpSynAck { ja4ts } => write!(f, "tcp_syn_ack ja4ts={ja4ts}"),
+            StreamEvent::Ssh(ssh) => {
+                write!(f, "ssh banner={}", ssh.banner)?;
+                if let Some(hassh) = &ssh.hassh {
+                    write!(f, " hassh={hassh}")?;
+                }
+                if let Some(hassh) = &ssh.hassh_server {
+                    write!(f, " hassh_server={hassh}")?;
+                }
+                Ok(())
+            }
+            StreamEvent::Dns(dns) => {
+                if dns.response {
+                    let answers: Vec<&str> = dns
+                        .answers
+                        .iter()
+                        .filter(|a| !a.data.is_empty())
+                        .map(|a| a.data.as_str())
+                        .collect();
+                    write!(f, "dns_response {} {} {}", dns.name, dns.qtype, dns.rcode)?;
+                    if !answers.is_empty() {
+                        write!(f, " -> {}", answers.join(","))?;
+                    }
+                    Ok(())
+                } else {
+                    write!(f, "dns_query {} {}", dns.name, dns.qtype)
+                }
+            }
         }
     }
 }

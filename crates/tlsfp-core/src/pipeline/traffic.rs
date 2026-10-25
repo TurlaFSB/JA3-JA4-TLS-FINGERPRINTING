@@ -183,6 +183,9 @@ pub struct FlowRow {
     pub alpn: Option<String>,
     pub ja4: Option<String>,
     pub ja4_raw: Option<String>,
+    /// The name DNS gave this server's address, when the handshake did not
+    /// name it. Learned from responses the sensor saw, so it can be stale.
+    pub dns_name: Option<String>,
 }
 
 /// What a client hello reveals about the conversation that carried it.
@@ -205,7 +208,13 @@ pub struct TrafficTable {
     /// Networks the operator or the capture interface says are ours, beyond
     /// the private ranges.
     local: Vec<Network>,
+    /// Names DNS responses gave addresses, bounded.
+    names: HashMap<IpAddr, String>,
 }
+
+/// Addresses remembered from DNS. The table is cleared when it fills, which
+/// costs a few names for a moment and keeps memory fixed.
+const MAX_DNS_NAMES: usize = 16_384;
 
 impl Default for TrafficTable {
     fn default() -> Self {
@@ -221,6 +230,17 @@ impl TrafficTable {
             flows: HashMap::new(),
             totals: Totals::default(),
             local: Vec::new(),
+            names: HashMap::new(),
+        }
+    }
+
+    /// Remembers that `name` resolved to these addresses.
+    pub fn note_dns(&mut self, name: &str, addresses: &[IpAddr]) {
+        if self.names.len() + addresses.len() > MAX_DNS_NAMES {
+            self.names.clear();
+        }
+        for ip in addresses {
+            self.names.insert(*ip, name.to_owned());
         }
     }
 
@@ -381,11 +401,21 @@ impl TrafficTable {
     }
 
     fn row(&self, key: &Key, e: &Entry) -> FlowRow {
-        row(key, e, |ip| self.is_ours(ip))
+        row(
+            key,
+            e,
+            |ip| self.is_ours(ip),
+            |ip| self.names.get(&ip).cloned(),
+        )
     }
 }
 
-fn row(key: &Key, e: &Entry, local: impl Fn(IpAddr) -> bool) -> FlowRow {
+fn row(
+    key: &Key,
+    e: &Entry,
+    local: impl Fn(IpAddr) -> bool,
+    dns: impl Fn(IpAddr) -> Option<String>,
+) -> FlowRow {
     let responder = if e.initiator == key.a { key.b } else { key.a };
     let direction = match (local(e.initiator.ip()), local(responder.ip())) {
         (true, false) => Direction::Outbound,
@@ -412,6 +442,11 @@ fn row(key: &Key, e: &Entry, local: impl Fn(IpAddr) -> bool) -> FlowRow {
         alpn: e.alpn.clone(),
         ja4: e.ja4.clone(),
         ja4_raw: e.ja4_raw.clone(),
+        dns_name: if e.sni.is_none() {
+            dns(responder.ip())
+        } else {
+            None
+        },
     }
 }
 

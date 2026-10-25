@@ -11,6 +11,7 @@
 
 pub mod der;
 pub mod detail;
+pub mod dns;
 pub mod error;
 pub mod fingerprint;
 pub mod grease;
@@ -25,6 +26,7 @@ pub mod parse;
 pub mod pipeline;
 pub mod quic;
 pub mod registry;
+pub mod ssh;
 
 pub use error::{ParseError, Result};
 pub use fingerprint::{Ja3, Ja4Family};

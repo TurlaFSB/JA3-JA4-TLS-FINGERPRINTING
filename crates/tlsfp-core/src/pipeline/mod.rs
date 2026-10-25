@@ -122,6 +122,12 @@ pub struct Counters {
     pub quic_decrypted: u64,
     /// Initials carrying a QUIC version this build has no salt for.
     pub quic_version_unsupported: u64,
+    /// SSH hellos (banner and key exchange offer) read.
+    pub ssh_hellos: u64,
+    /// Well-formed DNS messages read (queries and responses).
+    pub dns_messages: u64,
+    /// UDP port 53 datagrams that were not a message this build reads.
+    pub dns_unparsed: u64,
 }
 
 /// A shareable window onto a running pipeline's [`Counters`], so a server
@@ -145,6 +151,8 @@ impl CountersHandle {
 /// be wasted work; per 64 keeps the view fresh to well under a second on a
 /// busy link and costs nothing measurable.
 const PUBLISH_EVERY_FRAMES: u64 = 64;
+
+const DNS_PORT: u16 = 53;
 
 impl Counters {
     /// The share of recognized TLS streams the capture clipped before a
@@ -176,6 +184,8 @@ struct StreamHalf {
     /// Initial sequence number of the SYN seen from this side, to tell a
     /// retransmitted SYN from a new connection on the same address pair.
     syn_seq: Option<u32>,
+    /// True when this side sent the opening SYN, which makes it the client.
+    opened: bool,
 }
 
 impl StreamHalf {
@@ -185,6 +195,7 @@ impl StreamHalf {
             protocol: StreamProtocol::Undecided,
             syn_fingerprint_emitted: false,
             syn_seq: None,
+            opened: false,
         }
     }
 }
@@ -367,7 +378,11 @@ impl Pipeline {
                         );
                     });
                 }
-                self.feed_quic(&datagram, frame, &mut tap);
+                if datagram.src.port() == DNS_PORT || datagram.dst.port() == DNS_PORT {
+                    self.feed_dns(&datagram, frame, &mut tap);
+                } else {
+                    self.feed_quic(&datagram, frame, &mut tap);
+                }
             }
             Err(skip) => match skip {
                 Skip::UnsupportedLinkType => self.counters.skipped_unsupported_link_type += 1,
@@ -417,6 +432,15 @@ impl Pipeline {
         flow.last_seen_nanos = flow.last_seen_nanos.max(frame.ts_nanos);
 
         let (src, dst) = direction.addresses(&key);
+        // Who opened the connection, when the capture saw the SYN: the answer
+        // SSH needs to tell a client's hello from a server's.
+        let opener = if flow.halves[direction.index()].opened {
+            Some(true)
+        } else if flow.halves[1 - direction.index()].opened {
+            Some(false)
+        } else {
+            None
+        };
         let half = &mut flow.halves[direction.index()];
 
         if !half.syn_fingerprint_emitted {
@@ -439,6 +463,9 @@ impl Pipeline {
         }
 
         if segment.tcp.flags.syn() {
+            if !segment.tcp.flags.ack() {
+                half.opened = true;
+            }
             half.syn_seq = Some(segment.tcp.seq);
             half.reassembler.anchor(segment.tcp.seq.wrapping_add(1));
         }
@@ -456,27 +483,72 @@ impl Pipeline {
         if outcome == PushOutcome::Grew {
             let mut emitted = 0u64;
             let mut tls_fingerprinted = 0u64;
-            tls::advance(&mut half.protocol, half.reassembler.data(), &mut |event| {
-                emitted += 1;
-                if matches!(
-                    event,
-                    StreamEvent::ClientHello { .. } | StreamEvent::ServerHello { .. }
-                ) {
-                    tls_fingerprinted += 1;
-                }
-                sink(FingerprintEvent {
-                    ts_nanos: frame.ts_nanos,
-                    src,
-                    dst,
-                    event,
-                });
-            });
+            let mut ssh_hellos = 0u64;
+            tls::advance(
+                &mut half.protocol,
+                half.reassembler.data(),
+                &mut |mut event| {
+                    emitted += 1;
+                    if let StreamEvent::Ssh(hello) = &mut event {
+                        hello.resolve(opener, src.port(), dst.port());
+                        ssh_hellos += 1;
+                    }
+                    if matches!(
+                        event,
+                        StreamEvent::ClientHello { .. } | StreamEvent::ServerHello { .. }
+                    ) {
+                        tls_fingerprinted += 1;
+                    }
+                    sink(FingerprintEvent {
+                        ts_nanos: frame.ts_nanos,
+                        src,
+                        dst,
+                        event,
+                    });
+                },
+            );
             self.counters.events += emitted;
             self.counters.tls_handshakes_fingerprinted += tls_fingerprinted;
+            self.counters.ssh_hellos += ssh_hellos;
             if half.protocol.finished() && !half.reassembler.released() {
                 half.reassembler.release();
             }
         }
+    }
+
+    /// Reads a DNS message. Responses also teach the traffic table which name
+    /// an address was asked for, so a server whose handshake hides its name
+    /// (or that is not TLS at all) can still be named.
+    fn feed_dns(
+        &mut self,
+        datagram: &DecodedDatagram<'_>,
+        frame: &RawFrame<'_>,
+        sink: &mut impl FnMut(FingerprintEvent),
+    ) {
+        let Some(message) = crate::dns::parse(datagram.payload) else {
+            self.counters.dns_unparsed += 1;
+            return;
+        };
+        self.counters.dns_messages += 1;
+        if message.response {
+            if let Some(handle) = &self.traffic {
+                let addresses: Vec<std::net::IpAddr> = message
+                    .answers
+                    .iter()
+                    .filter_map(|answer| answer.data.parse().ok())
+                    .collect();
+                if !addresses.is_empty() {
+                    handle.with(|t| t.note_dns(&message.name, &addresses));
+                }
+            }
+        }
+        self.counters.events += 1;
+        sink(FingerprintEvent {
+            ts_nanos: frame.ts_nanos,
+            src: datagram.src,
+            dst: datagram.dst,
+            event: StreamEvent::Dns(Box::new(message)),
+        });
     }
 
     /// Feeds one UDP datagram into its QUIC flow, decrypting any client

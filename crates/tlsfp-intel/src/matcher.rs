@@ -73,6 +73,7 @@ pub fn event_fingerprints(event: &FingerprintEvent) -> Vec<(FpKind, String)> {
         StreamEvent::HttpRequest { ja4h, .. } => vec![(FpKind::Ja4h, ja4h.hash.clone())],
         StreamEvent::TcpSyn { ja4t } => vec![(FpKind::Ja4t, ja4t.clone())],
         StreamEvent::TcpSynAck { ja4ts } => vec![(FpKind::Ja4ts, ja4ts.clone())],
+        StreamEvent::Ssh(_) | StreamEvent::Dns(_) => Vec::new(),
     }
 }
 

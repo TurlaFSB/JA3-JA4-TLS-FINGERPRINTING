@@ -224,6 +224,8 @@ fn primary_fingerprint(event: &StreamEvent) -> (FpKind, String) {
         StreamEvent::HttpRequest { ja4h, .. } => (FpKind::Ja4h, ja4h.hash.clone()),
         StreamEvent::TcpSyn { ja4t } => (FpKind::Ja4t, ja4t.clone()),
         StreamEvent::TcpSynAck { ja4ts } => (FpKind::Ja4ts, ja4ts.clone()),
+        // Observation-only events never reach detection (see `run`).
+        StreamEvent::Ssh(_) | StreamEvent::Dns(_) => (FpKind::Ja4, String::new()),
     }
 }
 
@@ -280,6 +282,9 @@ pub(crate) fn run(
     event: &FingerprintEvent,
     config: &DetectConfig,
 ) -> Result<Vec<Alert>> {
+    if !event.event.is_fingerprinted() {
+        return Ok(Vec::new());
+    }
     let ts = i64::try_from(event.ts_nanos).unwrap_or(i64::MAX);
     let ip_text = event.src.ip().to_string();
     let (kind, value) = primary_fingerprint(&event.event);

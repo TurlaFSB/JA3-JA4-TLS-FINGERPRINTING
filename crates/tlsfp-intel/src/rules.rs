@@ -258,6 +258,8 @@ fn view<'a>(event: &'a FingerprintEvent, reports: &[MatchReport]) -> View<'a> {
             v.event = "tcp_syn_ack";
             v.fingerprints = vec![("ja4ts", ja4ts.clone())];
         }
+        StreamEvent::Ssh(_) => v.event = "ssh",
+        StreamEvent::Dns(_) => v.event = "dns",
     }
     v
 }
