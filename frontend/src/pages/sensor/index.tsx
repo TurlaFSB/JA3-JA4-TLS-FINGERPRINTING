@@ -208,34 +208,61 @@ function Interfaces({ view }: { view: InterfacesView }): React.ReactElement {
   )
 }
 
-const RECIPES: { label: string; command: string }[] = [
-  {
-    label: 'capture a different interface',
-    command: `tlsfp serve --live ${quote('Wi-Fi')}`,
-  },
-  {
-    label: 'only HTTPS and QUIC, nothing else',
-    command: 'tlsfp serve --live auto --filter "tcp port 443 or udp port 443"',
-  },
-  {
-    label: 'a busy link: bigger buffer and conversation table',
-    command: 'tlsfp serve --live auto --buffer-mib 128 --max-flows 500000',
-  },
-  {
-    label: 'forward alerts to a SIEM',
-    command: 'tlsfp serve --live auto --alert-syslog udp://siem.example:514',
-  },
-  {
-    label: 'keep less history',
-    command: 'tlsfp serve --live auto --keep-days 14 --keep-alert-days 90',
-  },
-]
+// Commands built from this sensor's real setup: the interface and filter it is
+// using now, and an interface it could use instead. Anything the dashboard
+// cannot know (a SIEM address) is a <placeholder>, not an invented value.
+function recipesFor(
+  capture: CaptureView | undefined,
+  interfaces: InterfacesView | undefined
+): { label: string; command: string }[] {
+  const live = capture?.interface ?? 'auto'
+  const base = `tlsfp serve --live ${quote(live)}`
+  const other = interfaces?.interfaces.find(
+    (i) =>
+      i.kind === 'physical' &&
+      i.up &&
+      i.name !== capture?.interface &&
+      i.addresses.length > 0
+  )
+  const recipes: { label: string; command: string }[] = []
+  if (other) {
+    recipes.push({
+      label: `capture ${other.description ?? other.name} instead`,
+      command: commandFor(nameForCommand(other.name, other.description)),
+    })
+  }
+  recipes.push(
+    {
+      label: 'only HTTPS and QUIC, nothing else',
+      command: `${base} --filter "tcp port 443 or udp port 443"`,
+    },
+    {
+      label: `a busy link: bigger buffer than ${capture?.buffer_mib ?? 32} MiB and a bigger conversation table than ${(capture?.limits.max_flows ?? 65536).toLocaleString()}`,
+      command: `${base} --buffer-mib 128 --max-flows 500000`,
+    },
+    {
+      label: 'forward alerts to a SIEM',
+      command: `${base} --alert-syslog udp://<siem-host>:514`,
+    },
+    {
+      label: 'keep less history',
+      command: `${base} --keep-days 14 --keep-alert-days 90`,
+    }
+  )
+  return recipes
+}
 
-function Recipes(): React.ReactElement {
+function Recipes({
+  capture,
+  interfaces,
+}: {
+  capture?: CaptureView
+  interfaces?: InterfacesView
+}): React.ReactElement {
   return (
     <CropFrame label="change it" aside="restart the server with the flag">
       <div className={styles.recipes}>
-        {RECIPES.map((recipe) => (
+        {recipesFor(capture, interfaces).map((recipe) => (
           <div key={recipe.label} className={styles.recipe}>
             <span className={styles.recipeLabel}>{recipe.label}</span>
             <div className={styles.ifaceCmd}>
@@ -327,7 +354,7 @@ export function Component(): React.ReactElement {
         </div>
         <div className={styles.col}>
           <Preferences />
-          <Recipes />
+          <Recipes capture={capture} interfaces={interfaces} />
           <Downloads />
           <CropFrame label="keyboard">
             <dl className={styles.facts}>
