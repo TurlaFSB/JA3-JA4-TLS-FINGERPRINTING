@@ -125,6 +125,8 @@ pub enum Rule {
     HeaderAnomaly,
     /// A rule the operator wrote in a rules file.
     Custom,
+    /// A pattern in plain DNS traffic (see the DNS page): not tied to a fingerprint.
+    DnsPattern,
 }
 
 impl Rule {
@@ -139,6 +141,7 @@ impl Rule {
             Rule::Monoculture => "monoculture",
             Rule::HeaderAnomaly => "header_anomaly",
             Rule::Custom => "custom",
+            Rule::DnsPattern => "dns_pattern",
         }
     }
 
@@ -153,6 +156,7 @@ impl Rule {
             "monoculture" => Rule::Monoculture,
             "header_anomaly" => Rule::HeaderAnomaly,
             "custom" => Rule::Custom,
+            "dns_pattern" => Rule::DnsPattern,
             _ => Rule::FirstSeen,
         }
     }
@@ -981,9 +985,9 @@ fn insert_observation(
     Ok(conn.last_insert_rowid())
 }
 
-fn persist(conn: &Connection, alert: &Alert, observation_id: i64) -> Result<()> {
+pub(crate) fn persist(conn: &Connection, alert: &Alert, observation_id: i64) -> Result<()> {
     let observation_id = match alert.rule {
-        Rule::Monoculture => None,
+        Rule::Monoculture | Rule::DnsPattern => None,
         _ => Some(observation_id),
     };
     conn.execute(

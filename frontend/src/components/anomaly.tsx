@@ -23,6 +23,7 @@ const HEADLINE: Record<Rule, string> = {
   monoculture: 'one toolkit, many hosts',
   header_anomaly: 'headers no browser would send',
   custom: 'your rule matched',
+  dns_pattern: 'a pattern in the dns traffic',
 }
 
 export function AnomalyHighlights({

@@ -5,6 +5,13 @@ The first tagged release. Since the audited import it adds: capture library and 
 
 Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. See `NOTICE.md`.
 
+## Resilience, configuration, DNS alerts (after 0.2.0)
+- A supervisor reopens a failed live capture with pauses of 1, 2, 4 ... 30 seconds; the capture state (running, reconnecting, stopped, restarts, last error) is published at `/api/capture` and shown in the header and the health panel. Tested against fake sources; not exercised against a real unplugged adapter.
+- `--config FILE` (and `tlsfp config example | path`): options in a TOML file with the precedence flag, variable, file, default. Keys are the flag names; unknown keys are errors listing the valid ones; values pass through the normal validation.
+- `dns_pattern` alerts: new DNS findings that need a look become low-severity alerts, stored and delivered like any other.
+- Property tests for the DNS and SSH readers (arbitrary and mutated bytes never panic; reverse names round-trip for every IPv4 and IPv6 address).
+- `contrib/tlsfp.service` (hardened systemd unit) and `docs/DEPLOYMENT.md`; `start-windows.ps1 -NoBrowser`.
+
 ## DNS findings, domain view, build id (after 0.2.0)
 - DNS: six pattern checks (many failures from one host, generated subdomains, very long names, steady rhythm, changing addresses, blocked names) with evidence and innocent explanations; thresholds are constants with tests (`dnsfind.rs`). The "what is happening" box is always present and explains an empty page.
 - Traffic: a domains view groups conversations by who answered (connections, machines, addresses, data, software) and drills into the conversations.

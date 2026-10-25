@@ -212,6 +212,7 @@ export const RULE_SHORT: Record<Rule, string> = {
   monoculture: 'monoculture',
   header_anomaly: 'headers',
   custom: 'custom',
+  dns_pattern: 'dns',
 }
 
 export const RULE_NOTE: Record<Rule, string> = {
@@ -229,6 +230,8 @@ export const RULE_NOTE: Record<Rule, string> = {
   header_anomaly:
     'The HTTP request headers are ordered or shaped unlike the client they claim to be.',
   custom: 'A rule written by the operator matched.',
+  dns_pattern:
+    'A pattern in plain DNS traffic was noticed. See the DNS page for the evidence and what else could explain it.',
 }
 
 // The most telling alert on a row: the most severe, then the most recent.

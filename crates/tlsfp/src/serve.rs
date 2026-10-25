@@ -2026,10 +2026,23 @@ fn spawn_tail(state: Shared, feed: Feed, shutdown: Arc<AtomicBool>) {
 fn broadcast_flow(store: &mut IntelStore, feed: &Feed, event: FingerprintEvent) {
     // DNS is summarised, not streamed: it would drown the handshakes.
     if let StreamEvent::Dns(message) = &event.event {
-        feed.dns
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .record(event.ts_nanos, event.src, event.dst, message);
+        let alerts = {
+            let mut book = feed
+                .dns
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            book.record(event.ts_nanos, event.src, event.dst, message);
+            book.new_alerts(event.ts_nanos)
+        };
+        for alert in alerts {
+            if let Err(error) = store.record_external_alert(&alert) {
+                tracing::warn!(%error, "could not record a DNS alert");
+                continue;
+            }
+            if let Ok(line) = serde_json::to_string(&LiveMessage::Alert { alert }) {
+                feed.publish(line);
+            }
+        }
         return;
     }
     let intel = store.match_event(&event).unwrap_or_default();

@@ -159,6 +159,17 @@ impl IntelStore {
         Ok(alerts)
     }
 
+    /// Records an alert that does not come from one fingerprint event (a pattern
+    /// noticed over many), and hands it to the configured delivery sink. It is
+    /// stored and shown exactly like any other alert.
+    pub fn record_external_alert(&mut self, alert: &Alert) -> Result<()> {
+        detect::persist(&self.conn, alert, 0)?;
+        if let Some(sink) = &self.detect_config.sink {
+            (sink.0)(alert);
+        }
+        Ok(())
+    }
+
     /// The most recent alerts, newest first, for the CLI feed and the dashboard.
     pub fn recent_alerts(&self, limit: i64) -> Result<Vec<Alert>> {
         detect::recent(&self.conn, limit)

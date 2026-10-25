@@ -1,0 +1,64 @@
+# /etc/systemd/system/tlsfp.service
+#
+# Runs the sensor as an unprivileged user that holds only the two capabilities
+# packet capture needs, with the rest of the system out of reach.
+#
+# Install (as root):
+#   useradd --system --no-create-home --shell /usr/sbin/nologin tlsfp
+#   install -m 0755 tlsfp /usr/local/bin/tlsfp
+#   install -d /etc/tlsfp && tlsfp config example > /etc/tlsfp/tlsfp.toml
+#   install -d -o tlsfp -g tlsfp /var/lib/tlsfp && cp -r web /var/lib/tlsfp/web
+#   sudo -u tlsfp env XDG_DATA_HOME=/var/lib tlsfp intel seed
+#   install -m 0644 contrib/tlsfp.service /etc/systemd/system/
+#   systemctl daemon-reload && systemctl enable --now tlsfp
+#
+# Check what it can still do:  systemd-analyze security tlsfp
+# This is a starting point. It has been written against systemd's documented
+# options but not exercised on every distribution; adjust to your policy.
+
+[Unit]
+Description=tlsfp passive TLS fingerprinting sensor
+Documentation=https://github.com/TurlaFSB/JA3-JA4-TLS-FINGERPRINTING
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tlsfp
+Group=tlsfp
+# The database and dashboard live under /var/lib/tlsfp (StateDirectory).
+Environment=XDG_DATA_HOME=/var/lib
+ExecStart=/usr/local/bin/tlsfp --config /etc/tlsfp/tlsfp.toml serve
+Restart=on-failure
+RestartSec=5
+# The live capture reopens itself if an interface disappears; systemd covers
+# the process dying.
+
+# Capture needs CAP_NET_RAW (open the socket) and CAP_NET_ADMIN (promiscuous mode).
+AmbientCapabilities=CAP_NET_RAW CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW CAP_NET_ADMIN
+NoNewPrivileges=true
+
+StateDirectory=tlsfp
+StateDirectoryMode=0750
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX AF_PACKET AF_NETLINK
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

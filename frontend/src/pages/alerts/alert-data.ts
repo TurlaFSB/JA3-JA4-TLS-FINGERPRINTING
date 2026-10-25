@@ -46,6 +46,10 @@ export const RULE_NOTES: Record<Rule, { what: string; next: string }> = {
     what: 'A cleartext request claiming a browser carried headers browsers never send to that origin.',
     next: 'Typical of impersonation tools left on defaults. Trivially avoided by a careful attacker.',
   },
+  dns_pattern: {
+    what: 'A pattern in plain DNS traffic: a host with many "no such name" answers, many random-looking subdomains under one domain, or very long names. Raised once per host or domain.',
+    next: 'Open the DNS page for the evidence. Each pattern has innocent causes (a stale setting, a content network); the alert says which to rule out.',
+  },
 }
 
 export interface AlertFilter {

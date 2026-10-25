@@ -13,6 +13,7 @@ Rules read fingerprint history stored in the database, so they behave identicall
 | `first_seen` | The fingerprint has never been recorded before. Informational. |
 | `fp_rotation` | One address presents more than 5 distinct fingerprints within the window (default 1 hour). |
 | `monoculture` | One fingerprint appears from more than 10 distinct addresses within the window. Never raised for a fingerprint with an exact benign match. |
+| `dns_pattern` | A pattern in plain DNS traffic (many failures from one host, many random-looking subdomains under one domain, very long names). Raised once per host or domain. Not tied to a fingerprint. |
 | `custom` | A rule from your own TOML file matched: server names, fingerprints, client families, verdicts, networks, ports, TLS version, extensions. See [`RULES.md`](RULES.md). |
 
 Thresholds and the window are configurable in `DetectConfig`. The defaults suit a quiet link; busy sensors should raise them. Rotation and monoculture are skipped for addresses declared with `--shared-network` (a NAT gateway, proxy or jump host).

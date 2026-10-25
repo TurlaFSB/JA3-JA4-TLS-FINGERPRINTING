@@ -38,6 +38,7 @@ serde.workspace = true
 serde_json.workspace = true
 csv.workspace = true
 clap.workspace = true
+toml.workspace = true
 etherparse.workspace = true
 smallvec.workspace = true
 thiserror.workspace = true

@@ -16,6 +16,7 @@ use std::net::IpAddr;
 
 use serde::Serialize;
 use tlsfp_core::dns::DnsMessage;
+use tlsfp_intel::{Alert, AlertSeverity, Rule};
 
 use crate::dnsfind::{self, ClientFacts, Finding, NameFacts, ParentFacts};
 
@@ -30,6 +31,10 @@ const MAX_PARENTS: usize = 5_000;
 const MAX_CHILDREN: usize = 256;
 /// Query times kept per name.
 const MAX_TIMES: usize = 24;
+/// How often the findings are re-examined for new alerts. They are computed
+/// over every name, so this is throttled rather than run per message.
+const EXAMINE_EVERY_NANOS: u64 = 30_000_000_000;
+const MAX_ALERTED: usize = 2_000;
 
 #[derive(Default)]
 struct NameStat {
@@ -179,6 +184,10 @@ pub struct DnsBook {
     clients: HashMap<IpAddr, ClientStat>,
     resolvers: HashMap<String, ResolverStat>,
     parents: HashMap<String, ParentStat>,
+    /// Findings already turned into alerts, so each is raised once.
+    alerted: HashSet<String>,
+    /// When the findings were last examined (nanoseconds of capture time).
+    examined_ts: u64,
     /// Queries waiting for their response, to time the answer.
     pending: HashMap<(IpAddr, u16, String), u64>,
     recent: VecDeque<Lookup>,
@@ -334,6 +343,49 @@ impl DnsBook {
         times.select_nth_unstable(cut);
         let threshold = times[cut];
         self.names.retain(|_, s| s.last_ts > threshold);
+    }
+
+    /// Alerts for findings that are new since the last time, at most every 30
+    /// seconds of capture time. Only the "worth a look" findings alert; the
+    /// informational ones stay on the page. Each subject (a host, a domain, a
+    /// name) alerts once until the sensor restarts.
+    pub fn new_alerts(&mut self, now_ts: u64) -> Vec<Alert> {
+        if now_ts.saturating_sub(self.examined_ts) < EXAMINE_EVERY_NANOS {
+            return Vec::new();
+        }
+        self.examined_ts = now_ts;
+        let mut out = Vec::new();
+        for finding in self.findings() {
+            if finding.severity != dnsfind::Severity::Notice {
+                continue;
+            }
+            for line in &finding.evidence {
+                let subject = line.split(" (").next().unwrap_or(line).to_owned();
+                let key = format!("{}|{subject}", finding.id);
+                if self.alerted.len() >= MAX_ALERTED {
+                    self.alerted.clear();
+                }
+                if !self.alerted.insert(key) {
+                    continue;
+                }
+                out.push(Alert {
+                    ts_nanos: i64::try_from(now_ts).unwrap_or(i64::MAX),
+                    rule: Rule::DnsPattern,
+                    severity: AlertSeverity::Low,
+                    // A host's own failures belong to that host.
+                    ip: (finding.id == "many_failures").then(|| subject.clone()),
+                    fp_kind: None,
+                    fp_value: None,
+                    title: finding.title.clone(),
+                    detail: format!(
+                        "{line}. {} Could also be: {}",
+                        finding.detail, finding.innocent
+                    ),
+                    score: None,
+                });
+            }
+        }
+        out
     }
 
     #[must_use]
@@ -701,5 +753,65 @@ mod tests {
             &msg("www.example.com", true, "NOERROR", &["192.0.2.1"]),
         );
         assert_eq!(book.view(10).findings, Vec::new());
+    }
+
+    #[test]
+    fn a_finding_raises_one_alert_per_subject_and_not_again() {
+        let mut book = DnsBook::default();
+        let (client, resolver) = (addr("10.0.0.5:40000"), addr("10.0.0.1:53"));
+        for i in 0..8u64 {
+            let name = format!("x7f3k9q2m8z1v5b{i}n6.tunnel.example");
+            book.record(i, client, resolver, &msg(&name, false, "", &[]));
+        }
+        // Too soon after the start of capture time: nothing is examined yet.
+        assert_eq!(book.new_alerts(1).len(), 0);
+        let first = book.new_alerts(EXAMINE_EVERY_NANOS);
+        assert_eq!(first.len(), 1, "{first:?}");
+        assert_eq!(first[0].rule, Rule::DnsPattern);
+        assert_eq!(first[0].severity, AlertSeverity::Low);
+        assert!(first[0].detail.contains("tunnel.example"));
+        assert!(first[0].detail.contains("Could also be"));
+        // Examined again later: the same subject is not alerted twice.
+        assert_eq!(book.new_alerts(EXAMINE_EVERY_NANOS * 3).len(), 0);
+    }
+
+    #[test]
+    fn informational_findings_do_not_alert() {
+        let mut book = DnsBook::default();
+        let (client, resolver) = (addr("10.0.0.5:40000"), addr("10.0.0.1:53"));
+        // A steady rhythm is only informational.
+        for i in 0..10u64 {
+            book.record(
+                i * 30_000_000_000,
+                client,
+                resolver,
+                &msg("poll.example.com", false, "", &[]),
+            );
+        }
+        assert!(
+            book.view(5)
+                .findings
+                .iter()
+                .any(|f| f.id == "regular_polling")
+        );
+        assert_eq!(book.new_alerts(EXAMINE_EVERY_NANOS * 20).len(), 0);
+    }
+
+    #[test]
+    fn a_hosts_failures_alert_against_that_host() {
+        let mut book = DnsBook::default();
+        let (client, resolver) = (addr("10.0.0.9:40000"), addr("10.0.0.1:53"));
+        for i in 0..30u64 {
+            let name = format!("gone{i}.example");
+            book.record(i, client, resolver, &msg(&name, false, "", &[]));
+            book.record(i, resolver, client, &msg(&name, true, "NXDOMAIN", &[]));
+        }
+        let alerts = book.new_alerts(EXAMINE_EVERY_NANOS);
+        let failures: Vec<_> = alerts
+            .iter()
+            .filter(|a| a.title.contains("no such name"))
+            .collect();
+        assert_eq!(failures.len(), 1);
+        assert_eq!(failures[0].ip.as_deref(), Some("10.0.0.9"));
     }
 }

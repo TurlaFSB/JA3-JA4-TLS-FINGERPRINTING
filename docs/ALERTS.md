@@ -34,3 +34,7 @@ Syslog carries the same facts: the rule is the message id, and the structured da
 - Delivery is at most once. There is no spool to disk and no replay after a crash; the database is the record. If you need guaranteed delivery, tail the database with `tlsfp intel alerts --json` or use the file output with a shipper that tracks its position.
 - A webhook URL often contains a secret. Prefer the environment variable to the flag so it stays out of the process list, and it is never logged.
 - Alerts raised by a separate sensor writing the same database are delivered by that sensor, not by a `serve` that only tails the database.
+
+## DNS pattern alerts
+
+Alongside fingerprint alerts, the sensor raises `dns_pattern` alerts (severity low) when plain DNS traffic shows a host with many "no such name" answers, many random-looking subdomains under one domain, or very long names. Each is raised once per host or domain until the sensor restarts, is stored and shown like any other alert, and goes to every configured destination (file, syslog, webhook). The detail names the evidence and what else could explain it; the thresholds are in `crates/tlsfp/src/dnsfind.rs`. Informational DNS findings (steady rhythm, changing addresses, blocked names) appear on the DNS page but do not alert.

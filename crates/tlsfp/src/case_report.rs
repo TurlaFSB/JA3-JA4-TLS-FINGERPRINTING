@@ -192,6 +192,7 @@ fn rule_explanation(rule: Rule) -> &'static str {
         }
         Rule::FirstSeen => "This fingerprint had not been seen before in this database.",
         Rule::Custom => "A rule written by the operator matched.",
+        Rule::DnsPattern => "A pattern in plain DNS traffic was noticed (see the DNS findings).",
     }
 }
 

@@ -67,11 +67,27 @@ pub struct Cli {
     )]
     pub alert_min_severity: tlsfp_intel::AlertSeverity,
 
+    /// A TOML file of options, so a long command line becomes a file.
+    /// Precedence: flag, environment variable, this file, default. Without
+    /// this flag, `tlsfp.toml` in the data directory is read if it exists.
+    /// See `tlsfp config example`.
+    #[arg(long, global = true, env = "TLSFP_CONFIG", value_name = "FILE")]
+    pub config: Option<PathBuf>,
+
     #[command(flatten)]
     pub engine: crate::engine::EngineArgs,
 
     #[command(subcommand)]
     pub command: Command,
+}
+
+/// What `tlsfp config` can do.
+#[derive(Debug, Subcommand)]
+pub enum ConfigCommand {
+    /// Print a commented template to start from: `tlsfp config example > tlsfp.toml`.
+    Example,
+    /// Print where the configuration file is looked for by default.
+    Path,
 }
 
 #[derive(Debug, Subcommand)]
@@ -320,6 +336,12 @@ pub enum Command {
     /// List the network interfaces that `live` and `serve --live` can capture on.
     Interfaces,
 
+    /// Work with the configuration file.
+    Config {
+        #[command(subcommand)]
+        action: ConfigCommand,
+    },
+
     /// Write a self-contained HTML report for one or more captures: what is in
     /// them, the clients named, the detection rules that fired, the SHA-256 of
     /// each file, and the limits of the findings. No script, no network.
@@ -557,6 +579,7 @@ impl Cli {
             .init();
     }
 
+    #[allow(clippy::too_many_lines)]
     pub fn run(self) -> Result<()> {
         crate::engine::init(self.engine);
         crate::extras::init(self.rules.as_ref())?;
@@ -651,6 +674,10 @@ impl Cli {
                 RulesCommand::Check { file } => run_rules_check(&file),
             },
             Command::Interfaces => run_interfaces(),
+            Command::Config { action } => {
+                run_config(&action);
+                Ok(())
+            }
             Command::Identify { paths, json, db } => run_identify(&paths, json, db),
             Command::Html { files, out, db } => run_html(&files, &out, db),
             Command::Intel { action } => action.run(),
@@ -1590,6 +1617,16 @@ fn run_identify(paths: &[PathBuf], json: bool, db: Option<PathBuf>) -> Result<()
 
 /// Prints the interfaces libpcap can open, with their addresses and state, so
 /// a person knows what to pass to `live` or `serve --live`.
+fn run_config(action: &ConfigCommand) {
+    match action {
+        ConfigCommand::Example => print!("{}", crate::config::EXAMPLE),
+        ConfigCommand::Path => println!(
+            "{}",
+            crate::config::describe_default(&crate::config::default_path())
+        ),
+    }
+}
+
 fn run_interfaces() -> Result<()> {
     crate::npcap::ensure().map_err(anyhow::Error::msg)?;
     let devices = pcap::Device::list().context("listing network interfaces")?;

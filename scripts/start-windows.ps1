@@ -8,7 +8,8 @@
 
 param(
     [string]$Interface = "auto",
-    [int]$Port = 8080
+    [int]$Port = 8080,
+    [switch]$NoBrowser
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,5 +37,5 @@ $args = @("serve", "127.0.0.1:$Port", "--live", $Interface)
 if (Test-Path $captures) { $args += @("--library", $captures) }
 
 Write-Host "Dashboard: http://127.0.0.1:$Port  (Ctrl+C to stop)"
-Start-Process "http://127.0.0.1:$Port"
+if (-not $NoBrowser) { Start-Process "http://127.0.0.1:$Port" }
 & $exe @args

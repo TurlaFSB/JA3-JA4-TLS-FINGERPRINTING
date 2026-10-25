@@ -410,6 +410,19 @@ The sensor is passive. What you tune is how much of a busy link it reads and how
 | Your own rules | `--rules FILE` | | none |
 | Dashboard label | `--location TEXT` | `TLSFP_SENSOR_LOCATION` | none |
 
+**Put it in a file.** Every option above can live in a `tlsfp.toml` instead of a long command line (`tlsfp config example > tlsfp.toml`, then `tlsfp --config tlsfp.toml serve`). Precedence, strongest first: flag, environment variable, file, default. A misspelt key is an error that lists the valid ones.
+
+```toml
+max-flows = 200000
+alert-file = "alerts.jsonl"
+
+[serve]
+live = "auto"
+buffer-mib = 64
+```
+
+**It keeps itself running.** If the capture's interface disappears (Wi-Fi switched off, a USB adapter unplugged), the sensor reopens it with growing pauses and the dashboard says `capture reconnecting` and why, instead of sitting online and silent. To run it as a service, with hardening, a reverse proxy, monitoring and backups: [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+
 All settings and how to read the capture health panel: [`docs/CAPTURE_TUNING.md`](docs/CAPTURE_TUNING.md). Alert delivery: [`docs/ALERTS.md`](docs/ALERTS.md).
 
 ## 8. Detection and intelligence
@@ -426,8 +439,9 @@ Seven built-in rules, plus any you write, read fingerprint history stored in the
 | `fp_rotation` | One address presents more than 5 distinct fingerprints in an hour. |
 | `monoculture` | One fingerprint appears from more than 10 addresses in an hour. |
 | `custom` | A rule from your own TOML file matched ([`docs/RULES.md`](docs/RULES.md)). |
+| `dns_pattern` | A pattern in plain DNS traffic: a host with many "no such name" answers, many random-looking subdomains under one domain, or very long names. Raised once per host or domain, with the evidence and what else could explain it. |
 
-The bundled feed has 309 fingerprints from four vendored sources (abuse.ch SSLBL, Salesforce's JA3 list, a curated set, and fingerprints measured from this project's own labelled captures). It is a baseline, not coverage of current malware. SSH and DNS are reported as observations; they are not yet matched or alerted on. Full semantics, sources and licences: [`docs/DETECTION.md`](docs/DETECTION.md); extending the feed: [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md).
+The bundled feed has 309 fingerprints from four vendored sources (abuse.ch SSLBL, Salesforce's JA3 list, a curated set, and fingerprints measured from this project's own labelled captures). It is a baseline, not coverage of current malware. SSH is reported as an observation and is not yet matched against a feed. DNS patterns raise `dns_pattern` alerts, but individual DNS lookups are not matched against intelligence. Full semantics, sources and licences: [`docs/DETECTION.md`](docs/DETECTION.md); extending the feed: [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md).
 
 ## 9. Architecture
 
@@ -512,7 +526,7 @@ SSH and DNS enter at the engine layer (a banner sniff on TCP streams, a port-53 
 |---|---|---|---|
 | Engine | `tlsfp-core` | Decoding, TCP and QUIC reassembly, protocol parsing, every fingerprint algorithm, DNS and SSH reading, conversation accounting | Touch the network, a database or an async runtime. Forbids `unsafe`; treats every byte as hostile |
 | Intelligence | `tlsfp-intel` | SQLite store, matching and scoring, client inference, detection rules, host history, labels, retention | Know where packets came from |
-| Application | `tlsfp` | Reading files and interfaces, the HTTP API and event stream, alert delivery, the capture library, reports, DNS summary | Compute a fingerprint |
+| Application | `tlsfp` | Reading files and interfaces, keeping the capture alive, the HTTP API and event stream, alert delivery, the capture library, reports, DNS summary and findings | Compute a fingerprint |
 | Dashboard | `frontend/` | Showing it, with no logic the server cannot be asked for | Hold state that matters |
 
 **Project layout**
@@ -634,6 +648,7 @@ More: [`docs/INSTALL.md`](docs/INSTALL.md) and [`docs/LIVE_CAPTURE.md`](docs/LIV
 | Install, verify, troubleshoot (extended) | [`docs/INSTALL.md`](docs/INSTALL.md) |
 | Every command and option, JSON fields, the HTTP API | [`docs/USAGE.md`](docs/USAGE.md) |
 | Capture settings, health, output detail, accuracy limits | [`docs/CAPTURE_TUNING.md`](docs/CAPTURE_TUNING.md) |
+| Running it as a service: config file, systemd, reverse proxy, monitoring, backups | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) |
 | Live capture and the Traffic page | [`docs/LIVE_CAPTURE.md`](docs/LIVE_CAPTURE.md) |
 | Dashboard pages | [`docs/DASHBOARD.md`](docs/DASHBOARD.md) |
 | Detection rules and the intelligence feed | [`docs/DETECTION.md`](docs/DETECTION.md), [`docs/RULES.md`](docs/RULES.md), [`docs/INTELLIGENCE.md`](docs/INTELLIGENCE.md) |
@@ -654,7 +669,8 @@ More: [`docs/INSTALL.md`](docs/INSTALL.md) and [`docs/LIVE_CAPTURE.md`](docs/LIV
 | Done | Per-host history, alert delivery, HTML reports, custom rules, Windows live capture, capture health |
 | Done | SSH (HASSH) and plain DNS, with a DNS page and DNS-derived server names |
 | Next | Optional offline GeoIP / ASN lookup to show country and network owner; certificate subject names on TLS 1.2 |
-| Next | Match HASSH against a feed and add SSH and DNS rules (for example a host whose SSH client changes, or a burst of failing lookups) |
+| Done | DNS pattern findings and `dns_pattern` alerts; a configuration file; automatic capture reconnection |
+| Next | Match HASSH against a feed and add an SSH rule (for example a host whose SSH client changes) |
 | Next | Real Firefox, Safari and Edge captures, and a second operating system, to replace impersonation stand-ins |
 | Planned | A TLS-to-TCP consistency rule (needs real multi-OS captures to set a threshold) |
 | Planned | Further passive protocols (DHCP and mDNS names, JA4L latency), and evasion and Encrypted Client Hello studies |

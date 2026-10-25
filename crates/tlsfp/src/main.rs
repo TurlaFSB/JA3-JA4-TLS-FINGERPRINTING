@@ -3,6 +3,7 @@
 
 mod case_report;
 mod cli;
+mod config;
 mod deliver;
 mod dnsbook;
 mod dnsfind;
@@ -38,7 +39,16 @@ fn main() -> Result<()> {
         default_hook(info);
     }));
 
-    let cli = Cli::parse();
+    // Fold the configuration file into the arguments before the real parse,
+    // so one parser (and one set of validations) serves flags, variables and file.
+    let args = match config::apply(std::env::args_os().collect()) {
+        Ok(args) => args,
+        Err(error) => {
+            eprintln!("error: {error:#}");
+            std::process::exit(2);
+        }
+    };
+    let cli = Cli::parse_from(args);
     cli.init_tracing();
     let result = cli.run();
     deliver::flush();
