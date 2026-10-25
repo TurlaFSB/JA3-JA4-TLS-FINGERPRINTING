@@ -53,7 +53,8 @@ A TLS handshake starts in the clear. The ClientHello lists the protocol versions
 - name the software behind a connection without reading its content;
 - spot a "browser" whose handshake belongs to a script, or an operating-system claim its TCP stack contradicts;
 - recognise known-malicious TLS stacks from public feeds, and notice when an address starts using a new client;
-- see which names a machine resolves, including the lookups that fail;
+- see who is talking to whom: every conversation with both ends named (the domain, the address, the port), what it was, and how much moved;
+- see which names a machine resolves, which DNS server it asked, and the lookups that fail;
 - keep evidence: per-capture HTML reports carrying the file's SHA-256, JSON for pipelines, alerts to a SIEM.
 
 **It is not**
@@ -78,7 +79,9 @@ A TLS handshake starts in the clear. The ClientHello lists the protocol versions
 | **Fingerprints** | JA3 / JA3S, JA4 / JA4S, JA4H (cleartext HTTP), JA4X (certificates), JA4T / JA4TS (TCP), HASSH / HASSHServer (SSH). GREASE stripped; raw and hashed forms. |
 | **Handshake detail** | Every hello carries a readable account of what was offered or chosen: versions, cipher suites, extensions, groups, signature algorithms, ALPN, features (ECH, resumption, certificate compression and more). |
 | **Transports** | TCP with full stream reassembly (reordering, retransmission, overlap); QUIC v1 and v2 (client Initial packets decrypted). |
-| **Who and where** | Every handshake is attributed to a site and a client (an exact feed match, or the family its shape suggests, with evidence and limits). Servers whose handshake hides its name are named from DNS answers. |
+| **Who talks to whom** | Every conversation is read as *from* (who opened it) *to* (who answered), with names where they can be known: the TLS handshake's server name, the HTTP Host, a DNS answer, a reverse lookup, and "this computer" for your own side. Each name says how it is known. The detail view adds TLS version and cipher, JA4 and JA4S, the client software, volume and timing, and a plain-English sentence. |
+| **Who and where** | Every handshake is attributed to a site and a client (an exact feed match, or the family its shape suggests, with evidence and limits). |
+| **DNS** | Plain DNS read from the wire: a generated summary of what is happening, the names asked, who asked and which DNS server answered (and how fast), reverse lookups decoded, names that failed, blocked names, and the connections that followed. |
 | **Detection** | Seven built-in rules over fingerprint history and cleartext HTTP, plus your own rules in a TOML file. |
 | **Per-host history** | Which clients each address has run and when each first appeared. |
 | **Capture health** | The sensor counts what it fails to read (kernel drops, shed conversations, clipped streams, handshakes that ended unread) and the dashboard says so, naming the flag that fixes it. |
@@ -257,7 +260,7 @@ The `ja4` value is FoxIO's published reference fingerprint for this handshake. I
 tlsfp serve --replay browsers-x509.pcapng --loop
 ```
 
-Browse to <http://127.0.0.1:8080>. The header reads `REPLAY …` and **Scope** fills within seconds. Click a row to open the detail drawer.
+Browse to <http://127.0.0.1:8080>. The header reads `REPLAY …` and **Scope** fills within seconds. Click a row to open the detail drawer, then open **Traffic** and click a conversation to see who connected to whom ([how to read it](#how-to-read-a-conversation)).
 
 **Step 4. Watch your own traffic** (needs the capture permission from section 3):
 
@@ -346,7 +349,7 @@ Each fingerprint is pinned to published vectors in the test suite: [`learn/CONFO
 | Page | Purpose |
 |---|---|
 | **Scope** | Live handshakes with site, client and verdict; a By site view; a detail drawer for any event; CSV and JSON export of what is listed. |
-| **Traffic** | Every conversation read left to right: who opened it (name and address), who answered (the domain, its address and port, and how the name is known: handshake, HTTP, DNS answer or reverse lookup), what it was (service, TLS version, ALPN, SSH banner), the client software, bytes each way and duration. Click a row for a plain-English sentence and every fact. A 15-minute throughput chart and the **capture health** panel sit above. |
+| **Traffic** | Every conversation read left to right: who opened it (name and address), who answered (the domain, its address and port, and how the name is known: handshake, HTTP, DNS answer or reverse lookup), what it was (service, TLS version, ALPN, SSH banner), the client software, bytes each way and duration. Click a row for a plain-English sentence and every fact. A 15-minute throughput chart and the **capture health** panel sit above. See [how to read a conversation](#how-to-read-a-conversation). |
 | **Hosts** | Per-machine history: which clients each address runs and when a new one appears. |
 | **DNS** | A "what is happening" summary, then the names being asked for, who asked, which DNS server they asked and how fast it answered, reverse lookups decoded to the address, names that failed, and the connections that followed each name. Plain-English explanations throughout. |
 | **Alerts** | Every alert with a plain explanation and what to verify; filters and export. |
@@ -355,6 +358,25 @@ Each fingerprint is pinned to published vectors in the test suite: [`learn/CONFO
 | **Sensor** | How the sensor is set up, the interfaces it can capture, commands to change settings, display preferences (theme, time zone, text size), data downloads, shortcuts. |
 
 ![Event detail drawer](docs/images/detail.png)
+
+### How to read a conversation
+
+The **Traffic** page lists every conversation the sensor sees. Click a row to open it:
+
+![A conversation opened on the Traffic page](docs/images/conversation.png)
+
+| Column | Meaning |
+|---|---|
+| **OUT / IN / LOCAL / PASSING** | Which way it crossed your network boundary: out (you opened it to the internet), in (something outside opened it to you), local (inside the network), passing (neither end is yours). |
+| **From (opened it)** | The side that sent the first packet. Its name (your computer's name, or a reverse-DNS name) when known, then its address and port. |
+| **To (answered)** | The server. Its **domain** when known, then its address and port, and a small tag saying how the name is known: `tls handshake` (the name the client asked for), `http request`, `dns answer` (a DNS response the sensor saw), or `reverse dns`. With no tag, only the address is known. |
+| **What** | The service and what the handshake revealed, for example `HTTPS · TLS 1.2 · h2` or `SSH · OpenSSH_9.6`. |
+| **Client software** | The software on the From side, from an exact match in the intelligence feed or inferred from the handshake's shape. |
+| **Sent / received / lasted** | Bytes each way and how long the conversation ran. |
+
+An address with no name is shown as an address because nothing on the wire names it: the handshake hid or omitted the name (Encrypted Client Hello, or not TLS), and no DNS answer or reverse lookup for it crossed the sensor. The sensor does not guess.
+
+The **DNS** page works the same way for lookups. Start with the "what is happening" box, then click a name to see who asked, which DNS server answered, and the connections that followed.
 
 <table>
 <tr>
@@ -565,7 +587,9 @@ Vulnerability reports: [`SECURITY.md`](SECURITY.md) (GitHub private vulnerabilit
 
 - **Fingerprints can be spoofed.** A tool that reproduces a browser's ClientHello (uTLS, curl-impersonate) is identical to it on the wire. The cross-layer rules raise the cost for tools on their defaults; they do not stop a careful attacker, and nothing here detects a real browser driven by automation.
 - **A fingerprint names a stack, not a program.** The client label is an exact feed match or a family guessed from the handshake's shape; it cannot tell Brave from Chrome from Edge.
-- **Encrypted Client Hello** hides the real server name and inner hello. DNS can still name the server when DNS is in the clear.
+- **Encrypted Client Hello** hides the real server name and inner hello. DNS can still name the server when DNS is in the clear; otherwise the server stays an address.
+- **No geolocation or ownership data:** the sensor shows addresses and names, not countries or companies, because it ships no GeoIP or ASN database.
+- **Certificate names** are not shown: they are readable only on TLS 1.2 and earlier, and only the certificate's fingerprint (JA4X) is computed.
 - **DNS** is seen only as plain UDP port 53. DNS over HTTPS or TLS is encrypted and invisible, and a local resolver on loopback is seen only if loopback is captured.
 - **JA4X** needs the certificate in the clear (TLS 1.2 and earlier); **JA4H** covers cleartext HTTP/1.x only; **SSH** is read from the first key-exchange packet of each side only.
 - **QUIC:** client Initial packets only; no 0-RTT, Handshake packets or connection migration.
@@ -583,6 +607,8 @@ Vulnerability reports: [`SECURITY.md`](SECURITY.md) (GitHub private vulnerabilit
 **Will it work on a VPN, Wi-Fi, or inside WSL or a container?** On Wi-Fi and Ethernet, yes. Through a VPN it sees the tunnel's own handshake on the physical adapter, or the traffic inside it if you capture the VPN's virtual adapter. WSL and containers have their own virtual network; capture on the host interface for the host's traffic.
 
 **Why is the client "Unrecognised"?** The fingerprint is not in the bundled feed. That means "not catalogued", not "bad". Name it yourself on the Intel page or with `tlsfp intel label`.
+
+**Why does a server show only an address?** Nothing on the wire named it. See [how to read a conversation](#how-to-read-a-conversation). Browsers that use DNS over HTTPS or Encrypted Client Hello hide the names the sensor would otherwise read; turning off "secure DNS" in the browser, or watching the machine's own resolver, restores them.
 
 **Why do I see nothing on Scope?** Check, in order: the header says `LIVE` (not `REPLAY` or `TAIL`); you have the capture permission; you chose the right interface (`tlsfp interfaces`, then `--live "<name>"`); on Windows, Npcap is installed. The Traffic page's capture health panel shows whether frames are arriving at all.
 
@@ -627,6 +653,7 @@ More: [`docs/INSTALL.md`](docs/INSTALL.md) and [`docs/LIVE_CAPTURE.md`](docs/LIV
 | Done | Cleartext-HTTP rules evaluated on labelled scenarios, including adaptive attackers |
 | Done | Per-host history, alert delivery, HTML reports, custom rules, Windows live capture, capture health |
 | Done | SSH (HASSH) and plain DNS, with a DNS page and DNS-derived server names |
+| Next | Optional offline GeoIP / ASN lookup to show country and network owner; certificate subject names on TLS 1.2 |
 | Next | Match HASSH against a feed and add SSH and DNS rules (for example a host whose SSH client changes, or a burst of failing lookups) |
 | Next | Real Firefox, Safari and Edge captures, and a second operating system, to replace impersonation stand-ins |
 | Planned | A TLS-to-TCP consistency rule (needs real multi-OS captures to set a threshold) |
