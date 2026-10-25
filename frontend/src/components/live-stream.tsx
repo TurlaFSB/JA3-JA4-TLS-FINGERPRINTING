@@ -15,6 +15,7 @@ import {
   splitAddr,
   worstVerdict,
 } from '@/api/types'
+import { downloadText, stamp, toCsv } from '@/core/lib/export'
 import { useClock } from '@/core/lib/use-clock'
 import { SeverityTag } from './atoms'
 import { cx } from './cx'
@@ -27,9 +28,12 @@ import {
   type Connection,
   clientName,
   connectionKey,
+  EXPORT_HEADERS,
+  exportRows,
   leadAlert,
   matchesSite,
   NO_NAME,
+  ownName,
   RULE_NOTE,
   RULE_SHORT,
   type SiteRow,
@@ -147,12 +151,7 @@ function FlowRow({
   const lead = leadAlert(alerts)
   const severity = topSeverity(alerts ?? [])
   const hot = severity === 'high' || severity === 'critical'
-  const own =
-    event.kind === 'ssh'
-      ? event.banner.replace(/^SSH-[0-9.]+-/, '')
-      : 'sni' in event
-        ? event.sni
-        : undefined
+  const own = ownName(event)
   // A server's reply carries no name of its own; take it from the connection
   // it answers, and say so by dimming it.
   const borrowed = own === undefined && event.kind !== 'client_hello'
@@ -545,6 +544,40 @@ export function LiveStream({
           disabled={items.length === 0}
         >
           clear
+        </button>
+        <button
+          type="button"
+          className={styles.chip}
+          disabled={items.length === 0}
+          title="Download what is listed, as a spreadsheet"
+          onClick={() =>
+            downloadText(
+              `tlsfp-stream-${stamp()}.csv`,
+              'text/csv',
+              toCsv(EXPORT_HEADERS, exportRows(items, connections))
+            )
+          }
+        >
+          csv
+        </button>
+        <button
+          type="button"
+          className={styles.chip}
+          disabled={items.length === 0}
+          title="Download what is listed, with every field"
+          onClick={() =>
+            downloadText(
+              `tlsfp-stream-${stamp()}.json`,
+              'application/json',
+              JSON.stringify(
+                items.map((item) => item.message),
+                null,
+                2
+              )
+            )
+          }
+        >
+          json
         </button>
       </div>
 

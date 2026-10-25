@@ -7,7 +7,9 @@ import { describe, expect, it } from 'vitest'
 import type { TrafficFlow } from '@/api/types'
 import {
   chartMax,
+  FLOW_HEADERS,
   type FlowFilter,
+  flowRows,
   linePath,
   matchesFlow,
   sortFlows,
@@ -100,5 +102,18 @@ describe('chart helpers', () => {
       'M0.0 10.0 L50.0 5.0 L100.0 0.0'
     )
     expect(linePath([4], 100, 10, 10)).toBe('M0.0 6.0')
+  })
+})
+
+describe('flowRows', () => {
+  it('says where a server name came from', () => {
+    const rows = flowRows([
+      flow({}),
+      flow({ sni: null, dns_name: 'cdn.example' }),
+      flow({ sni: null, dns_name: null }),
+    ])
+    for (const row of rows) expect(row).toHaveLength(FLOW_HEADERS.length)
+    const source = FLOW_HEADERS.indexOf('name_source')
+    expect(rows.map((r) => r[source])).toEqual(['handshake', 'dns', ''])
   })
 })

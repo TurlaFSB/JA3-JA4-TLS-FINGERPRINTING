@@ -7,6 +7,7 @@ import type { LiveItem } from '@/api/hooks'
 import {
   type Alert,
   type ClientRead,
+  fingerprintOf,
   type LiveMessage,
   type MatchReport,
   type Rule,
@@ -279,4 +280,69 @@ export function intelNote(intel?: MatchReport[]): string {
   return !intel || intel.length === 0
     ? 'No entry in the intelligence feed matches this fingerprint, so its verdict is "unknown". That means it is not catalogued, which is neither a clean nor a bad result.'
     : ''
+}
+
+export const EXPORT_HEADERS = [
+  'time_utc',
+  'kind',
+  'src',
+  'dst',
+  'site',
+  'client',
+  'fingerprint_kind',
+  'fingerprint',
+  'verdict',
+  'alerts',
+]
+
+// The visible stream as spreadsheet rows. Alerts that arrive on their own are
+// listed with their title in the kind column.
+export function exportRows(
+  items: LiveItem[],
+  connections: Map<string, Connection>
+): (string | number)[][] {
+  return items.map((item) => {
+    const { message } = item
+    if (message.type === 'alert') {
+      const alert = message.alert
+      return [
+        new Date(alert.ts_nanos / 1_000_000).toISOString(),
+        `alert:${alert.rule}`,
+        alert.ip ?? '',
+        '',
+        '',
+        '',
+        alert.fp_kind ?? '',
+        alert.fp_value ?? '',
+        '',
+        1,
+      ]
+    }
+    const { event } = message
+    const conn = connections.get(connectionKey(event))
+    const fp = fingerprintOf(event)
+    const site =
+      event.kind === 'client_hello'
+        ? (event.sni ?? conn?.sni ?? '')
+        : (conn?.sni ?? '')
+    return [
+      new Date(event.ts_nanos / 1_000_000).toISOString(),
+      event.kind,
+      event.src,
+      event.dst,
+      site,
+      clientName(message.client ?? conn?.client).text,
+      fp.kind,
+      fp.value,
+      worstVerdict(message.intel) ?? '',
+      message.alerts?.length ?? 0,
+    ]
+  })
+}
+
+// The name an event carries itself: the server name a client asked for, or an
+// SSH server's software banner. Replies borrow a name from their connection.
+export function ownName(event: StreamEvent): string | undefined {
+  if (event.kind === 'ssh') return event.banner.replace(/^SSH-[0-9.]+-/, '')
+  return 'sni' in event ? event.sni : undefined
 }

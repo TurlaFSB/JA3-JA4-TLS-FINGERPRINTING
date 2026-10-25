@@ -9,6 +9,7 @@ import { type RateSample, useTraffic } from '@/api/hooks'
 import type { Talker, TrafficFlow } from '@/api/types'
 import { CaptureHealth, CropFrame, cx } from '@/components'
 import { ROUTES } from '@/config'
+import { downloadText, stamp, toCsv } from '@/core/lib/export'
 import { formatBitRate, formatBytes, formatDuration } from '@/core/lib/format'
 import styles from './traffic.module.scss'
 import {
@@ -16,6 +17,8 @@ import {
   DIRECTION_ARROW,
   DIRECTION_NOTE,
   type DirectionFilter,
+  FLOW_HEADERS,
+  flowRows,
   identity,
   linePath,
   matchesFlow,
@@ -382,6 +385,21 @@ export function Component(): React.ReactElement {
                 {item.label}
               </button>
             ))}
+            <button
+              type="button"
+              className={styles.chip}
+              disabled={shown.length === 0}
+              title="Download the conversations listed, as a spreadsheet"
+              onClick={() =>
+                downloadText(
+                  `tlsfp-conversations-${stamp()}.csv`,
+                  'text/csv',
+                  toCsv(FLOW_HEADERS, flowRows(shown))
+                )
+              }
+            >
+              csv
+            </button>
           </fieldset>
         </div>
 

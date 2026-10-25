@@ -104,3 +104,48 @@ export function linePath(
     })
     .join(' ')
 }
+
+export const FLOW_HEADERS = [
+  'first_seen_utc',
+  'last_seen_utc',
+  'protocol',
+  'service',
+  'direction',
+  'client',
+  'server',
+  'server_name',
+  'name_source',
+  'client_identity',
+  'ja4',
+  'bytes_up',
+  'bytes_down',
+  'packets_up',
+  'packets_down',
+  'state',
+]
+
+// The conversations as spreadsheet rows, with where each server name came from.
+export function flowRows(flows: TrafficFlow[]): (string | number)[][] {
+  const iso = (ns: number): string => new Date(ns / 1e6).toISOString()
+  return flows.map((flow) => {
+    const site = siteName(flow)
+    return [
+      iso(flow.first_ns),
+      iso(flow.last_ns),
+      flow.proto,
+      flow.service ?? '',
+      flow.direction,
+      flow.client,
+      flow.server,
+      site.name,
+      site.name === '' ? '' : site.viaDns ? 'dns' : 'handshake',
+      identity(flow),
+      flow.ja4 ?? '',
+      flow.bytes_up,
+      flow.bytes_down,
+      flow.packets_up,
+      flow.packets_down,
+      flow.state,
+    ]
+  })
+}

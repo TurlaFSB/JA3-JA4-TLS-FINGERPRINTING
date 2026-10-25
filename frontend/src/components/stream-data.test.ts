@@ -11,7 +11,9 @@ import {
   bySite,
   clientName,
   connectionKey,
+  EXPORT_HEADERS,
   explain,
+  exportRows,
   leadAlert,
   matchesSite,
 } from './stream-data'
@@ -173,5 +175,24 @@ describe('leadAlert', () => {
     ])
     expect(lead?.rule).toBe('known_bad')
     expect(leadAlert([])).toBeUndefined()
+  })
+})
+
+describe('exportRows', () => {
+  it('writes one row per item with the site and client filled in', () => {
+    const items = [
+      hello('10.0.0.5:50000', '1.1.1.1:443', 'example.com', 'ja4-a'),
+      serverHello('1.1.1.1:443', '10.0.0.5:50000'),
+    ]
+    const rows = exportRows(items, buildConnections(items))
+    expect(rows).toHaveLength(2)
+    for (const row of rows) expect(row).toHaveLength(EXPORT_HEADERS.length)
+    expect(rows[0][1]).toBe('client_hello')
+    expect(rows[0][4]).toBe('example.com')
+    expect(rows[0][5]).toBe('Chromium')
+    // The server's reply borrows the site from its connection.
+    expect(rows[1][1]).toBe('server_hello')
+    expect(rows[1][4]).toBe('example.com')
+    expect(String(rows[0][0])).toMatch(/^\d{4}-\d{2}-\d{2}T/)
   })
 })
