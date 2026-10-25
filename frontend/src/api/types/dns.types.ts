@@ -43,6 +43,17 @@ export const dnsLookupSchema = z.object({
   latency_ms: z.number().nullable(),
 })
 
+export const findingSchema = z.object({
+  id: z.string(),
+  severity: z.enum(['info', 'notice']),
+  title: z.string(),
+  detail: z.string(),
+  innocent: z.string(),
+  evidence: z.array(z.string()),
+})
+
+export type Finding = z.infer<typeof findingSchema>
+
 export const dnsViewSchema = z.object({
   totals: z.object({
     queries: z.number(),
@@ -72,6 +83,7 @@ export const dnsViewSchema = z.object({
     })
   ),
   recent: z.array(dnsLookupSchema),
+  findings: z.array(findingSchema).default([]),
 })
 
 export type DnsLookup = z.infer<typeof dnsLookupSchema>

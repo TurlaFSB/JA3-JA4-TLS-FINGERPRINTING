@@ -11,6 +11,7 @@ import { formatBytes, formatDuration } from '@/core/lib/format'
 import { useClock } from '@/core/lib/use-clock'
 import styles from './conversations.module.scss'
 import {
+  byDomain,
   clientEndpoint,
   DIRECTION_NOTE,
   describeFlow,
@@ -241,6 +242,64 @@ export function Conversations({
           them
         </p>
       )}
+    </div>
+  )
+}
+
+// The conversations grouped by who answered: one row per domain (or address).
+export function Domains({
+  flows,
+  onPick,
+}: {
+  flows: TrafficFlow[]
+  onPick: (name: string) => void
+}): React.ReactElement {
+  const clock = useClock()
+  const rows = byDomain(flows)
+  return (
+    <div className={styles.table}>
+      <div className={styles.domainHead} aria-hidden="true">
+        <span>domain (answered)</span>
+        <span className={styles.num}>talks</span>
+        <span className={styles.num}>machines</span>
+        <span>what</span>
+        <span>client software</span>
+        <span className={styles.num}>sent</span>
+        <span className={styles.num}>received</span>
+        <span className={styles.num}>last</span>
+      </div>
+      {rows.slice(0, SHOWN).map((row) => (
+        <button
+          key={`${row.tag}|${row.name}`}
+          type="button"
+          className={styles.domainRow}
+          title="Show these conversations"
+          onClick={() => onPick(row.name)}
+        >
+          <span className={styles.end}>
+            <span className={styles.primary} title={row.name}>
+              {row.name}
+            </span>
+            <span className={styles.secondary} title={row.addresses.join(', ')}>
+              {row.addresses.length === 1
+                ? row.addresses[0]
+                : `${row.addresses.length} addresses`}
+              {row.tag !== '' && <span className={styles.tag}>{row.tag}</span>}
+            </span>
+          </span>
+          <span className={styles.num}>{row.conversations}</span>
+          <span className={styles.num}>{row.clients}</span>
+          <span className={styles.what} title={row.protocols.join(', ')}>
+            {row.protocols.join(', ')}
+          </span>
+          <span className={styles.who} title={row.software.join(', ')}>
+            {row.software.join(', ')}
+          </span>
+          <span className={styles.num}>{formatBytes(row.bytesUp)}</span>
+          <span className={styles.num}>{formatBytes(row.bytesDown)}</span>
+          <span className={styles.num}>{clock(row.lastNs).slice(0, 8)}</span>
+        </button>
+      ))}
     </div>
   )
 }

@@ -9,6 +9,7 @@ export const SOURCE_KIND_VALUES = ['tail', 'replay', 'live'] as const
 
 export const metaSchema = z.object({
   version: z.string(),
+  build: z.string().default(''),
   source: z.object({
     kind: z.enum(SOURCE_KIND_VALUES),
     detail: z.string().nullable(),

@@ -232,3 +232,52 @@
   font-size: $font-size-2xs;
   color: $dust;
 }
+
+.domainHead,
+.domainRow {
+  display: grid;
+  grid-template-columns:
+    minmax(200px, 2.2fr) 54px 70px minmax(130px, 1.4fr) minmax(90px, 0.9fr)
+    70px 70px 64px;
+  align-items: center;
+  gap: $space-3;
+  width: 100%;
+  padding: 6px $space-3;
+  text-align: left;
+  font-size: $font-size-2xs;
+
+  @include breakpoint-down('lg') {
+    grid-template-columns: minmax(0, 1fr) 54px 70px 70px;
+
+    > :nth-child(3),
+    > :nth-child(4),
+    > :nth-child(5),
+    > :nth-child(8) {
+      display: none;
+    }
+  }
+}
+
+.domainHead {
+  font-family: $font-mono;
+  font-size: $font-size-3xs;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: $dust;
+  border-bottom: 1px solid $line-faint;
+}
+
+.domainRow {
+  margin: 0;
+  color: $paper;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid $line-faint;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: $ink-800;
+    outline: none;
+  }
+}

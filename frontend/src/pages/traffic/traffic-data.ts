@@ -262,3 +262,67 @@ export function describeFlow(flow: TrafficFlow): string {
     : ''
   return `${fromText} opened ${what} to ${toText} on port ${portOf(flow.server)}. It sent ${formatBytes(flow.bytes_up)} and received ${formatBytes(flow.bytes_down)} over ${formatDuration(flow.last_ns - flow.first_ns)}.${who}`
 }
+
+export interface DomainRow {
+  /** The name when one is known, else the address. */
+  name: string
+  /** How the name is known; empty for a bare address. */
+  tag: string
+  conversations: number
+  /** Distinct machines that opened them. */
+  clients: number
+  /** Distinct server addresses behind the name. */
+  addresses: string[]
+  bytesUp: number
+  bytesDown: number
+  lastNs: number
+  /** The kinds of conversation seen, for example `HTTPS · TLS 1.3 · h2`. */
+  protocols: string[]
+  /** The client software seen. */
+  software: string[]
+}
+
+// The conversations grouped by who answered, so one domain is one row even when
+// it has many connections, many addresses and several clients. Largest first.
+export function byDomain(flows: TrafficFlow[]): DomainRow[] {
+  const rows = new Map<string, DomainRow & { clientSet: Set<string> }>()
+  for (const flow of flows) {
+    const end = serverEndpoint(flow)
+    const key = `${end.tag === '' ? 'ip' : 'name'}|${end.primary}`
+    let row = rows.get(key)
+    if (!row) {
+      row = {
+        name: end.primary,
+        tag: end.tag,
+        conversations: 0,
+        clients: 0,
+        addresses: [],
+        bytesUp: 0,
+        bytesDown: 0,
+        lastNs: 0,
+        protocols: [],
+        software: [],
+        clientSet: new Set(),
+      }
+      rows.set(key, row)
+    }
+    row.conversations += 1
+    row.clientSet.add(hostOf(flow.client))
+    const address = hostOf(flow.server)
+    if (!row.addresses.includes(address)) row.addresses.push(address)
+    row.bytesUp += flow.bytes_up
+    row.bytesDown += flow.bytes_down
+    row.lastNs = Math.max(row.lastNs, flow.last_ns)
+    const words = protocolWords(flow)
+    if (!row.protocols.includes(words)) row.protocols.push(words)
+    const who = identity(flow)
+    if (who !== '' && !row.software.includes(who)) row.software.push(who)
+  }
+  return [...rows.values()]
+    .map(({ clientSet, ...row }) => ({ ...row, clients: clientSet.size }))
+    .sort(
+      (a, b) =>
+        b.bytesUp + b.bytesDown - (a.bytesUp + a.bytesDown) ||
+        a.name.localeCompare(b.name)
+    )
+}

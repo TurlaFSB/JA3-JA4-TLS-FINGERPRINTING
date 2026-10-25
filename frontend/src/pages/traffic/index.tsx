@@ -10,7 +10,7 @@ import type { Talker } from '@/api/types'
 import { CaptureHealth, CropFrame, cx } from '@/components'
 import { downloadText, stamp, toCsv } from '@/core/lib/export'
 import { formatBitRate, formatBytes } from '@/core/lib/format'
-import { Conversations } from './conversations'
+import { Conversations, Domains } from './conversations'
 import styles from './traffic.module.scss'
 import {
   chartMax,
@@ -175,6 +175,9 @@ export function Component(): React.ReactElement {
   const [params] = useSearchParams()
   const [query, setQuery] = useState(params.get('q') ?? '')
   const [sort, setSort] = useState<SortKey>('recent')
+  const [grouping, setGrouping] = useState<'conversations' | 'domains'>(
+    'conversations'
+  )
 
   const flows = view?.flows ?? []
   const shown = useMemo(
@@ -318,6 +321,20 @@ export function Component(): React.ReactElement {
             onChange={(event) => setQuery(event.target.value)}
           />
           <fieldset className={styles.chips}>
+            <legend className={styles.srOnly}>Group by</legend>
+            {(['conversations', 'domains'] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={cx(styles.chip, grouping === item && styles.chipOn)}
+                aria-pressed={grouping === item}
+                onClick={() => setGrouping(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </fieldset>
+          <fieldset className={styles.chips}>
             <legend className={styles.srOnly}>Sort</legend>
             {SORTS.map((item) => (
               <button
@@ -352,6 +369,14 @@ export function Component(): React.ReactElement {
           <p className={styles.idle}>no conversations yet</p>
         ) : shown.length === 0 ? (
           <p className={styles.idle}>no conversation matches this filter</p>
+        ) : grouping === 'domains' ? (
+          <Domains
+            flows={shown}
+            onPick={(name) => {
+              setQuery(name)
+              setGrouping('conversations')
+            }}
+          />
         ) : (
           <Conversations flows={shown.slice(0, 200)} total={shown.length} />
         )}

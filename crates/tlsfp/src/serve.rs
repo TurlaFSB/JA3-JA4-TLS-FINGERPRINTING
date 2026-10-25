@@ -230,6 +230,8 @@ const MAX_LOCATION_CHARS: usize = 80;
 #[derive(Serialize, Clone, Debug, PartialEq, Eq)]
 struct Meta {
     version: &'static str,
+    /// The commit this build came from.
+    build: &'static str,
     source: SourceMeta,
     started_unix_ms: u64,
     location: Option<String>,
@@ -276,6 +278,7 @@ impl Meta {
             .map(|label| label.chars().take(MAX_LOCATION_CHARS).collect());
         Self {
             version: env!("CARGO_PKG_VERSION"),
+            build: env!("TLSFP_BUILD"),
             source,
             started_unix_ms,
             location,

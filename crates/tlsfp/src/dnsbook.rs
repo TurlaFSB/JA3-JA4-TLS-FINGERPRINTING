@@ -17,6 +17,8 @@ use std::net::IpAddr;
 use serde::Serialize;
 use tlsfp_core::dns::DnsMessage;
 
+use crate::dnsfind::{self, ClientFacts, Finding, NameFacts, ParentFacts};
+
 const MAX_NAMES: usize = 20_000;
 const MAX_CLIENTS: usize = 5_000;
 const MAX_RECENT: usize = 500;
@@ -24,6 +26,10 @@ const MAX_RECENT: usize = 500;
 const MAX_CLIENTS_PER_NAME: usize = 16;
 const MAX_PENDING: usize = 4_096;
 const MAX_RESOLVERS: usize = 256;
+const MAX_PARENTS: usize = 5_000;
+const MAX_CHILDREN: usize = 256;
+/// Query times kept per name.
+const MAX_TIMES: usize = 24;
 
 #[derive(Default)]
 struct NameStat {
@@ -42,6 +48,16 @@ struct NameStat {
     latency_total_ms: f64,
     latency_count: u64,
     ttl: Option<u32>,
+    /// When the most recent questions were asked, for judging rhythm.
+    times: VecDeque<u64>,
+}
+
+/// What is known about a domain's subdomains, for spotting generated names.
+#[derive(Default)]
+struct ParentStat {
+    children: HashSet<String>,
+    random: HashSet<String>,
+    queries: u64,
 }
 
 /// One answer record as shown.
@@ -137,6 +153,8 @@ pub struct DnsView {
     pub top_clients: Vec<ClientRow>,
     pub resolvers: Vec<ResolverRow>,
     pub recent: Vec<Lookup>,
+    /// Things in the traffic worth a look, with evidence.
+    pub findings: Vec<Finding>,
 }
 
 #[derive(Default)]
@@ -160,6 +178,7 @@ pub struct DnsBook {
     names: HashMap<String, NameStat>,
     clients: HashMap<IpAddr, ClientStat>,
     resolvers: HashMap<String, ResolverStat>,
+    parents: HashMap<String, ParentStat>,
     /// Queries waiting for their response, to time the answer.
     pending: HashMap<(IpAddr, u16, String), u64>,
     recent: VecDeque<Lookup>,
@@ -393,6 +412,7 @@ impl DnsBook {
                 .then_with(|| a.resolver.cmp(&b.resolver))
         });
 
+        let findings = self.findings();
         DnsView {
             totals: self.totals,
             top_names: names,
@@ -406,7 +426,52 @@ impl DnsBook {
                 .take(top.max(50))
                 .cloned()
                 .collect(),
+            findings,
         }
+    }
+
+    fn findings(&self) -> Vec<Finding> {
+        let rows: Vec<(&String, &NameStat, Vec<u64>)> = self
+            .names
+            .iter()
+            .map(|(name, s)| (name, s, s.times.iter().copied().collect()))
+            .collect();
+        let names: Vec<NameFacts<'_>> = rows
+            .iter()
+            .map(|(name, s, times)| NameFacts {
+                name,
+                reverse: s.reverse_of.is_some(),
+                queries: s.queries,
+                ttl: s.ttl,
+                addresses: &s.addresses,
+                times,
+                blocked: s.addresses.iter().any(|a| a == "0.0.0.0" || a == "::"),
+            })
+            .collect();
+        let client_keys: Vec<(String, &ClientStat)> = self
+            .clients
+            .iter()
+            .map(|(ip, s)| (ip.to_string(), s))
+            .collect();
+        let clients: Vec<ClientFacts<'_>> = client_keys
+            .iter()
+            .map(|(ip, s)| ClientFacts {
+                client: ip,
+                queries: s.queries,
+                nxdomain: s.nxdomain,
+            })
+            .collect();
+        let parents: Vec<ParentFacts<'_>> = self
+            .parents
+            .iter()
+            .map(|(parent, s)| ParentFacts {
+                parent,
+                children: s.children.len(),
+                random_children: s.random.len(),
+                queries: s.queries,
+            })
+            .collect();
+        dnsfind::analyze(&names, &clients, &parents)
     }
 }
 
@@ -455,6 +520,31 @@ impl DnsBook {
             }
         } else {
             stat.queries += 1;
+            if stat.times.len() >= MAX_TIMES {
+                stat.times.pop_front();
+            }
+            stat.times.push_back(seen.ts_nanos);
+        }
+        if !message.response && message.reverse_of.is_none() {
+            self.note_parent(&message.name);
+        }
+    }
+
+    fn note_parent(&mut self, name: &str) {
+        let parent = dnsfind::parent_domain(name);
+        if parent == name {
+            return;
+        }
+        if self.parents.len() >= MAX_PARENTS && !self.parents.contains_key(parent) {
+            self.parents.clear();
+        }
+        let stat = self.parents.entry(parent.to_owned()).or_default();
+        stat.queries += 1;
+        if stat.children.len() < MAX_CHILDREN {
+            stat.children.insert(name.to_owned());
+        }
+        if looks_random(name) && stat.random.len() < MAX_CHILDREN {
+            stat.random.insert(name.to_owned());
         }
     }
 
@@ -574,5 +664,42 @@ mod tests {
         assert!(!looks_random("www.example.com"));
         assert!(!looks_random("mail-server-01.example.com"));
         assert!(!looks_random("aaaaaaaaaaaaaaaaaaaa.example.com"));
+    }
+
+    #[test]
+    fn findings_surface_from_the_books() {
+        let mut book = DnsBook::default();
+        let (client, resolver) = (addr("10.0.0.5:40000"), addr("10.0.0.1:53"));
+        // Many random-looking subdomains of one domain.
+        for i in 0..8u64 {
+            let name = format!("x7f3k9q2m8z1v5b{i}n6.tunnel.example");
+            book.record(i, client, resolver, &msg(&name, false, "", &[]));
+        }
+        // A name asked for every 30 seconds.
+        for i in 0..10u64 {
+            book.record(
+                i * 30_000_000_000,
+                client,
+                resolver,
+                &msg("poll.example.com", false, "", &[]),
+            );
+        }
+        let ids: Vec<&str> = book.view(10).findings.iter().map(|f| f.id).collect();
+        assert!(ids.contains(&"generated_subdomains"), "{ids:?}");
+        assert!(ids.contains(&"regular_polling"), "{ids:?}");
+    }
+
+    #[test]
+    fn a_quiet_network_has_no_findings() {
+        let mut book = DnsBook::default();
+        let (client, resolver) = (addr("10.0.0.5:40000"), addr("10.0.0.1:53"));
+        book.record(1, client, resolver, &msg("www.example.com", false, "", &[]));
+        book.record(
+            2,
+            resolver,
+            client,
+            &msg("www.example.com", true, "NOERROR", &["192.0.2.1"]),
+        );
+        assert_eq!(book.view(10).findings, Vec::new());
     }
 }

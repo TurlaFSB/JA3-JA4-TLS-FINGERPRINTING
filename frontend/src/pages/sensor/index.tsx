@@ -343,7 +343,8 @@ export function Component(): React.ReactElement {
         <p className={styles.sub}>
           How this sensor is set up, what it can capture from, how to change it,
           and how you want the dashboard to look.{' '}
-          {meta && `tlsfp ${meta.version}.`}
+          {meta &&
+            `tlsfp ${meta.version}${meta.build ? ` (build ${meta.build})` : ''}.`}
         </p>
       </section>
 

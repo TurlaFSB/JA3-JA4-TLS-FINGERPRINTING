@@ -64,7 +64,10 @@ function SensorStatus(): React.ReactElement {
         {isSuccess ? 'online' : 'offline'}
       </span>
       {data && (
-        <span className={styles.source} title={`tlsfp ${data.version}`}>
+        <span
+          className={styles.source}
+          title={`tlsfp ${data.version}${data.build ? `, build ${data.build}` : ''}`}
+        >
           {describeSource(data)}
         </span>
       )}

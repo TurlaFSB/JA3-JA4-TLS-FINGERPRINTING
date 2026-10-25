@@ -6,6 +6,7 @@
 import { describe, expect, it } from 'vitest'
 import type { TrafficFlow } from '@/api/types'
 import {
+  byDomain,
   chartMax,
   clientEndpoint,
   describeFlow,
@@ -191,5 +192,50 @@ describe('describing a conversation', () => {
     expect(text).toContain('my-laptop (192.168.1.5) opened an HTTPS connection')
     expect(text).toContain('example.com (93.184.216.34) on port 443')
     expect(text).toContain('sent 100 B and received 900 B')
+  })
+})
+
+describe('byDomain', () => {
+  it('groups connections to one name, counts machines and addresses, and sorts by volume', () => {
+    const rows = byDomain([
+      flow({
+        client: '10.0.0.5:1',
+        server: '1.1.1.1:443',
+        bytes_up: 10,
+        bytes_down: 90,
+      }),
+      flow({
+        client: '10.0.0.6:2',
+        server: '1.1.1.2:443',
+        bytes_up: 5,
+        bytes_down: 5,
+      }),
+      flow({
+        client: '10.0.0.5:3',
+        server: '9.9.9.9:443',
+        sni: 'other.example',
+        bytes_up: 1000,
+        bytes_down: 1000,
+      }),
+    ])
+    expect(rows.map((r) => r.name)).toEqual(['other.example', 'example.com'])
+    const example = rows[1]
+    expect(example).toMatchObject({
+      conversations: 2,
+      clients: 2,
+      bytesUp: 15,
+      bytesDown: 95,
+      tag: 'tls handshake',
+    })
+    expect(example.addresses).toEqual(['1.1.1.1', '1.1.1.2'])
+  })
+
+  it('keeps unnamed addresses apart rather than inventing a domain', () => {
+    const rows = byDomain([
+      flow({ sni: null, server: '8.8.8.8:853' }),
+      flow({ sni: null, server: '8.8.4.4:853' }),
+    ])
+    expect(rows).toHaveLength(2)
+    expect(rows.every((r) => r.tag === '')).toBe(true)
   })
 })

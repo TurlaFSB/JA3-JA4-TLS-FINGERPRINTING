@@ -6,7 +6,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useDns, useMeta, useTraffic } from '@/api/hooks'
-import type { DnsLookup, DnsName, DnsView } from '@/api/types'
+import type { DnsLookup, DnsName, DnsView, Finding } from '@/api/types'
 import { CropFrame } from '@/components'
 import { ROUTES } from '@/config'
 import { downloadText, stamp, toCsv } from '@/core/lib/export'
@@ -203,26 +203,88 @@ function NameTable({
 function Story({
   lines,
   since,
+  silent,
 }: {
   lines: string[]
   since: number
+  silent: boolean
 }): React.ReactElement | null {
   const clock = useClock()
-  if (lines.length === 0) return null
+  if (lines.length === 0 && !silent) return null
   return (
     <section className={styles.story} aria-label="What is happening">
       <h2 className={styles.storyTitle}>what is happening</h2>
-      <ul>
-        {lines.map((line) => (
-          <li key={line}>{line}</li>
-        ))}
-      </ul>
+      {silent ? (
+        <p className={styles.sentenceLoose}>
+          Nothing yet. No plain DNS has crossed the sensor. That happens when the
+          capture does not include UDP port 53 (the default live filter does),
+          when nothing has looked up a name since the sensor started, or when this
+          computer resolves names over HTTPS or TLS (a browser setting often
+          called "secure DNS"), which is encrypted and invisible here. Open a new
+          website and this page fills in within seconds if the lookup is plain
+          DNS. The <Link to={ROUTES.TRAFFIC}>Traffic</Link> page shows what is
+          crossing the sensor.
+        </p>
+      ) : (
+        <ul>
+          {lines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      )}
       {since > 0 && (
         <p className={styles.since}>
           since {clock(since)}; kept in memory, so a restart clears it.
         </p>
       )}
     </section>
+  )
+}
+
+function FindingsPanel({
+  findings,
+  silent,
+}: {
+  findings: Finding[]
+  silent: boolean
+}): React.ReactElement | null {
+  if (silent) return null
+  return (
+    <CropFrame
+      label="worth a look"
+      aside="patterns in the DNS traffic, with what else could explain them"
+    >
+      {findings.length === 0 ? (
+        <p className={styles.empty}>
+          Nothing unusual in what has been heard. Checked for: a host with many
+          "no such name" answers, many random-looking subdomains under one domain,
+          very long names, lookups at a steady rhythm, names that keep changing
+          address, and blocked names.
+        </p>
+      ) : (
+        <ul className={styles.findings}>
+          {findings.map((finding) => (
+            <li
+              key={finding.id}
+              className={styles.finding}
+              data-severity={finding.severity}
+            >
+              <span className={styles.severity}>
+                {finding.severity === 'notice' ? 'worth a look' : 'good to know'}
+              </span>
+              <h3 className={styles.findingTitle}>{finding.title}</h3>
+              <p className={styles.findingText}>{finding.detail}</p>
+              <ul className={styles.evidence}>
+                {finding.evidence.map((line) => (
+                  <li key={line}>{line}</li>
+                ))}
+              </ul>
+              <p className={styles.innocent}>Could also be: {finding.innocent}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </CropFrame>
   )
 }
 
@@ -424,17 +486,8 @@ export function Component(): React.ReactElement {
       </section>
 
       {isError && <p className={styles.notice}>The server did not answer.</p>}
-      {silent && (
-        <p className={styles.notice}>
-          No DNS has been seen yet. Plain DNS appears when the capture includes
-          UDP port 53 (the default live filter does), and not at all if this
-          machine resolves names over HTTPS or TLS (a browser setting often called
-          "secure DNS"). Check the <Link to={ROUTES.TRAFFIC}>Traffic</Link> page
-          for what is crossing the sensor.
-        </p>
-      )}
 
-      <Story lines={story} since={totals?.since_ts ?? 0} />
+      <Story lines={story} since={totals?.since_ts ?? 0} silent={silent} />
 
       <section className={styles.stats} aria-label="DNS totals">
         <div className={styles.stat}>
@@ -466,6 +519,8 @@ export function Component(): React.ReactElement {
           <span className={styles.label}>DNS servers asked</span>
         </div>
       </section>
+
+      <FindingsPanel findings={data?.findings ?? []} silent={silent || !data} />
 
       <details className={styles.help}>
         <summary>how to read this page</summary>

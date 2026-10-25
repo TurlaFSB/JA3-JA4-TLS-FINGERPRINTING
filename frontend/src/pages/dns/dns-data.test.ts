@@ -168,6 +168,7 @@ describe('summarize', () => {
       },
     ],
     recent: [],
+    findings: [],
   }
 
   it('says nothing when nothing was heard', () => {

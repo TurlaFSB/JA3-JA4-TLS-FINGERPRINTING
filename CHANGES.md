@@ -5,6 +5,11 @@ The first tagged release. Since the audited import it adds: capture library and 
 
 Base: upstream commit `bf9ac5d6eecd7743bf488602a5de4c27cf72a4d8` of https://github.com/CarterPerez-dev/Cybersecurity-Projects (`PROJECTS/intermediate/ja3-ja4-tls-fingerprinting`), AGPL-3.0. See `NOTICE.md`.
 
+## DNS findings, domain view, build id (after 0.2.0)
+- DNS: six pattern checks (many failures from one host, generated subdomains, very long names, steady rhythm, changing addresses, blocked names) with evidence and innocent explanations; thresholds are constants with tests (`dnsfind.rs`). The "what is happening" box is always present and explains an empty page.
+- Traffic: a domains view groups conversations by who answered (connections, machines, addresses, data, software) and drills into the conversations.
+- The build commit is shown on the Sensor page and in the header tooltip, so a tester can tell which build is running.
+
 ## Readable conversations and DNS (after 0.2.0)
 - Traffic rows are written as who opened it, who answered, what it was and how much; each end shows a name when one is known and says how it is known (TLS handshake, HTTP request, DNS answer, reverse DNS, or "this computer"). The detail view adds a plain sentence, TLS version and cipher, JA4S, HTTP host and User-Agent, SSH banner, timing.
 - Engine: reverse DNS (PTR) answers are decoded and name addresses; the capture interface's addresses and this computer's name label this computer's side; server hellos, HTTP requests and SSH hellos annotate their conversation.
